@@ -230,11 +230,46 @@
       font-weight: 400;
       color: var(--muted);
     }
+    .sold-at {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--grape);
+      text-align: right;
+      line-height: 1.6;
+      margin-top: 16px;
+    }
+    .sold-at small {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 4px;
+    }
     .notice {
       text-align: center;
       font-size: 0.85rem;
       color: var(--muted);
       margin-top: 32px;
+    }
+
+    /* お取り扱い */
+    .shop-info {
+      margin-top: 32px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    .shop-info h3 {
+      font-size: 1rem;
+      color: var(--grape);
+      margin-bottom: 12px;
+    }
+    .shop-info p {
+      font-size: 0.92rem;
+    }
+    .shop-info .shop-note {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-top: 8px;
     }
 
     /* 1年の流れ */
@@ -456,8 +491,9 @@
                 <div><dt>品種</dt><dd>マスカット・ベーリーA 100％</dd></div>
                 <div><dt>内容量</dt><dd>750ml</dd></div>
                 <div><dt>味わい</dt><dd>ミディアムボディ</dd></div>
+                <div><dt>お取り扱い</dt><dd>ヒトミワイナリー</dd></div>
               </dl>
-              <p class="price">○,○○○円 <small>（税込）</small></p>
+              <p class="sold-at">ヒトミワイナリーにて販売<br><small>価格・在庫はお問い合わせください</small></p>
             </div>
           </article>
 
@@ -502,7 +538,7 @@
           <h2>ご購入・お問い合わせ</h2>
         </div>
         <div class="contact-box">
-          <p style="margin-bottom: 20px;">商品はぶどう園の直売所で販売しています。<br>ご注文・発送のご相談は、お電話でお気軽にお問い合わせください。</p>
+          <p style="margin-bottom: 20px;">ぶどうジュースは愛東農園にて販売しています。赤ワインはヒトミワイナリーさんでお取り扱いいただいています。<br>ご注文・発送のご相談は、お電話でお気軽にお問い合わせください。</p>
           <dl>
             <div><dt>名称</dt><dd>愛東農園</dd></div>
             <div><dt>住所</dt><dd>滋賀県東近江市愛東町</dd></div>
@@ -511,6 +547,12 @@
             <div><dt>電話番号</dt><dd>000-000-0000</dd></div>
           </dl>
           <a class="tel" href="tel:000-000-0000">電話でお問い合わせ</a>
+
+          <div class="shop-info">
+            <h3>赤ワインのお取り扱い</h3>
+            <p>ヒトミワイナリー</p>
+            <p class="shop-note">※ 価格・在庫・営業時間については、ヒトミワイナリーさんへ直接お問い合わせください。</p>
+          </div>
         </div>
       </div>
     </section>
