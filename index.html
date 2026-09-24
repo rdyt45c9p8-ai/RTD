@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>○○ぶどう園｜マスカット・ベーリーAのジュースとワイン</title>
+  <meta name="description" content="○○ぶどう園の公式ホームページ。自家栽培のマスカット・ベーリーAでつくるぶどうジュースと赤ワインをご紹介します。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --grape: #4a1f3d;
+      --grape-light: #7a3b63;
+      --leaf: #5f7a3a;
+      --cream: #faf7f2;
+      --paper: #ffffff;
+      --text: #2b2327;
+      --muted: #6e6368;
+      --line: #e8e0e4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", sans-serif;
+      color: var(--text);
+      background: var(--cream);
+      line-height: 1.9;
+      letter-spacing: 0.04em;
+    }
+
+    img, svg { display: block; max-width: 100%; }
+
+    a { color: inherit; }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ヘッダー */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(250, 247, 242, 0.95);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      font-family: "Noto Serif JP", serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--grape);
+      text-decoration: none;
+    }
+    nav ul {
+      display: flex;
+      gap: 28px;
+      list-style: none;
+    }
+    nav a {
+      text-decoration: none;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+    nav a:hover { color: var(--grape-light); }
+
+    /* メインビジュアル */
+    .hero {
+      background: var(--grape);
+      color: #fff;
+      padding: 96px 0 88px;
+      text-align: center;
+    }
+    .hero svg { margin: 0 auto 28px; }
+    .hero-sub {
+      font-size: 0.85rem;
+      letter-spacing: 0.3em;
+      opacity: 0.8;
+      margin-bottom: 12px;
+    }
+    .hero h1 {
+      font-family: "Noto Serif JP", serif;
+      font-size: clamp(1.7rem, 5vw, 2.6rem);
+      font-weight: 700;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .hero p { opacity: 0.9; }
+
+    /* セクション共通 */
+    section { padding: 88px 0; }
+    .section-title {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .section-title span {
+      display: block;
+      font-size: 0.8rem;
+      letter-spacing: 0.3em;
+      color: var(--leaf);
+      margin-bottom: 4px;
+    }
+    .section-title h2 {
+      font-family: "Noto Serif JP", serif;
+      font-size: 1.7rem;
+      color: var(--grape);
+    }
+
+    /* ぶどう園について */
+    .about-text {
+      max-width: 680px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .about-text p + p { margin-top: 1.2em; }
+
+    /* ベーリーA */
+    .variety { background: var(--paper); }
+    .variety-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+    .variety-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    .variety-item .num {
+      font-family: "Noto Serif JP", serif;
+      font-size: 1.8rem;
+      color: var(--grape-light);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .variety-item h3 {
+      font-size: 1.05rem;
+      margin-bottom: 10px;
+      color: var(--grape);
+    }
+    .variety-item p {
+      font-size: 0.92rem;
+      color: var(--muted);
+      text-align: left;
+    }
+
+    /* 商品 */
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 32px;
+    }
+    .product {
+      background: var(--paper);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+    }
+    .product-image {
+      height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .product-image.juice { background: #f3e6ee; }
+    .product-image.wine { background: #e9e1e6; }
+    .product-body {
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .product-tag {
+      display: inline-block;
+      align-self: flex-start;
+      font-size: 0.75rem;
+      color: #fff;
+      background: var(--leaf);
+      border-radius: 4px;
+      padding: 0 10px;
+      margin-bottom: 10px;
+    }
+    .product h3 {
+      font-family: "Noto Serif JP", serif;
+      font-size: 1.3rem;
+      color: var(--grape);
+      margin-bottom: 10px;
+    }
+    .product-desc {
+      font-size: 0.92rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .spec {
+      font-size: 0.88rem;
+      border-top: 1px solid var(--line);
+      margin-top: auto;
+    }
+    .spec div {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .spec dt { color: var(--muted); }
+    .price {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--grape);
+      text-align: right;
+      margin-top: 16px;
+    }
+    .price small {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    .notice {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 32px;
+    }
+
+    /* 1年の流れ */
+    .season { background: var(--paper); }
+    .season-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      list-style: none;
+    }
+    .season-list li {
+      border-top: 3px solid var(--grape-light);
+      padding-top: 14px;
+    }
+    .season-list .month {
+      font-weight: 700;
+      color: var(--grape);
+    }
+    .season-list p {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    /* ご購入・お問い合わせ */
+    .contact-box {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 40px;
+    }
+    .contact-box dl div {
+      display: grid;
+      grid-template-columns: 7em 1fr;
+      gap: 16px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .contact-box dt {
+      color: var(--grape);
+      font-weight: 500;
+    }
+    .tel {
+      display: block;
+      text-align: center;
+      margin-top: 32px;
+      background: var(--grape);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 999px;
+      padding: 14px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+    .tel:hover { background: var(--grape-light); }
+
+    /* フッター */
+    footer {
+      background: var(--grape);
+      color: rgba(255, 255, 255, 0.85);
+      text-align: center;
+      padding: 40px 0;
+      font-size: 0.85rem;
+    }
+    footer .footer-name {
+      font-family: "Noto Serif JP", serif;
+      font-size: 1.1rem;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    footer .caution {
+      margin: 16px 0;
+      font-size: 0.8rem;
+    }
+
+    /* スマホ対応 */
+    @media (max-width: 760px) {
+      nav { display: none; }
+      section { padding: 64px 0; }
+      .hero { padding: 72px 0 64px; }
+      .variety-grid,
+      .products-grid { grid-template-columns: 1fr; }
+      .season-list { grid-template-columns: repeat(2, 1fr); }
+      .contact-box { padding: 28px 20px; }
+      .contact-box dl div { grid-template-columns: 1fr; gap: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container header-inner">
+      <a href="#top" class="logo">○○ぶどう園</a>
+      <nav>
+        <ul>
+          <li><a href="#about">ぶどう園について</a></li>
+          <li><a href="#variety">ベーリーA</a></li>
+          <li><a href="#products">商品紹介</a></li>
+          <li><a href="#contact">ご購入・お問い合わせ</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- メインビジュアル -->
+    <div class="hero">
+      <div class="container">
+        <svg width="96" height="120" viewBox="0 0 96 120" aria-hidden="true">
+          <path d="M48 20 C48 10 52 4 58 0" stroke="#a8c07a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <path d="M50 14 C60 6 76 8 82 18 C70 22 58 20 50 14 Z" fill="#8fae5b"/>
+          <g fill="#b77fa5">
+            <circle cx="30" cy="34" r="11"/><circle cx="52" cy="32" r="11"/><circle cx="72" cy="36" r="10"/>
+            <circle cx="40" cy="54" r="11"/><circle cx="62" cy="54" r="11"/>
+            <circle cx="30" cy="72" r="10"/><circle cx="51" cy="74" r="11"/><circle cx="70" cy="72" r="9"/>
+            <circle cx="40" cy="92" r="10"/><circle cx="60" cy="92" r="10"/>
+            <circle cx="50" cy="109" r="9"/>
+          </g>
+        </svg>
+        <p class="hero-sub">MUSCAT BAILEY A</p>
+        <h1>ひと粒ひと粒に、<br>この土地の味を。</h1>
+        <p>自分たちの畑で育てたベーリーAを、<br>ぶどうジュースと赤ワインにしてお届けしています。</p>
+      </div>
+    </div>
+
+    <!-- ぶどう園について -->
+    <section id="about">
+      <div class="container">
+        <div class="section-title">
+          <span>ABOUT</span>
+          <h2>ぶどう園について</h2>
+        </div>
+        <div class="about-text">
+          <p>○○ぶどう園は、○○県○○市でぶどうを育てている小さな家族経営のぶどう園です。</p>
+          <p>育てている品種は「マスカット・ベーリーA」ひとつだけ。<br>ひとつの品種に向き合い、土づくりから収穫まで、毎日畑に立って手をかけています。</p>
+          <p>完熟したぶどうだけを選んで、ぶどうジュースと赤ワインに仕上げています。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ベーリーAについて -->
+    <section id="variety" class="variety">
+      <div class="container">
+        <div class="section-title">
+          <span>VARIETY</span>
+          <h2>マスカット・ベーリーAとは</h2>
+        </div>
+        <div class="variety-grid">
+          <div class="variety-item">
+            <div class="num">1</div>
+            <h3>日本生まれのぶどう</h3>
+            <p>1927年に新潟県の川上善兵衛によって生み出された、日本を代表する赤ワイン用・生食兼用の品種です。</p>
+          </div>
+          <div class="variety-item">
+            <div class="num">2</div>
+            <h3>甘くてやさしい香り</h3>
+            <p>いちごやキャンディを思わせる甘い香りが特長。渋みがおだやかで、どなたにも親しみやすい味わいです。</p>
+          </div>
+          <div class="variety-item">
+            <div class="num">3</div>
+            <h3>ジュースにもワインにも</h3>
+            <p>果汁がたっぷりで色も濃く、ぶどうジュースにしても赤ワインにしても、その魅力がまっすぐに伝わります。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 商品紹介 -->
+    <section id="products">
+      <div class="container">
+        <div class="section-title">
+          <span>PRODUCTS</span>
+          <h2>商品紹介</h2>
+        </div>
+        <div class="products-grid">
+
+          <article class="product">
+            <div class="product-image juice">
+              <svg width="80" height="190" viewBox="0 0 80 190" aria-hidden="true">
+                <rect x="28" y="4" width="24" height="14" rx="3" fill="#5f7a3a"/>
+                <path d="M30 18 H50 V40 C50 48 66 52 66 66 V178 C66 183 62 186 57 186 H23 C18 186 14 183 14 178 V66 C14 52 30 48 30 40 Z" fill="#7a3b63"/>
+                <rect x="18" y="96" width="44" height="52" rx="3" fill="#faf7f2"/>
+                <circle cx="34" cy="116" r="5" fill="#7a3b63"/><circle cx="46" cy="116" r="5" fill="#7a3b63"/>
+                <circle cx="40" cy="126" r="5" fill="#7a3b63"/>
+                <rect x="28" y="136" width="24" height="3" rx="1.5" fill="#5f7a3a"/>
+              </svg>
+            </div>
+            <div class="product-body">
+              <span class="product-tag">JUICE</span>
+              <h3>ベーリーA ぶどうジュース</h3>
+              <p class="product-desc">ベーリーAだけをしぼった、果汁100％のストレートジュース。砂糖や香料は加えていません。ぶどうそのままの甘さと香りを、お子さまから大人までお楽しみください。</p>
+              <dl class="spec">
+                <div><dt>原材料</dt><dd>ぶどう（ベーリーA）</dd></div>
+                <div><dt>内容量</dt><dd>720ml</dd></div>
+                <div><dt>おすすめ</dt><dd>よく冷やしてそのまま</dd></div>
+              </dl>
+              <p class="price">○,○○○円 <small>（税込）</small></p>
+            </div>
+          </article>
+
+          <article class="product">
+            <div class="product-image wine">
+              <svg width="80" height="190" viewBox="0 0 80 190" aria-hidden="true">
+                <rect x="31" y="2" width="18" height="30" rx="2" fill="#4a1f3d"/>
+                <path d="M31 30 H49 V58 C49 68 64 72 64 88 V180 C64 184 61 187 57 187 H23 C19 187 16 184 16 180 V88 C16 72 31 68 31 58 Z" fill="#2e1426"/>
+                <rect x="20" y="108" width="40" height="48" rx="2" fill="#faf7f2"/>
+                <rect x="28" y="122" width="24" height="2" fill="#4a1f3d"/>
+                <rect x="31" y="130" width="18" height="2" fill="#4a1f3d"/>
+                <rect x="34" y="140" width="12" height="2" fill="#5f7a3a"/>
+              </svg>
+            </div>
+            <div class="product-body">
+              <span class="product-tag">WINE</span>
+              <h3>ベーリーA 赤ワイン</h3>
+              <p class="product-desc">自家栽培のベーリーAで醸した赤ワイン。やさしい果実の香りと、軽やかでなめらかな飲み口が特長です。和食や家庭料理にもよく合います。</p>
+              <dl class="spec">
+                <div><dt>品種</dt><dd>マスカット・ベーリーA 100％</dd></div>
+                <div><dt>内容量</dt><dd>750ml</dd></div>
+                <div><dt>味わい</dt><dd>ミディアムボディ</dd></div>
+              </dl>
+              <p class="price">○,○○○円 <small>（税込）</small></p>
+            </div>
+          </article>
+
+        </div>
+        <p class="notice">※ 数量限定のため、売り切れの際はご容赦ください。</p>
+      </div>
+    </section>
+
+    <!-- 1年の流れ -->
+    <section class="season">
+      <div class="container">
+        <div class="section-title">
+          <span>SEASON</span>
+          <h2>ぶどう園の1年</h2>
+        </div>
+        <ol class="season-list">
+          <li>
+            <p class="month">1月〜3月</p>
+            <p>剪定。春にそなえて枝を整えます。</p>
+          </li>
+          <li>
+            <p class="month">4月〜6月</p>
+            <p>芽吹きと開花。房の形を整えます。</p>
+          </li>
+          <li>
+            <p class="month">7月〜8月</p>
+            <p>実が色づき、少しずつ甘くなります。</p>
+          </li>
+          <li>
+            <p class="month">9月〜10月</p>
+            <p>収穫。ジュースとワインの仕込みを行います。</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ご購入・お問い合わせ -->
+    <section id="contact">
+      <div class="container">
+        <div class="section-title">
+          <span>CONTACT</span>
+          <h2>ご購入・お問い合わせ</h2>
+        </div>
+        <div class="contact-box">
+          <p style="margin-bottom: 20px;">商品はぶどう園の直売所で販売しています。<br>ご注文・発送のご相談は、お電話でお気軽にお問い合わせください。</p>
+          <dl>
+            <div><dt>名称</dt><dd>○○ぶどう園</dd></div>
+            <div><dt>住所</dt><dd>〒000-0000 ○○県○○市○○町0-0</dd></div>
+            <div><dt>営業時間</dt><dd>9:00〜17:00</dd></div>
+            <div><dt>定休日</dt><dd>毎週○曜日</dd></div>
+            <div><dt>電話番号</dt><dd>000-000-0000</dd></div>
+          </dl>
+          <a class="tel" href="tel:000-000-0000">電話でお問い合わせ</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <p class="footer-name">○○ぶどう園</p>
+      <p>〒000-0000 ○○県○○市○○町0-0</p>
+      <p class="caution">20歳未満の者の飲酒は法律で禁止されています。</p>
+      <p><small>&copy; ○○ぶどう園</small></p>
+    </div>
+  </footer>
+
+</body>
+</html>
