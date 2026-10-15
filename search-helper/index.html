@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>検索ポイント ヘルパー</title>
+<meta name="description" content="検索ワードを自動で用意して、ボタンを押すだけで次々検索できる非公式の補助アプリ。進捗とポイントの記録もできます。">
+<style>
+:root{
+  --bg:#f4f6fa;
+  --surface:#ffffff;
+  --surface-2:#eef1f7;
+  --ink:#16191f;
+  --ink-2:#4a515e;
+  --ink-3:#767f8f;
+  --line:#dde2eb;
+  --accent:#1f5fd0;
+  --accent-ink:#ffffff;
+  --accent-soft:#e6edfb;
+  --accent-bar:#4b82e0;
+  --good:#1d7a4d;
+  --good-soft:#e3f3ea;
+  --warn:#8a5a00;
+  --warn-soft:#fdf1da;
+  --radius:14px;
+  --shadow:0 1px 2px rgba(20,28,45,.06), 0 8px 24px rgba(20,28,45,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1319; --surface:#171c24; --surface-2:#1f2630;
+    --ink:#eef1f6; --ink-2:#b4bcc9; --ink-3:#8b93a1; --line:#2b333f;
+    --accent:#7aa6f0; --accent-ink:#0f1319; --accent-soft:#1d2a40; --accent-bar:#6d9bec;
+    --good:#6ed49b; --good-soft:#15291f; --warn:#e8bd72; --warn-soft:#2c2415;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1319; --surface:#171c24; --surface-2:#1f2630;
+  --ink:#eef1f6; --ink-2:#b4bcc9; --ink-3:#8b93a1; --line:#2b333f;
+  --accent:#7aa6f0; --accent-ink:#0f1319; --accent-soft:#1d2a40; --accent-bar:#6d9bec;
+  --good:#6ed49b; --good-soft:#15291f; --warn:#e8bd72; --warn-soft:#2c2415;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:"Hiragino Sans","Yu Gothic UI","Yu Gothic","Noto Sans JP","Segoe UI",system-ui,sans-serif;
+  background:var(--bg); color:var(--ink); line-height:1.7;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+header.top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+header.top h1{font-size:1.3rem;letter-spacing:.01em}
+header.top p{color:var(--ink-3);font-size:.82rem;margin-top:2px}
+.spacer{flex:1 1 auto}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+.ghost{
+  border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
+  border-radius:10px;padding:7px 13px;font-size:.84rem;
+}
+.ghost:hover{border-color:var(--accent);color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+.card h2{font-size:.95rem;letter-spacing:.02em;margin-bottom:4px}
+.card h2 .sub{font-weight:400;color:var(--ink-3);font-size:.8rem;margin-left:8px}
+
+/* mode switch */
+.modes{display:flex;gap:6px;background:var(--surface-2);padding:5px;border-radius:12px;margin-bottom:16px}
+.modes button{flex:1;padding:9px 6px;border-radius:9px;font-size:.88rem;color:var(--ink-2);font-weight:500}
+.modes button[aria-pressed="true"]{background:var(--surface);color:var(--accent);box-shadow:var(--shadow);font-weight:700}
+.modes small{display:block;font-weight:400;color:var(--ink-3);font-size:.72rem}
+
+/* hero */
+.hero{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.tile{background:var(--surface);padding:14px 12px;text-align:center}
+.tile .n{font-size:1.9rem;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .n small{font-size:.8rem;font-weight:500;color:var(--ink-3);margin-left:2px}
+.tile .k{font-size:.74rem;color:var(--ink-3);letter-spacing:.03em}
+
+.meter{height:10px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:12px 0 6px}
+.meter > i{display:block;height:100%;border-radius:99px;background:var(--accent-bar);transition:width .25s ease}
+.meter.done > i{background:var(--good)}
+.meter-note{display:flex;justify-content:space-between;font-size:.78rem;color:var(--ink-3)}
+
+/* next query */
+.nextbox{text-align:center;padding:6px 0 2px}
+.nextbox .label{font-size:.76rem;color:var(--ink-3);letter-spacing:.06em}
+.nextbox .q{font-size:1.45rem;font-weight:700;margin:6px 0 16px;word-break:break-word;min-height:2.4em;display:flex;align-items:center;justify-content:center}
+.bigbtn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  background:var(--accent);color:var(--accent-ink);font-size:1.05rem;font-weight:700;
+  padding:16px 30px;border-radius:14px;width:100%;max-width:420px;
+  box-shadow:0 6px 18px rgba(31,95,208,.25);
+}
+.bigbtn:hover{filter:brightness(1.07)}
+.bigbtn:active{transform:translateY(1px)}
+.bigbtn[disabled]{background:var(--surface-2);color:var(--ink-3);box-shadow:none;cursor:default}
+.hint{font-size:.78rem;color:var(--ink-3);margin-top:10px}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+
+/* list */
+ol.qlist{list-style:none;counter-reset:q;display:grid;gap:4px;margin-top:10px}
+ol.qlist li{counter-increment:q;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:9px;background:var(--surface-2)}
+ol.qlist li.done{background:var(--good-soft)}
+ol.qlist li.skipped{background:var(--surface-2)}
+ol.qlist li.skipped .mark{color:var(--ink-3)}
+ol.qlist li.now{outline:2px solid var(--accent);outline-offset:-2px;background:var(--accent-soft)}
+ol.qlist li .idx{min-width:2.1em;text-align:right;color:var(--ink-3);font-size:.78rem;font-variant-numeric:tabular-nums}
+ol.qlist li .idx::before{content:counter(q)}
+ol.qlist li .txt{flex:1;font-size:.9rem;word-break:break-word}
+ol.qlist li.done .txt{color:var(--ink-3);text-decoration:line-through}
+ol.qlist li .go{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:3px 10px;font-size:.78rem;color:var(--accent)}
+ol.qlist li .mark{font-size:.95rem;color:var(--good);min-width:1.2em;text-align:center}
+
+/* checklist */
+.checks{display:grid;gap:6px;margin-top:10px}
+.checks label{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;border-radius:9px;background:var(--surface-2);font-size:.9rem;cursor:pointer}
+.checks input{margin-top:5px;width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto}
+.checks label.on{background:var(--good-soft)}
+.checks label.on span{color:var(--ink-3);text-decoration:line-through}
+
+/* points log + chart */
+.logform{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.logform input[type=number]{
+  width:120px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;
+  background:var(--surface);color:var(--ink);font:inherit;font-variant-numeric:tabular-nums;
+}
+.logform button{background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:9px 16px;font-size:.88rem;font-weight:600}
+.chartwrap{position:relative;margin-top:6px}
+svg.chart{display:block;width:100%;height:170px;overflow:visible}
+svg.chart .grid line{stroke:var(--line);stroke-width:1}
+svg.chart .bar{fill:var(--accent-bar)}
+svg.chart .bar.hot{fill:var(--accent)}
+svg.chart text{fill:var(--ink-3);font-size:10px}
+svg.chart text.val{fill:var(--ink-2);font-size:10px;font-weight:700}
+.tooltip{
+  position:absolute;pointer-events:none;opacity:0;transition:opacity .12s;
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);
+  border-radius:9px;padding:6px 10px;font-size:.78rem;white-space:nowrap;transform:translate(-50%,-115%);
+}
+.empty{color:var(--ink-3);font-size:.85rem;text-align:center;padding:26px 0}
+table.data{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:10px}
+table.data th,table.data td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+table.data th{color:var(--ink-3);font-weight:500}
+
+/* settings */
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:12px}
+.fields label{display:block;font-size:.78rem;color:var(--ink-3)}
+.fields input,.fields select{
+  width:100%;margin-top:4px;padding:8px 10px;border:1px solid var(--line);border-radius:9px;
+  background:var(--surface);color:var(--ink);font:inherit;font-size:.9rem;
+}
+details.note{background:var(--warn-soft);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px}
+details.note summary{cursor:pointer;font-size:.88rem;font-weight:700;color:var(--warn)}
+details.note div{font-size:.84rem;color:var(--ink-2);margin-top:10px}
+details.note li{margin:4px 0 4px 18px}
+footer{color:var(--ink-3);font-size:.76rem;text-align:center;margin-top:26px;line-height:1.9}
+.badge{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:2px 10px;font-size:.74rem;font-weight:700}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-size:.84rem;
+  opacity:0;transition:all .2s;pointer-events:none;z-index:50;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:520px){
+  .hero{grid-template-columns:1fr 1fr}
+  .hero .tile:last-child{grid-column:1 / -1}
+  .nextbox .q{font-size:1.2rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>検索ポイント ヘルパー <span class="badge">非公式</span></h1>
+    <p>検索ワードは自動で用意します。検索するのはあなたのワンクリック。</p>
+  </div>
+  <div class="spacer"></div>
+  <button class="ghost" id="themeBtn">表示切替</button>
+</header>
+
+<details class="note">
+  <summary>はじめに読んでください（自動検索はしません）</summary>
+  <div>
+    このアプリがやるのは「検索ワードを自動で大量に用意する」ところまでです。検索そのものはボタンを押したあなたの操作で行われます。
+    <ul>
+      <li>ボットやマクロで検索を自動実行すると Microsoft Rewards の規約違反になり、ポイント没収やアカウント停止の対象になります。このアプリにその機能は入れていません。</li>
+      <li>ポイントが入るのは Microsoft アカウントでサインインした状態の検索だけです。先に Edge でサインインしておいてください。</li>
+      <li>モバイル検索枠は、スマホの Edge か Bing アプリでの検索が対象です。このページをスマホで開いて使ってください。</li>
+      <li>目標回数・1検索あたりのポイント・リセット時刻は地域やレベルで変わります。設定で自分の条件に合わせてください。</li>
+    </ul>
+  </div>
+</details>
+
+<div class="modes" id="modes">
+  <button data-mode="pc" aria-pressed="true">パソコン検索<small id="mPc">0 / 30</small></button>
+  <button data-mode="mb" aria-pressed="false">モバイル検索<small id="mMb">0 / 20</small></button>
+</div>
+
+<div class="hero">
+  <div class="tile"><div class="n" id="hRemain">0</div><div class="k">残り検索回数</div></div>
+  <div class="tile"><div class="n" id="hPts">0<small>pt</small></div><div class="k">今日の見込みポイント</div></div>
+  <div class="tile"><div class="n" id="hReset">--:--</div><div class="k">リセットまで</div></div>
+</div>
+
+<section class="card">
+  <div class="nextbox">
+    <div class="label" id="nextLabel">次の検索ワード</div>
+    <div class="q" id="nextQ">読み込み中…</div>
+    <button class="bigbtn" id="goBtn">この言葉で検索する（Space）</button>
+    <div class="hint" id="goHint">押すたびに新しいタブで検索して、次のワードに進みます。</div>
+    <div class="row">
+      <button class="ghost" id="skipBtn">このワードを飛ばす</button>
+      <button class="ghost" id="copyBtn">ワードをコピー</button>
+      <button class="ghost" id="undoBtn">1つ戻す</button>
+    </div>
+  </div>
+  <div class="meter" id="meter"><i style="width:0%"></i></div>
+  <div class="meter-note"><span id="meterLeft">0 / 30 回</span><span id="meterRight">0 pt</span></div>
+</section>
+
+<section class="card">
+  <h2>今日のワード一覧<span class="sub" id="listSub">日付が変わると自動で入れ替わります</span></h2>
+  <ol class="qlist" id="qlist"></ol>
+  <div class="row" style="justify-content:flex-start;margin-top:12px">
+    <button class="ghost" id="reshuffleBtn">ワードを作り直す</button>
+    <button class="ghost" id="resetDayBtn">今日の進捗をリセット</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>デイリーセット<span class="sub">検索以外の分は自分でチェック</span></h2>
+  <div class="checks" id="checks"></div>
+</section>
+
+<section class="card">
+  <h2>獲得ポイントの記録<span class="sub">Rewards の画面で見た合計値を入れてください</span></h2>
+  <div class="logform">
+    <input type="number" id="ptInput" min="0" step="1" placeholder="今日の獲得pt" inputmode="numeric">
+    <button id="ptSave">記録する</button>
+    <span class="hint" id="ptMsg"></span>
+  </div>
+  <div class="chartwrap">
+    <svg class="chart" id="chart" role="img" aria-label="直近14日の獲得ポイント"></svg>
+    <div class="tooltip" id="tip"></div>
+    <div class="empty" id="chartEmpty" hidden>まだ記録がありません。上の欄に今日の獲得ポイントを入れてみてください。</div>
+  </div>
+  <div class="meter" id="goalMeter"><i style="width:0%"></i></div>
+  <div class="meter-note"><span id="goalLeft">目標まで</span><span id="goalRight"></span></div>
+  <details style="margin-top:12px">
+    <summary style="cursor:pointer;font-size:.82rem;color:var(--ink-3)">数字で見る</summary>
+    <table class="data" id="dataTable"></table>
+  </details>
+</section>
+
+<section class="card">
+  <h2>設定</h2>
+  <div class="fields">
+    <label>パソコン検索の目標回数<input type="number" id="sPc" min="1" max="100" step="1"></label>
+    <label>モバイル検索の目標回数<input type="number" id="sMb" min="1" max="100" step="1"></label>
+    <label>1検索あたりのポイント<input type="number" id="sPt" min="1" max="20" step="1"></label>
+    <label>1日の上限ポイント（検索分・pc）<input type="number" id="sCapPc" min="0" max="500" step="1"></label>
+    <label>1日の上限ポイント（検索分・モバイル）<input type="number" id="sCapMb" min="0" max="500" step="1"></label>
+    <label>リセット時刻（0〜23時）<input type="number" id="sReset" min="0" max="23" step="1"></label>
+    <label>交換したい目標ポイント<input type="number" id="sGoal" min="0" step="100"></label>
+    <label>検索エンジンのURL<input type="text" id="sUrl" spellcheck="false"></label>
+  </div>
+  <div class="row" style="justify-content:flex-start;margin-top:14px">
+    <button class="ghost" id="exportBtn">データを書き出す</button>
+    <button class="ghost" id="importBtn">データを読み込む</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+  </div>
+</section>
+
+<footer>
+  Microsoft・Edge・Bing・Microsoft Rewards は Microsoft Corporation の商標です。このアプリは非公式の個人用ツールで、Microsoft とは関係ありません。<br>
+  データはこのブラウザの中だけに保存されます（どこにも送信しません）。
+</footer>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ---------------- 保存領域 ---------------- */
+const KEY = "search-helper-v1";
+const DEFAULTS = {
+  pcTarget: 30, mbTarget: 20, ptPer: 3,
+  capPc: 90, capMb: 60,
+  resetHour: 16, goal: 5000,
+  url: "https://www.bing.com/search?q=",
+  theme: "auto",
+  days: {},      // "2026-10-15": {pc:{done:[..],salt:n}, mb:{...}, checks:{}, pt:number}
+};
+let S = load();
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return structuredClone(DEFAULTS);
+    return Object.assign(structuredClone(DEFAULTS), JSON.parse(raw));
+  }catch(e){ return structuredClone(DEFAULTS); }
+}
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){}
+}
+
+/* ---------------- 日付（リセット時刻ベース） ---------------- */
+function dayKey(d = new Date()){
+  const x = new Date(d.getTime());
+  if(x.getHours() < S.resetHour) x.setDate(x.getDate() - 1);
+  return x.getFullYear() + "-" + String(x.getMonth()+1).padStart(2,"0") + "-" + String(x.getDate()).padStart(2,"0");
+}
+function nextResetMs(){
+  const now = new Date();
+  const r = new Date(now.getFullYear(), now.getMonth(), now.getDate(), S.resetHour, 0, 0, 0);
+  if(r <= now) r.setDate(r.getDate() + 1);
+  return r - now;
+}
+function today(){
+  const k = dayKey();
+  if(!S.days[k]) S.days[k] = { pc:{done:[],skips:[],salt:0}, mb:{done:[],skips:[],salt:0}, checks:{}, pt:null };
+  const d = S.days[k];
+  d.pc = d.pc || {done:[],salt:0};
+  d.mb = d.mb || {done:[],salt:0};
+  d.pc.skips = d.pc.skips || [];
+  d.mb.skips = d.mb.skips || [];
+  d.checks = d.checks || {};
+  return d;
+}
+
+/* ---------------- ワード生成 ---------------- */
+const BANK = {
+  "食べもの":["カレー","ラーメン","から揚げ","餃子","お寿司","天ぷら","うどん","そば","お好み焼き","パスタ","ピザ","ハンバーグ","肉じゃが","味噌汁","だし巻き卵","炒飯","焼きそば","おでん","水炊き","パンケーキ","どら焼き","プリン","メロンパン","抹茶ラテ","ぬか漬け","梅干し","干物","ジャム","スコーン","豚汁"],
+  "旅と場所":["京都","金沢","札幌","福岡","沖縄","箱根","鎌倉","日光","高山","松本","広島","松山","奈良","熱海","別府温泉","富士山","知床","屋久島","瀬戸内海","五島列島","佐渡島","阿蘇","立山","伊勢","出雲","小樽","倉敷","角館","白川郷","竹富島"],
+  "暮らし":["掃除のコツ","洗濯の時短","節電","収納術","観葉植物","家計簿","防災グッズ","ふるさと納税","保険の見直し","ごみの分別","すきま収納","自転車の手入れ","網戸の張り替え","包丁研ぎ","靴の手入れ","換気","加湿器","衣替え","ベランダ菜園","宅配便の再配達"],
+  "からだ":["ストレッチ","ウォーキング","睡眠の質","肩こり","筋トレ","血圧","水分補給","食物繊維","ビタミンD","花粉症","姿勢改善","目の疲れ","腰痛体操","ラジオ体操","呼吸法","減塩","歩数の目安","日焼け対策","冷え対策","のど飴"],
+  "パソコン":["パソコンが重いとき","Wi-Fiの速度","スマホのバッテリー","クラウドストレージ","パスワード管理","ショートカットキー","写真のバックアップ","迷惑メール対策","ブラウザの拡張機能","タイピング練習","二段階認証","ファイルの圧縮","PDFの結合","スキャン","プリンターの設定","文字化け","データ移行","無線マウス","外付けSSD","画面の明るさ"],
+  "趣味":["将棋","囲碁","ギター","家庭菜園","釣り","登山","カメラ","読書","折り紙","ジグソーパズル","書道","水彩画","天体観測","盆栽","編み物","陶芸","ハーモニカ","スケッチ","切り絵","御朱印"],
+  "いきもの":["カワセミ","メダカ","柴犬","猫","アルパカ","ホタル","紅葉","桜の名所","四季の花","きのこ","渡り鳥","深海魚","あじさい","ひまわり","どんぐり","クマゼミ","スズメ","トンボ","金魚","苔"],
+  "学び":["日本史","世界遺産","宇宙","地震のしくみ","気象","数学パズル","英単語","漢字","ことわざ","俳句","経済ニュース","地図記号","方言","暦","元号","星座","化石","algebra","江戸時代","浮世絵"],
+  "スポーツ":["野球","サッカー","大相撲","駅伝","テニス","バレーボール","ゴルフ","スケート","ラグビー","卓球","バドミントン","水泳","マラソン","柔道","剣道","弓道","自転車レース","スキー","カーリング","体操"],
+  "たのしみ":["映画","ドラマ","落語","歌舞伎","演歌","クラシック音楽","アニメ","漫画","舞台","ジャズ","写真展","美術館","朗読","ラジオ番組","民謡","吹奏楽","合唱","フォークソング","時代小説","推理小説"],
+};
+const TAILS = {
+  "食べもの":["とは","作り方","おすすめ","人気","値段","旬","コツ","種類","由来","口コミ","ランキング","お取り寄せ"],
+  "旅と場所":["観光","名所","おすすめ","見どころ","行き方","歴史","名物","口コミ","お土産","日帰り"],
+  "暮らし":["コツ","やり方","注意点","おすすめ","手順","基本","道具","費用の目安","失敗しない","まとめ"],
+  "からだ":["とは","やり方","効果","注意点","基本","コツ","目安","入門","原因","続け方"],
+  "パソコン":["対処法","設定方法","使い方","おすすめ","比較","基本","注意点","手順","選び方","無料"],
+  "趣味":["入門","道具","始め方","コツ","楽しみ方","おすすめ","基本","歴史","費用","教室"],
+  "いきもの":["生態","育て方","種類","見ごろ","豆知識","とは","見られる場所","写真","季節","飼い方"],
+  "学び":["とは","入門","豆知識","わかりやすく","一覧","歴史","まとめ","基本","年表","クイズ"],
+  "スポーツ":["ルール","入門","歴史","用語","見どころ","基本","道具","日程","練習方法","観戦"],
+  "たのしみ":["おすすめ","名作","歴史","入門","楽しみ方","ランキング","演目","見方","名場面","まとめ"],
+};
+const SOLO = ["今日の天気","週末の天気","ニュース 最新","為替 ドル円","日経平均","高速道路 渋滞","電車 運行情報","近くの郵便局","今日は何の日","祝日 一覧","ゴミ出し カレンダー","郵便料金","宅配便 追跡","市役所 開庁時間","図書館 開館時間","献血 会場","確定申告 時期","健康診断 目安","季節の花 見ごろ","日の出 時刻","月の満ち欠け","潮見表","花粉 飛散","紫外線 指数","地震 情報","防災 無線","路線 乗り換え","バス 時刻表","電気料金 平均","水道代 平均"];
+
+function rng(seed){
+  let a = seed >>> 0;
+  return function(){
+    a += 0x6D2B79F5; a |= 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function seedOf(str){
+  let h = 2166136261;
+  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function buildQueries(key, mode, salt, n){
+  const r = rng(seedOf(key + "|" + mode + "|" + salt));
+  const cats = Object.keys(BANK);
+  const out = [], seen = new Set();
+  let guard = 0;
+  while(out.length < n && guard++ < n * 60){
+    let q;
+    if(r() < 0.18){
+      q = SOLO[Math.floor(r()*SOLO.length)];
+    }else{
+      const c = cats[Math.floor(r()*cats.length)];
+      const w = BANK[c][Math.floor(r()*BANK[c].length)];
+      const tl = TAILS[c];
+      const t = tl[Math.floor(r()*tl.length)];
+      q = r() < 0.12 ? w : w + " " + t;
+    }
+    if(seen.has(q)) continue;
+    seen.add(q); out.push(q);
+  }
+  return out;
+}
+
+/* ---------------- 状態 ---------------- */
+let mode = "pc";
+let queries = [];
+
+const el = id => document.getElementById(id);
+function targetOf(m){ return m === "pc" ? S.pcTarget : S.mbTarget; }
+function capOf(m){ return m === "pc" ? S.capPc : S.capMb; }
+function slot(m){ return today()[m]; }
+function doneSet(m){ return new Set(slot(m).done); }
+function skipSet(m){ return new Set(slot(m).skips || []); }
+function searchedCount(m){
+  const sk = skipSet(m);
+  return slot(m).done.filter(i => !sk.has(i)).length;
+}
+function pointsFor(m){
+  const n = searchedCount(m);
+  const cap = capOf(m);
+  const raw = n * S.ptPer;
+  return cap > 0 ? Math.min(raw, cap) : raw;
+}
+function refreshQueries(){
+  const k = dayKey();
+  queries = buildQueries(k, mode, slot(mode).salt || 0, Math.max(targetOf(mode) + 12, 24));
+}
+function firstUndone(){
+  const done = doneSet(mode);
+  for(let i=0;i<queries.length;i++) if(!done.has(i)) return i;
+  return -1;
+}
+
+/* ---------------- 検索を開く ---------------- */
+function openSearch(i){
+  if(i < 0 || i >= queries.length) return;
+  const url = S.url + encodeURIComponent(queries[i]);
+  window.open(url, "_blank", "noopener");
+  const sl = slot(mode);
+  if(!sl.done.includes(i)) sl.done.push(i);
+  save(); render();
+}
+
+/* ---------------- 画面 ---------------- */
+function render(){
+  const t = targetOf(mode), done = searchedCount(mode);
+  const complete = done >= t;
+
+  el("mPc").textContent = searchedCount("pc") + " / " + S.pcTarget;
+  el("mMb").textContent = searchedCount("mb") + " / " + S.mbTarget;
+  [...el("modes").children].forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
+
+  el("hRemain").textContent = Math.max(t - done, 0);
+  el("hPts").innerHTML = (pointsFor("pc") + pointsFor("mb")) + '<small>pt</small>';
+
+  const idx = firstUndone();
+  el("nextQ").textContent = complete ? "今日の分はおしまいです 🎉" : (idx >= 0 ? queries[idx] : "—");
+  el("nextLabel").textContent = complete ? "達成" : (mode === "pc" ? "次の検索ワード（パソコン）" : "次の検索ワード（モバイル）");
+  el("goBtn").disabled = complete || idx < 0;
+  el("goBtn").textContent = complete ? "目標達成ずみ" : "この言葉で検索する（Space）";
+  el("goHint").textContent = complete
+    ? "もっと検索したい場合は下の一覧から選べます（上限を超えた分はポイントになりません）。"
+    : "押すたびに新しいタブで検索して、次のワードに進みます。";
+
+  const pct = Math.min(done / t * 100, 100);
+  const m = el("meter");
+  m.classList.toggle("done", complete);
+  m.firstElementChild.style.width = pct + "%";
+  el("meterLeft").textContent = done + " / " + t + " 回";
+  el("meterRight").textContent = pointsFor(mode) + " pt" + (capOf(mode) > 0 ? "（上限 " + capOf(mode) + "）" : "");
+
+  // 一覧
+  const ds = doneSet(mode), sk = skipSet(mode), ol = el("qlist");
+  ol.innerHTML = "";
+  queries.forEach((q, i) => {
+    const li = document.createElement("li");
+    if(ds.has(i)) li.className = "done";
+    else if(i === idx) li.className = "now";
+    if(sk.has(i)) li.classList.add("skipped");
+    const mark = document.createElement("span");
+    mark.className = "mark"; mark.textContent = sk.has(i) ? "－" : ds.has(i) ? "✓" : "";
+    const ix = document.createElement("span"); ix.className = "idx";
+    const tx = document.createElement("span"); tx.className = "txt"; tx.textContent = q;
+    const go = document.createElement("button"); go.className = "go"; go.textContent = "検索";
+    go.addEventListener("click", () => openSearch(i));
+    li.append(ix, tx, mark, go);
+    ol.appendChild(li);
+  });
+  el("listSub").textContent = (mode === "pc" ? "パソコン用" : "モバイル用") + "・" + dayKey() + " の分";
+
+  renderChecks();
+  renderChart();
+  renderGoal();
+  renderCountdown();
+}
+
+/* デイリーセット */
+const CHECK_ITEMS = [
+  ["set1","デイリーセット その1"],
+  ["set2","デイリーセット その2"],
+  ["set3","デイリーセット その3"],
+  ["quiz","クイズ・アンケート"],
+  ["punch","パンチカード"],
+  ["streak","連続ボーナスの確認"],
+];
+function renderChecks(){
+  const box = el("checks"), c = today().checks;
+  box.innerHTML = "";
+  CHECK_ITEMS.forEach(([k, label]) => {
+    const lb = document.createElement("label");
+    if(c[k]) lb.className = "on";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = !!c[k];
+    cb.addEventListener("change", () => { c[k] = cb.checked; save(); renderChecks(); });
+    const sp = document.createElement("span"); sp.textContent = label;
+    lb.append(cb, sp); box.appendChild(lb);
+  });
+}
+
+/* グラフ（直近14日・1系列） */
+function last14(){
+  const out = [];
+  const base = new Date();
+  if(base.getHours() < S.resetHour) base.setDate(base.getDate() - 1);
+  for(let i=13;i>=0;i--){
+    const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i);
+    const k = d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+    const rec = S.days[k];
+    out.push({ key:k, label:(d.getMonth()+1) + "/" + d.getDate(), pt: rec && typeof rec.pt === "number" ? rec.pt : null });
+  }
+  return out;
+}
+function renderChart(){
+  const data = last14();
+  const has = data.some(d => d.pt !== null);
+  const svg = el("chart"), tip = el("tip");
+  el("chartEmpty").hidden = has;
+  svg.style.display = has ? "block" : "none";
+  svg.innerHTML = "";
+  if(!has){ el("dataTable").innerHTML = ""; return; }
+
+  const W = svg.clientWidth || 600, H = 170;
+  const pad = { t:16, r:6, b:22, l:30 };
+  const max = Math.max(...data.map(d => d.pt || 0), 10);
+  const nice = Math.ceil(max / 10) * 10;
+  const iw = W - pad.l - pad.r, ih = H - pad.t - pad.b;
+  const bw = Math.max(iw / data.length - 4, 4);
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  const ns = "http://www.w3.org/2000/svg";
+  const mk = (n, a) => { const e = document.createElementNS(ns, n); for(const k in a) e.setAttribute(k, a[k]); return e; };
+
+  const g = mk("g", { class:"grid" });
+  [0, 0.5, 1].forEach(f => {
+    const y = pad.t + ih * (1 - f);
+    g.appendChild(mk("line", { x1:pad.l, x2:W - pad.r, y1:y, y2:y }));
+    const tx = mk("text", { x:pad.l - 6, y:y + 3, "text-anchor":"end" });
+    tx.textContent = Math.round(nice * f); g.appendChild(tx);
+  });
+  svg.appendChild(g);
+
+  const maxVal = Math.max(...data.map(d => d.pt || 0));
+  data.forEach((d, i) => {
+    const x = pad.l + iw * (i / data.length) + 2;
+    const lab = mk("text", { x:x + bw/2, y:H - 6, "text-anchor":"middle" });
+    lab.textContent = i % 2 === 0 ? d.label : "";
+    svg.appendChild(lab);
+    if(d.pt === null) return;
+    const h = Math.max(ih * (d.pt / nice), 2);
+    const bar = mk("rect", { class:"bar" + (d.pt === maxVal ? " hot" : ""), x:x, y:pad.t + ih - h, width:bw, height:h, rx:4 });
+    bar.addEventListener("pointerenter", () => {
+      tip.textContent = d.label + "　" + d.pt + " pt";
+      tip.style.left = (x + bw/2) + "px";
+      tip.style.top = (pad.t + ih - h) + "px";
+      tip.style.opacity = 1;
+    });
+    bar.addEventListener("pointerleave", () => { tip.style.opacity = 0; });
+    svg.appendChild(bar);
+    if(d.pt === maxVal){
+      const v = mk("text", { class:"val", x:x + bw/2, y:pad.t + ih - h - 5, "text-anchor":"middle" });
+      v.textContent = d.pt; svg.appendChild(v);
+    }
+  });
+
+  const rows = data.filter(d => d.pt !== null).reverse();
+  el("dataTable").innerHTML = "<tr><th>日付</th><th>獲得ポイント</th></tr>" +
+    rows.map(d => "<tr><td>" + d.key + "</td><td>" + d.pt + " pt</td></tr>").join("");
+}
+
+function renderGoal(){
+  const vals = Object.values(S.days).map(d => d.pt).filter(v => typeof v === "number");
+  const total = vals.reduce((a, b) => a + b, 0);
+  const goal = S.goal || 0;
+  const pct = goal > 0 ? Math.min(total / goal * 100, 100) : 0;
+  const gm = el("goalMeter");
+  gm.classList.toggle("done", goal > 0 && total >= goal);
+  gm.firstElementChild.style.width = pct + "%";
+  if(goal <= 0){ el("goalLeft").textContent = "目標ポイントは設定から"; el("goalRight").textContent = total + " pt 記録ずみ"; return; }
+  const avg = vals.length ? total / vals.length : 0;
+  const left = Math.max(goal - total, 0);
+  el("goalLeft").textContent = "記録した合計 " + total + " / " + goal + " pt";
+  el("goalRight").textContent = left === 0 ? "目標達成" : (avg > 0 ? "この調子であと約 " + Math.ceil(left / avg) + " 日" : "あと " + left + " pt");
+}
+
+function renderCountdown(){
+  const ms = nextResetMs();
+  const h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000);
+  el("hReset").textContent = h + "時間" + String(m).padStart(2,"0") + "分";
+}
+
+/* ---------------- 操作 ---------------- */
+el("modes").addEventListener("click", e => {
+  const b = e.target.closest("button[data-mode]"); if(!b) return;
+  mode = b.dataset.mode; refreshQueries(); render();
+});
+el("goBtn").addEventListener("click", () => openSearch(firstUndone()));
+el("skipBtn").addEventListener("click", () => {
+  const i = firstUndone(); if(i < 0) return;
+  const sl = slot(mode);
+  if(!sl.done.includes(i)) sl.done.push(i);                 // 次のワードへ進める
+  if(!sl.skips.includes(i)) sl.skips.push(i);               // ただし検索回数には数えない
+  save(); render(); toast("飛ばしました（回数には数えません）");
+});
+el("undoBtn").addEventListener("click", () => {
+  const sl = slot(mode);
+  if(!sl.done.length){ toast("戻せる分がありません"); return; }
+  const i = sl.done.pop();
+  sl.skips = sl.skips.filter(x => x !== i);
+  save(); render(); toast("1つ戻しました");
+});
+el("copyBtn").addEventListener("click", async () => {
+  const i = firstUndone(); if(i < 0) return;
+  try{ await navigator.clipboard.writeText(queries[i]); toast("コピーしました"); }
+  catch(e){ toast("コピーできませんでした"); }
+});
+el("reshuffleBtn").addEventListener("click", () => {
+  const sl = slot(mode);
+  sl.salt = (sl.salt || 0) + 1; sl.done = []; sl.skips = [];
+  save(); refreshQueries(); render(); toast("新しいワードを作りました");
+});
+el("resetDayBtn").addEventListener("click", () => {
+  const d = today();
+  d.pc = { done:[], skips:[], salt:d.pc.salt || 0 };
+  d.mb = { done:[], skips:[], salt:d.mb.salt || 0 };
+  save(); refreshQueries(); render(); toast("今日の進捗をリセットしました");
+});
+document.addEventListener("keydown", e => {
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+  if(e.code === "Space" || e.code === "Enter"){
+    e.preventDefault();
+    if(!el("goBtn").disabled) openSearch(firstUndone());
+  }
+});
+
+/* ポイント記録 */
+el("ptSave").addEventListener("click", () => {
+  const v = parseInt(el("ptInput").value, 10);
+  if(isNaN(v) || v < 0){ el("ptMsg").textContent = "数字を入れてください"; return; }
+  today().pt = v; save();
+  el("ptMsg").textContent = dayKey() + " の記録を保存しました";
+  el("ptInput").value = "";
+  renderChart(); renderGoal();
+});
+
+/* 設定 */
+const FIELDS = [["sPc","pcTarget"],["sMb","mbTarget"],["sPt","ptPer"],["sCapPc","capPc"],["sCapMb","capMb"],["sReset","resetHour"],["sGoal","goal"],["sUrl","url"]];
+function fillFields(){ FIELDS.forEach(([id, k]) => { el(id).value = S[k]; }); }
+FIELDS.forEach(([id, k]) => {
+  el(id).addEventListener("change", () => {
+    const raw = el(id).value;
+    if(k === "url"){
+      S.url = raw.trim() || DEFAULTS.url;
+    }else{
+      const v = parseInt(raw, 10);
+      if(isNaN(v)){ fillFields(); return; }
+      S[k] = Math.max(0, v);
+      if(k === "resetHour") S.resetHour = Math.min(23, S.resetHour);
+    }
+    save(); fillFields(); refreshQueries(); render();
+  });
+});
+
+/* 書き出し・読み込み */
+el("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type:"application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "search-helper-" + dayKey() + ".json";
+  a.click(); URL.revokeObjectURL(a.href);
+});
+el("importBtn").addEventListener("click", () => el("importFile").click());
+el("importFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; if(!f) return;
+  try{
+    const obj = JSON.parse(await f.text());
+    S = Object.assign(structuredClone(DEFAULTS), obj);
+    save(); applyTheme(); fillFields(); refreshQueries(); render(); toast("読み込みました");
+  }catch(err){ toast("読み込めませんでした"); }
+  e.target.value = "";
+});
+
+/* テーマ */
+function applyTheme(){
+  if(S.theme === "auto") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", S.theme);
+}
+el("themeBtn").addEventListener("click", () => {
+  S.theme = S.theme === "auto" ? "light" : S.theme === "light" ? "dark" : "auto";
+  save(); applyTheme();
+  toast(S.theme === "auto" ? "端末の設定に合わせます" : S.theme === "light" ? "明るい表示" : "暗い表示");
+  renderChart();
+});
+
+/* トースト */
+let toastT;
+function toast(msg){
+  const t = el("toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove("on"), 1600);
+}
+
+/* 起動 */
+applyTheme(); fillFields(); refreshQueries(); render();
+setInterval(renderCountdown, 30000);
+let lastKey = dayKey();
+setInterval(() => {
+  if(dayKey() !== lastKey){ lastKey = dayKey(); refreshQueries(); render(); toast("日付が変わりました"); }
+}, 60000);
+window.addEventListener("resize", () => renderChart());
+</script>
+</body>
+</html>
