@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ER:LC お金プランナー</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Mono:wght@500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+  /* Layout: パトカーの車載端末(MDT)風。上に回転灯のライン、2列のパネル(スマホでは1列) */
+  :root {
+    --bg: #e9eef5;
+    --panel: #ffffff;
+    --ink: #0f1b2d;
+    --muted: #56667c;
+    --line: #d2dae5;
+    --blue: #1d3fae;
+    --red: #c4122f;
+    --amber: #b86a00;
+    --amber-soft: #fff1d6;
+    --good: #12805c;
+    --field: #f5f8fc;
+    --display: "Chakra Petch", "Zen Kaku Gothic New", system-ui, sans-serif;
+    --body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0a111e; --panel: #111b2c; --ink: #e5ecf6; --muted: #92a2b8; --line: #23324a;
+      --blue: #7d9bff; --red: #ff5c72; --amber: #f5a524; --amber-soft: #2e2410; --good: #3fcf98; --field: #0d1626;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0a111e; --panel: #111b2c; --ink: #e5ecf6; --muted: #92a2b8; --line: #23324a;
+    --blue: #7d9bff; --red: #ff5c72; --amber: #f5a524; --amber-soft: #2e2410; --good: #3fcf98; --field: #0d1626;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--body); font-size: 15px; line-height: 1.6;
+  }
+  .wrap {
+    max-width: 1080px; margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 48px;
+    display: grid; gap: 20px;
+  }
+
+  /* 回転灯 */
+  .lightbar { height: 6px; display: grid; grid-template-columns: 1fr 1fr; }
+  .lightbar span:first-child { background: var(--red); animation: flash 1.6s steps(1) infinite; }
+  .lightbar span:last-child { background: var(--blue); animation: flash 1.6s steps(1) infinite .8s; }
+  @keyframes flash { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
+  @media (prefers-reduced-motion: reduce) { .lightbar span { animation: none !important; } }
+
+  header { padding-top: 24px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; }
+  .unit { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; color: var(--muted); text-transform: uppercase; }
+  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(26px, 5vw, 38px); line-height: 1.15; margin: 4px 0 0; text-wrap: balance; }
+  h1 em { font-style: normal; color: var(--amber); }
+  .lede { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+  .rule-chip {
+    display: inline-flex; gap: 8px; align-items: center;
+    border: 1px solid var(--line); background: var(--panel); border-radius: 999px;
+    padding: 6px 14px; font-size: 13px; color: var(--muted);
+  }
+  .rule-chip b { color: var(--good); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 20px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+  .panel-head { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+  h2 { font-family: var(--display); font-weight: 700; font-size: 20px; margin: 0; display: flex; gap: 10px; align-items: baseline; }
+  h2 .no { font-family: var(--mono); font-size: 13px; color: var(--amber); }
+  .hint { font-size: 13px; color: var(--muted); margin: 0; }
+
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); font-weight: 500; }
+  input, select {
+    font: inherit; font-size: 16px; color: var(--ink); background: var(--field);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; width: 100%; min-width: 0;
+  }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; }
+
+  button {
+    font: inherit; font-weight: 700; cursor: pointer; border-radius: 6px; padding: 9px 16px;
+    border: 1px solid var(--blue); background: var(--blue); color: var(--panel);
+  }
+  button.ghost { background: transparent; color: var(--blue); }
+  button.small { padding: 4px 10px; font-size: 13px; font-weight: 500; }
+  button.del { background: transparent; border-color: var(--line); color: var(--muted); padding: 2px 8px; font-size: 13px; font-weight: 500; }
+
+  /* 目標 */
+  .readout { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .readout div { display: grid; gap: 2px; }
+  .readout .k { font-size: 12px; color: var(--muted); }
+  .readout .v { font-family: var(--mono); font-size: clamp(16px, 3.4vw, 22px); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .bar { height: 14px; border-radius: 7px; background: var(--field); border: 1px solid var(--line); overflow: hidden; }
+  .bar i { display: block; height: 100%; background: repeating-linear-gradient(-45deg, var(--amber) 0 10px, color-mix(in srgb, var(--amber) 75%, var(--panel)) 10px 20px); transition: width .4s ease; }
+  .eta { background: var(--amber-soft); border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+  .eta strong { font-family: var(--mono); font-size: 18px; }
+
+  /* 時給表 */
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  th.num { text-align: right; }
+  td input { padding: 5px 8px; font-size: 15px; max-width: 120px; font-family: var(--mono); text-align: right; }
+  .src { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .src.log { border-color: var(--good); color: var(--good); }
+  .src.ex { border-color: var(--amber); color: var(--amber); }
+  .team { display: flex; gap: 8px; align-items: center; white-space: nowrap; }
+  .dot { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  tr.best td { background: color-mix(in srgb, var(--amber-soft) 70%, transparent); }
+
+  .plan-out { font-size: 15px; }
+  .plan-out strong { font-family: var(--mono); font-size: 22px; color: var(--good); }
+
+  /* コツ */
+  ol.tips { margin: 0; padding-left: 1.6em; display: grid; gap: 10px; }
+  ol.tips li::marker { font-family: var(--mono); color: var(--amber); }
+  ol.tips b { font-weight: 700; }
+  .warn { border: 1px solid var(--red); border-radius: 8px; padding: 12px 14px; font-size: 14px; }
+  .warn b { color: var(--red); }
+
+  .toast { min-height: 1.4em; font-size: 13px; color: var(--good); margin: 0; }
+  footer { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="lightbar" aria-hidden="true"><span></span><span></span></div>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="unit">Emergency Response: Liberty County</div>
+      <h1>ER:LC <em>お金</em>プランナー</h1>
+      <p class="lede">目標の車まであといくら？どのチームで何分働けば届く？自分のプレイ記録から、いちばん稼げるやり方を見つけよう。</p>
+    </div>
+    <span class="rule-chip"><b>●</b> チートなし・ルールを守って稼ぐ</span>
+  </header>
+
+  <div class="grid">
+    <!-- 1 目標 -->
+    <section class="panel" aria-labelledby="h-goal">
+      <div class="panel-head">
+        <h2 id="h-goal"><span class="no">1</span>目標</h2>
+        <p class="hint">買いたいものを決めよう</p>
+      </div>
+      <div class="row">
+        <label>買いたいもの<input id="goal-name" type="text" maxlength="40"></label>
+        <label>値段 ($)<input id="goal-price" type="number" min="0" step="100" inputmode="numeric"></label>
+        <label>いまのお金 ($)<input id="goal-have" type="number" min="0" step="100" inputmode="numeric"></label>
+      </div>
+      <div class="readout">
+        <div><span class="k">いまのお金</span><span class="v" id="r-have">$0</span></div>
+        <div><span class="k">あと</span><span class="v" id="r-left">$0</span></div>
+        <div><span class="k">達成率</span><span class="v" id="r-pct">0%</span></div>
+      </div>
+      <div class="bar" role="progressbar" aria-label="目標の達成率" aria-valuemin="0" aria-valuemax="100" id="goal-bar"><i id="goal-fill" style="width:0%"></i></div>
+      <div class="eta" id="goal-eta"></div>
+    </section>
+
+    <!-- 2 時給くらべ -->
+    <section class="panel" aria-labelledby="h-rates">
+      <div class="panel-head">
+        <h2 id="h-rates"><span class="no">2</span>チーム別の時給</h2>
+        <p class="hint">記録があればそこから自動で計算</p>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>チーム</th><th class="num">1時間で</th><th>出どころ</th></tr></thead>
+          <tbody id="rate-body"></tbody>
+        </table>
+      </div>
+      <p class="hint">記録がないチームは、自分で時給を入れてね。最初に入っている数字は例なので、実際にプレイして記録すると正確になります。</p>
+    </section>
+
+    <!-- 3 プラン -->
+    <section class="panel" aria-labelledby="h-plan">
+      <div class="panel-head">
+        <h2 id="h-plan"><span class="no">3</span>稼ぎシミュレーター</h2>
+        <p class="hint">遊ぶ時間から予想する</p>
+      </div>
+      <div class="row">
+        <label>チーム<select id="plan-team"></select></label>
+        <label>1日に遊ぶ時間 (分)<input id="plan-min" type="number" min="1" step="5" inputmode="numeric"></label>
+        <label>日数<input id="plan-days" type="number" min="1" step="1" inputmode="numeric"></label>
+      </div>
+      <p class="plan-out" id="plan-out"></p>
+    </section>
+
+    <!-- 4 記録 -->
+    <section class="panel" aria-labelledby="h-log">
+      <div class="panel-head">
+        <h2 id="h-log"><span class="no">4</span>プレイ記録</h2>
+        <button class="ghost small" id="clear-ex" type="button" hidden>例の記録を消す</button>
+      </div>
+      <form id="log-form" class="row">
+        <label>日付<input id="log-date" type="date" required></label>
+        <label>チーム<select id="log-team"></select></label>
+        <label>遊んだ時間 (分)<input id="log-min" type="number" min="1" step="1" inputmode="numeric" required></label>
+        <label>増えたお金 ($)<input id="log-earn" type="number" min="0" step="1" inputmode="numeric" required></label>
+        <button type="submit" style="align-self:end">記録する</button>
+      </form>
+      <p class="toast" id="toast" role="status"></p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>日付</th><th>チーム</th><th class="num">時間</th><th class="num">お金</th><th class="num">時給</th><th></th></tr></thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+      <p class="hint">プレイを始める前と終わったあとに所持金を見て、その差を「増えたお金」に入れよう。記録はこのブラウザだけに保存されます。</p>
+    </section>
+  </div>
+
+  <!-- 5 コツ -->
+  <section class="panel" aria-labelledby="h-tips">
+    <div class="panel-head">
+      <h2 id="h-tips"><span class="no">5</span>ルールを守ってお金を増やすコツ</h2>
+    </div>
+    <ol class="tips">
+      <li><b>チームに入ってちゃんと仕事をする。</b>警察・保安官・消防・DOTなどのチームで活動していると給料が入ります。通報に対応したり、パトロールしたり、役になりきってプレイしよう。</li>
+      <li><b>放置(AFK)はしない。</b>放置はサーバーのルール違反になることが多く、キックやBANの原因になります。</li>
+      <li><b>記録して、いちばん時給が高いチームを見つける。</b>上の表で一番稼げるチームに色がつきます。</li>
+      <li><b>強盗で稼ぐなら逮捕に注意。</b>犯罪者は一気に稼げることもありますが、つかまると損をすることがあります。</li>
+      <li><b>買い物の前に目標を決める。</b>欲しい車や装備を1つに決めて、むだづかいしないのがいちばんの近道です。</li>
+      <li><b>サーバーのルールを読む。</b>プライベートサーバーごとにルールがちがいます。参加する前に確認しよう。</li>
+    </ol>
+    <div class="warn"><b>注意：</b>「お金が無限に増える」などのチート、改造ツール、スクリプトは使わないでください。アカウントがBANされたり、パスワードを盗まれたりする危険があります。</div>
+  </section>
+
+  <footer>このアプリはファンが作った非公式の計算ツールです。ゲーム内の給料や値段はアップデートで変わることがあるので、自分の記録を基準にしてください。</footer>
+</div>
+
+<script>
+(() => {
+  const TEAMS = [
+    { id: "police",  name: "警察 (Police)",      color: "#2f5bd8", rate: 1200 },
+    { id: "sheriff", name: "保安官 (Sheriff)",    color: "#8a6a2e", rate: 1200 },
+    { id: "fire",    name: "消防・救急 (Fire/EMS)", color: "#d43a2f", rate: 1100 },
+    { id: "dot",     name: "DOT (道路整備)",      color: "#e08a00", rate: 1000 },
+    { id: "civ",     name: "市民 (Civilian)",     color: "#4b8b5a", rate: 600 },
+    { id: "crim",    name: "犯罪者 (強盗)",        color: "#7a3fa8", rate: 1500 }
+  ];
+  const KEY = "erlc-money-planner-v1";
+
+  const today = () => new Date().toISOString().slice(0, 10);
+  const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
+
+  function defaults() {
+    return {
+      goal: { name: "新しい車 (例)", price: 120000, have: 35000 },
+      manual: Object.fromEntries(TEAMS.map(t => [t.id, t.rate])),
+      plan: { team: "police", min: 60, days: 7 },
+      logs: [
+        { id: 1, date: daysAgo(3), team: "police", min: 45, earn: 950, example: true },
+        { id: 2, date: daysAgo(2), team: "fire",   min: 60, earn: 1050, example: true },
+        { id: 3, date: daysAgo(1), team: "police", min: 30, earn: 640, example: true }
+      ]
+    };
+  }
+
+  let state;
+  try { state = JSON.parse(localStorage.getItem(KEY)) || defaults(); } catch { state = defaults(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch {} };
+
+  const $ = id => document.getElementById(id);
+  const money = n => "$" + Math.round(n).toLocaleString("en-US");
+  const num = v => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : 0; };
+  const team = id => TEAMS.find(t => t.id === id) || TEAMS[0];
+  const fmtTime = mins => {
+    if (!Number.isFinite(mins)) return "—";
+    mins = Math.ceil(mins);
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h ? `${h}時間${m ? m + "分" : ""}` : `${m}分`;
+  };
+
+  // 記録があるチームは記録の平均、ないチームは手入力の時給
+  function rateOf(id) {
+    const rows = state.logs.filter(l => l.team === id);
+    const min = rows.reduce((s, l) => s + l.min, 0);
+    if (min > 0) {
+      const earn = rows.reduce((s, l) => s + l.earn, 0);
+      return { rate: earn / min * 60, src: rows.every(l => l.example) ? "ex" : "log", count: rows.length };
+    }
+    return { rate: num(state.manual[id]), src: "manual", count: 0 };
+  }
+
+  function fillSelects() {
+    const opts = TEAMS.map(t => `<option value="${t.id}">${t.name}</option>`).join("");
+    $("plan-team").innerHTML = opts;
+    $("log-team").innerHTML = opts;
+  }
+
+  function renderRates() {
+    const rates = TEAMS.map(t => ({ t, ...rateOf(t.id) }));
+    const best = Math.max(...rates.map(r => r.rate));
+    $("rate-body").innerHTML = rates.map(({ t, rate, src, count }) => {
+      const cell = src === "manual"
+        ? `<input type="number" min="0" step="50" id="rate-${t.id}" data-team="${t.id}" value="${Math.round(rate)}" aria-label="${t.name}の時給">`
+        : money(rate);
+      const chip = src === "log" ? `<span class="src log">記録 ${count}回</span>`
+        : src === "ex" ? `<span class="src ex">例の記録</span>`
+        : `<span class="src">手入力</span>`;
+      return `<tr class="${rate === best && rate > 0 ? "best" : ""}">
+        <td><span class="team"><span class="dot" style="background:${t.color}"></span>${t.name}</span></td>
+        <td class="num">${cell}</td><td>${chip}</td></tr>`;
+    }).join("");
+  }
+
+  function renderGoal() {
+    const g = state.goal;
+    const left = Math.max(0, g.price - g.have);
+    const pct = g.price > 0 ? Math.min(100, g.have / g.price * 100) : 0;
+    $("r-have").textContent = money(g.have);
+    $("r-left").textContent = money(left);
+    $("r-pct").textContent = Math.floor(pct) + "%";
+    $("goal-fill").style.width = pct + "%";
+    $("goal-bar").setAttribute("aria-valuenow", Math.floor(pct));
+
+    const p = state.plan;
+    const { rate } = rateOf(p.team);
+    const name = g.name || "目標";
+    if (left === 0 && g.price > 0) {
+      $("goal-eta").innerHTML = `<strong>達成！</strong> ${esc(name)}が買えます。`;
+    } else if (rate <= 0) {
+      $("goal-eta").textContent = "時給が0のチームが選ばれています。3のシミュレーターでチームを選んでね。";
+    } else {
+      const mins = left / rate * 60;
+      const days = p.min > 0 ? Math.ceil(mins / p.min) : Infinity;
+      $("goal-eta").innerHTML = `${esc(team(p.team).name)}で働くと、${esc(name)}まであと <strong>${fmtTime(mins)}</strong>。` +
+        (Number.isFinite(days) ? `<br>1日${p.min}分なら <strong>${days}日</strong> で届きます。` : "");
+    }
+  }
+
+  function renderPlan() {
+    const p = state.plan;
+    const { rate } = rateOf(p.team);
+    const total = rate * p.min / 60 * p.days;
+    $("plan-out").innerHTML = `${esc(team(p.team).name)}で1日${p.min}分 × ${p.days}日 ＝ 合計${fmtTime(p.min * p.days)}<br>予想で <strong>${money(total)}</strong> 増えます。`;
+  }
+
+  function renderLogs() {
+    const rows = [...state.logs].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+    $("log-body").innerHTML = rows.length ? rows.map(l => `<tr>
+      <td class="num" style="text-align:left">${l.date.slice(5).replace("-", "/")}${l.example ? ' <span class="src ex">例</span>' : ""}</td>
+      <td><span class="team"><span class="dot" style="background:${team(l.team).color}"></span>${team(l.team).name.split(" ")[0]}</span></td>
+      <td class="num">${l.min}分</td>
+      <td class="num">${money(l.earn)}</td>
+      <td class="num">${money(l.earn / l.min * 60)}</td>
+      <td><button class="del" type="button" data-del="${l.id}" aria-label="この記録を消す">消す</button></td>
+    </tr>`).join("") : `<tr><td colspan="6" class="hint">まだ記録がありません。上のフォームから1回目を記録しよう。</td></tr>`;
+    $("clear-ex").hidden = !state.logs.some(l => l.example);
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+  function renderAll() { renderRates(); renderGoal(); renderPlan(); renderLogs(); }
+
+  function syncInputs() {
+    $("goal-name").value = state.goal.name;
+    $("goal-price").value = state.goal.price;
+    $("goal-have").value = state.goal.have;
+    $("plan-team").value = state.plan.team;
+    $("plan-min").value = state.plan.min;
+    $("plan-days").value = state.plan.days;
+    $("log-date").value = today();
+  }
+
+  // 入力イベント
+  $("goal-name").addEventListener("input", e => { state.goal.name = e.target.value; save(); renderGoal(); });
+  $("goal-price").addEventListener("input", e => { state.goal.price = num(e.target.value); save(); renderGoal(); });
+  $("goal-have").addEventListener("input", e => { state.goal.have = num(e.target.value); save(); renderGoal(); });
+  $("plan-team").addEventListener("change", e => { state.plan.team = e.target.value; save(); renderGoal(); renderPlan(); });
+  $("plan-min").addEventListener("input", e => { state.plan.min = num(e.target.value); save(); renderGoal(); renderPlan(); });
+  $("plan-days").addEventListener("input", e => { state.plan.days = num(e.target.value); save(); renderPlan(); });
+
+  $("rate-body").addEventListener("change", e => {
+    const id = e.target.dataset.team;
+    if (!id) return;
+    state.manual[id] = num(e.target.value);
+    save(); renderAll();
+  });
+
+  $("log-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const min = num($("log-min").value), earn = num($("log-earn").value);
+    if (min <= 0) { $("toast").textContent = "遊んだ時間は1分以上で入れてね。"; return; }
+    // 初めて自分の記録を入れたら例の記録は消す
+    const hadExamples = state.logs.some(l => l.example);
+    state.logs = state.logs.filter(l => !l.example);
+    const id = state.logs.reduce((m, l) => Math.max(m, l.id), 0) + 1;
+    const t = $("log-team").value;
+    state.logs.push({ id, date: $("log-date").value || today(), team: t, min, earn });
+    save(); renderAll();
+    $("log-min").value = ""; $("log-earn").value = "";
+    $("toast").textContent = `記録しました：${team(t).name.split(" ")[0]}で時給 ${money(earn / min * 60)}` + (hadExamples ? "（例の記録は消しました）" : "");
+  });
+
+  $("log-body").addEventListener("click", e => {
+    const id = Number(e.target.dataset.del);
+    if (!id) return;
+    state.logs = state.logs.filter(l => l.id !== id);
+    save(); renderAll();
+    $("toast").textContent = "記録を消しました。";
+  });
+
+  $("clear-ex").addEventListener("click", () => {
+    state.logs = state.logs.filter(l => !l.example);
+    save(); renderAll();
+    $("toast").textContent = "例の記録を消しました。";
+  });
+
+  fillSelects(); syncInputs(); renderAll();
+})();
+</script>
+</body>
+</html>
