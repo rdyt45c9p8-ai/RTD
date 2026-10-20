@@ -61,12 +61,12 @@ body{background:var(--sea);color:var(--fg);font-family:var(--f-body);overflow:hi
 .tool[aria-pressed="true"]{background:rgba(228,180,94,.15);border-color:var(--brass);color:var(--brass)}
 .tools hr{border:0;border-top:1px solid var(--line);margin:3px 6px}
 
-.side{position:absolute;z-index:5;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 82px);
-  width:292px;max-height:calc(100% - 190px);display:flex;flex-direction:column;gap:8px}
+.side{position:absolute;z-index:5;right:max(16px,env(safe-area-inset-right,0px));top:calc(var(--hud-h,70px) + 12px);
+  width:292px;max-height:calc(100% - var(--hud-h,70px) - 120px);display:flex;flex-direction:column;gap:8px}
 .side section{padding:12px 14px;overflow:auto;min-height:0}
 .side h2{font-family:var(--f-display);font-weight:400;font-size:13px;letter-spacing:.1em;color:var(--muted);margin:0 0 8px}
 .rows{display:flex;flex-direction:column;gap:2px}
-.row{appearance:none;display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;
+.row{appearance:none;display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;
   background:transparent;border:0;border-radius:6px;color:var(--fg);font:inherit;font-size:13px;padding:5px 6px;cursor:pointer}
 .row:hover{background:rgba(255,255,255,.06)}
 .row.sel{background:rgba(228,180,94,.13)}
@@ -79,7 +79,7 @@ body{background:var(--sea);color:var(--fg);font-family:var(--f-body);overflow:hi
 .row .pp{font-family:var(--f-pixel);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .more{font-size:12px;color:var(--muted);padding:4px 6px}
 .hint{color:var(--muted);font-size:13px;line-height:1.7;margin:0}
-.ihead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ihead{display:flex;align-items:center;gap:6px 8px;margin-bottom:8px;flex-wrap:wrap}
 .ihead b{font-size:17px}
 .tag{font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--brass);color:var(--brass)}
 .tag.w{border-color:var(--war);color:var(--war)}
@@ -104,7 +104,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 .cb-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-width:0}
 .cb-head b{font-size:14px;white-space:nowrap;flex:0 0 auto;max-width:60%;overflow:hidden;text-overflow:ellipsis}
 .cb-stat{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
-@media (min-width:761px){ body.has-cmd .side{max-height:calc(100% - 82px - 180px)} }
+@media (min-width:761px){ body.has-cmd .side{max-height:calc(100% - var(--hud-h,70px) - 200px)} }
 .cb-go{margin-left:auto;padding:4px 9px;font-size:12px}
 .cb-row{display:flex;flex-wrap:wrap;gap:5px}
 .cmd{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--fg);font:inherit;font-size:12.5px;padding:6px 10px;border-radius:7px;cursor:pointer;white-space:nowrap}
@@ -128,6 +128,46 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 .log .k-war .y{color:var(--war)}.log .k-peace .y{color:var(--peace)}.log .k-era .y{color:var(--brass)}.log .k-tech .y{color:#8fd3ff}
 @keyframes in{from{transform:translateY(6px);opacity:0}to{transform:none}}
 
+.flag{display:block;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.4);flex:0 0 auto}
+.myflag{display:inline-flex}
+.opts{margin-left:0}
+.sp-opts.dis{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.chart{display:block;width:100%;height:64px;margin-top:2px}
+.chart-cap{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin:2px 0 10px}
+.ren{margin:0 0 10px}
+.ren label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.ren-row{display:flex;gap:6px}
+.ren input{flex:1;min-width:0;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:7px;color:var(--fg);font:inherit;font-size:14px;padding:6px 8px}
+.ren input:focus-visible{outline:2px solid var(--brass);outline-offset:1px}
+.achpop{position:absolute;z-index:7;left:50%;top:calc(var(--hud-h,70px) + 16px);transform:translateX(-50%);background:var(--panel);border:1px solid var(--brass);border-radius:12px;padding:10px 18px;text-align:center;pointer-events:none;opacity:0;min-width:220px}
+.achpop.show{animation:achin 3.4s ease-out forwards}
+.achpop small{display:block;font-size:11px;color:var(--brass);letter-spacing:.12em}
+.achpop b{display:block;font-family:var(--f-display);font-weight:400;font-size:20px;margin:2px 0}
+.achpop span{font-size:12px;color:var(--muted)}
+@keyframes achin{0%{opacity:0;transform:translate(-50%,-8px)}10%{opacity:1;transform:translate(-50%,0)}85%{opacity:1}100%{opacity:0}}
+.modal{position:absolute;z-index:9;inset:0;display:grid;place-items:center;background:rgba(4,9,15,.55);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+.mcard{width:100%;max-width:580px;max-height:100%;display:flex;flex-direction:column;min-height:0;padding:16px 18px}
+.mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mhead b{font-family:var(--f-display);font-weight:400;font-size:20px;letter-spacing:.06em}
+.mtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.mbody{overflow:auto;min-height:0;font-size:13.5px;line-height:1.7}
+.mbody h3{font-family:var(--f-display);font-weight:400;font-size:14px;color:var(--brass);letter-spacing:.06em;margin:14px 0 6px}
+.mbody h3:first-child{margin-top:0}
+.mbody ol,.mbody ul{margin:0;padding-left:1.4em}
+.mbody kbd{font-family:var(--f-pixel);background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:12px}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.chips .btn{padding:4px 9px;font-size:12px}
+.chron{list-style:none;padding:0 !important;display:flex;flex-direction:column;gap:3px}
+.chron li{display:flex;gap:10px;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.chron .y{font-family:var(--f-pixel);color:var(--muted);white-space:nowrap;min-width:7.5em;font-variant-numeric:tabular-nums}
+.chron .k-war .y{color:var(--war)}.chron .k-peace .y{color:var(--peace)}.chron .k-era .y{color:var(--brass)}.chron .k-tech .y{color:#8fd3ff}
+.achs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.ach{border:1px solid var(--line);border-radius:9px;padding:8px 10px;opacity:.5}
+.ach.on{opacity:1;border-color:var(--brass);background:rgba(228,180,94,.08)}
+.ach b{display:block;font-size:13.5px}
+.ach span{display:block;font-size:12px;color:var(--muted);line-height:1.5}
+.ach small{display:block;font-size:11px;color:var(--brass);margin-top:3px}
+.mbody .acts{margin:10px 0}
 .banner{position:absolute;z-index:6;left:50%;top:30%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;padding-inline:16px}
 .banner.show{animation:ban 3.2s ease-out forwards}
 .banner small{display:block;font-family:var(--f-pixel);font-size:18px;color:var(--fg);letter-spacing:.2em;text-shadow:0 2px 8px rgba(0,0,0,.8)}
@@ -152,12 +192,18 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 
 @media (max-width:760px){
   .brand{display:none}
-  .clock{min-width:0;padding:5px 11px}
-  .year{font-size:17px}
-  .stats{gap:12px;padding:5px 11px}
-  .stat b{font-size:15px}
+  .hud{gap:6px}
+  .clock{min-width:0;padding:4px 9px}
+  .era{font-size:12px}
+  .year{font-size:15px}
+  .stats{gap:9px;padding:4px 9px}
+  .stat span{font-size:10px}
+  .stat b{font-size:14px}
+  #sideToggle{padding:4px 7px;font-size:12px}
   .speed{margin-left:0;width:100%;padding:5px}
   .speed .btn{padding:5px 8px;font-size:12px}
+  .opts{width:auto}
+  .sp-opts.dis{grid-template-columns:repeat(3,minmax(0,1fr))}
   .only-m{display:inline-block}
   .tools{top:auto;transform:none;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
     flex-direction:row;overflow-x:auto;padding:4px}
@@ -204,7 +250,14 @@ dd{margin:0;font-variant-numeric:tabular-nums}
       <button class="btn" type="button" data-speed="1" aria-pressed="true">1倍</button>
       <button class="btn" type="button" data-speed="3">3倍</button>
       <button class="btn" type="button" data-speed="10">10倍</button>
+      <button class="btn" type="button" data-speed="30">30倍</button>
       <button class="btn next" type="button" id="nextEra">次の時代へ</button>
+    </div>
+    <div class="plate speed opts" role="group" aria-label="表示と設定">
+      <button class="btn" type="button" id="nightBtn" aria-pressed="true" title="昼と夜を切りかえる（N）">夜景</button>
+      <button class="btn" type="button" id="liveBtn" aria-pressed="false" title="大きな出来事を自動で映す（C）">実況</button>
+      <button class="btn" type="button" id="soundBtn" aria-pressed="false" title="効果音">音</button>
+      <button class="btn next" type="button" id="menuBtn" title="遊び方・年表・実績・保存（H）">メニュー</button>
     </div>
   </header>
 
@@ -218,7 +271,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
     <button class="tool" type="button" data-tool="forest" title="森を育てる"><svg viewBox="0 0 24 24"><path d="M12 3l6 9h-3l4 6H5l4-6H6z"/><path d="M12 18v3"/></svg>森</button>
     <button class="tool" type="button" data-tool="mount" title="山を作る"><svg viewBox="0 0 24 24"><path d="M2 20l7-12 4 6 3-4 6 10z"/><path d="M7.5 11l1.5 1.5 1.5-1.5"/></svg>山</button>
     <hr>
-    <button class="tool" type="button" data-tool="meteor" title="隕石を落とす"><svg viewBox="0 0 24 24"><circle cx="8" cy="16" r="4"/><path d="M11 13l9-9M13 17l7-5M7 11l5-8"/></svg>隕石</button>
+    <button class="tool" type="button" data-tool="meteor" title="天変地異を起こす"><svg viewBox="0 0 24 24"><path d="M13 2L5 13h6l-2 9 9-12h-6z"/></svg>天災</button>
   </nav>
 
   <div class="plate specpick" id="specPick" role="group" aria-label="新しい国の特化" hidden>
@@ -231,13 +284,25 @@ dd{margin:0;font-variant-numeric:tabular-nums}
     </div>
   </div>
 
+  <div class="plate specpick" id="disPick" role="group" aria-label="天災の種類" hidden>
+    <span class="sp-h">起こす天災</span>
+    <div class="sp-opts dis">
+      <button class="sp" type="button" data-dis="meteor" aria-pressed="true"><b>隕石</b><small>街ごと消し飛ばす</small></button>
+      <button class="sp" type="button" data-dis="quake" aria-pressed="false"><b>地震</b><small>まわりの街がゆれる</small></button>
+      <button class="sp" type="button" data-dis="volcano" aria-pressed="false"><b>火山</b><small>山ができて噴火する</small></button>
+      <button class="sp" type="button" data-dis="plague" aria-pressed="false"><b>疫病</b><small>広い範囲で人が減る</small></button>
+      <button class="sp" type="button" data-dis="typhoon" aria-pressed="false"><b>台風</b><small>動きながら街をおそう</small></button>
+      <button class="sp" type="button" data-dis="bless" aria-pressed="false"><b style="color:#9fdc8a">恵みの雨</b><small>人が増え、砂漠が緑に</small></button>
+    </div>
+  </div>
+
   <aside class="side" id="side">
     <section class="plate" id="infoBox"><h2>しらべる</h2><div id="info"></div></section>
     <section class="plate"><h2>世界の国々</h2><div class="rows" id="nations"></div></section>
   </aside>
 
   <div class="plate cmdbar" id="cmdBar" hidden>
-    <div class="cb-head"><span class="sw" id="myColor"></span><b id="myName"></b><span class="cb-stat" id="myStat"></span><button class="btn cb-go" type="button" id="myGo">首都へ</button></div>
+    <div class="cb-head"><span class="myflag" id="myFlag"></span><b id="myName"></b><span class="cb-stat" id="myStat"></span><button class="btn cb-go" type="button" id="myGo">首都へ</button></div>
     <div class="cb-row" role="group" aria-label="自分の国への命令">
       <button class="cmd" type="button" data-cmd="cmdAttack" title="相手の街をタップすると、近くの街から軍を送ります">攻める</button>
       <button class="cmd" type="button" data-cmd="cmdSettle" title="陸地をタップすると、近くの街から人を送って新しい街をつくります">開拓</button>
@@ -254,6 +319,20 @@ dd{margin:0;font-variant-numeric:tabular-nums}
   <div class="log" id="log" aria-live="polite"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast"></div>
+  <div class="achpop" id="achPop" aria-live="polite"></div>
+
+  <div class="modal" id="menu" hidden>
+    <div class="plate mcard" role="dialog" aria-modal="true" aria-labelledby="mtitle">
+      <div class="mhead"><b id="mtitle">メニュー</b><button class="btn" type="button" id="menuClose">閉じる</button></div>
+      <div class="mtabs" role="tablist">
+        <button class="btn" type="button" data-mtab="help">遊び方</button>
+        <button class="btn" type="button" data-mtab="log">年表</button>
+        <button class="btn" type="button" data-mtab="ach">実績</button>
+        <button class="btn" type="button" data-mtab="save">保存</button>
+      </div>
+      <div class="mbody" id="mbody"></div>
+    </div>
+  </div>
 
   <div class="intro" id="intro">
     <div class="plate card">
@@ -706,6 +785,8 @@ function capture(t, nid){
   if (w){ if (w.a === nid) w.capA++; else w.capB++; }
   t.nation = nid; t.capital = false; terrDirty = true;
   log(`${nm(nid)}が${nm(old)}の${t.name}を占領した`, 'war');
+  if (nid === myNation) myCaptures++;
+  markEvent(t.x, t.y, 1);
   if (t.wonders && t.wonders.length) log(`${nm(nid)}は${wonderNames(t)}も手に入れた`, 'war');
   if (!S.some(o => o.alive && o.nation === old)) nationDies(old, `${nm(nid)}に滅ぼされた`);
   else if (wasCap){ const c = setCapital(old); if (c) log(`${nm(old)}は首都を${c.name}へ移した`); }
@@ -713,7 +794,7 @@ function capture(t, nid){
 function assault(a, t){
   const def = (t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5) * spec(t.nation).def * ((t.weak || 0) > tick ? .45 : 1) * (t.nation === myNation && fortifyUntil > tick ? 1.8 : 1);
   const atk = a.str * spec(a.nation).atk * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
-  boom(t.x + .5, t.y + .5, 18, warPal());
+  boom(t.x + .5, t.y + .5, 18, warPal()); sfx('boom');
   if (atk > dr){ capture(t, a.nation); t.pop = Math.max(5, t.pop * .65 + a.str * .3); }
   else t.pop = Math.max(3, t.pop - a.str * .4);
   a.dead = true;
@@ -775,7 +856,7 @@ function airStrike(me, foe){
     const t = theirs.reduce((a, b) => b.pop > a.pop ? b : a), [from, d] = nearestOf(mine, t);
     n.nukeCd = tick + 700;
     missiles.push({ x0:from.x + .5, y0:from.y + .5, x1:t.x + .5, y1:t.y + .5, t:0, dur:25 + d*.4, target:t.id, nation:me });
-    log(`${nm(me)}が${t.name}へ核ミサイルを発射した！`, 'war');
+    log(`${nm(me)}が${t.name}へ核ミサイルを発射した！`, 'war'); sfx('siren');
     return;
   }
   if (jets.length < 30 && rnd() < .6){
@@ -809,7 +890,7 @@ function updateAir(){
   missiles = missiles.filter(m => !m.dead);
 }
 function nukeHit(t, by){
-  shake = 1;
+  shake = 1; unlock('nuke'); sfx('big', 1.2); markEvent(t.x, t.y, 3);
   boom(t.x + .5, t.y + .5, 140, ['#ffffff','#fff2c8','#ffd27a','#ff9a3d'], 3.5);
   mushroom(t.x + .5, t.y + .5);
   for (const o of S) if (o.alive && o !== t && Math.hypot(o.x - t.x, o.y - t.y) < 4) o.pop *= .6;
@@ -829,7 +910,7 @@ function considerWonders(){
     let r = rnd() * cand.reduce((a, c) => a + wt(c), 0), c = cand[0];
     for (const x of cand){ r -= wt(x); if (r <= 0){ c = x; break; } }
     (c.wonders = c.wonders || []).push(wi); wonderBuilt[wi] = true; cityDirty = true;
-    log(`${nm(c.nation)}が${c.name}に${WONDERS[wi].name}を完成させた`, 'era');
+    log(`${nm(c.nation)}が${c.name}に${WONDERS[wi].name}を完成させた`, 'era'); sfx('chime'); markEvent(c.x, c.y, 2);
     boom(c.x + .5, c.y + .5, 30, ['#ffe08a','#fff2c8','#ffffff']);
     return;
   }
@@ -859,6 +940,14 @@ function runEvent(){
   const alive = aliveNations(); if (!alive.length) return;
   const n = pick(alive), cities = S.filter(s => s.alive && s.nation === n.id); if (!cities.length) return;
   const r = rnd();
+  if (r < .12){
+    const cc = cities.filter(c => coastal(c.x, c.y));
+    if (cc.length){ const c = pick(cc); for (let k = 0; k < 20; k++){ const x = Math.round(c.x + 4 + rnd()*8), y = Math.round(c.y + (rnd() - .5)*6); if (x >= 0 && x < W && y > 1 && y < H-1 && !isLand(terr[y*W + x])){ spawnTyphoon(x, y); return; } } }
+  }
+  if (r > .96){
+    const c = pick(cities);
+    for (let k = 0; k < 30; k++){ const x = c.x + Math.round((rnd() - .5)*12), y = c.y + Math.round((rnd() - .5)*12); if (x > 0 && y > 0 && x < W-1 && y < H-1 && terr[y*W + x] === T.MOUNT && !nearSettlement(x, y, 3)){ eruptVolcano(x, y); return; } }
+  }
   if (eraIdx >= 2 && eraIdx <= 3 && r < .3){
     for (const c of cities){ c.pop *= .72; boom(c.x + .5, c.y + .5, 4, SICK, .6); }
     log(`黒死病が${nm(n.id)}で流行し、人口が大きく減った`, 'war');
@@ -933,6 +1022,209 @@ function considerBetrayal(){
     const traitor = N[a].spec === 'war' ? a : N[b].spec === 'war' ? b : -1;
     if (traitor >= 0 && rnd() < .04) breakAlliance(a, b, traitor);
   }
+}
+
+// ===== 天災・実績・記録など =====
+let disaster = 'meteor', volcanoes = [], typhoons = [];
+let achDone = {}, myCaptures = 0, disCount = 0, unified = false;
+let liveCam = false, lastEvt = null;
+function markEvent(x, y, pri = 1){ if (!lastEvt || lastEvt.shown || pri >= lastEvt.pri) lastEvt = { x, y, pri, shown:false }; }
+const nearestCityName = (x, y) => { let b = null, bd = 1e9; for (const s of S) if (s.alive){ const d = Math.hypot(s.x - x, s.y - y); if (d < bd){ bd = d; b = s; } } return b && bd < 12 ? b.name + 'の近く' : '人のいない土地'; };
+function doDisaster(x, y){
+  disCount++;
+  if (disaster === 'meteor') launchMeteor(x, y);
+  else if (disaster === 'quake') quake(x, y);
+  else if (disaster === 'volcano') eruptVolcano(x, y);
+  else if (disaster === 'plague') plagueAt(x, y);
+  else if (disaster === 'typhoon') spawnTyphoon(x, y);
+  else if (disaster === 'bless') bless(x, y);
+}
+const DIS_R = { meteor:3.2, quake:7, volcano:2.2, plague:10, typhoon:2.6, bless:6 };
+function quake(x, y){
+  shake = Math.max(shake, .9); sfx('rumble'); markEvent(x, y, 2);
+  let hit = 0;
+  for (const s of S){ if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y); if (d < 7){ s.pop *= .45 + d*.06; hit++; boom(s.x + .5, s.y + .5, 10, DUST, 1.2); } }
+  boom(x + .5, y + .5, 40, DUST, 2);
+  log(`大地震が${nearestCityName(x, y)}を襲った（${hit}の街に被害）`, 'war');
+}
+function eruptVolcano(x, y){
+  if (!isLand(terr[y*W + x])){ toast('火山は陸地にしかつくれません'); return; }
+  for (const s of S){
+    if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y);
+    if (d < 2.2){ log(`${s.name}が溶岩にのみこまれた`, 'war'); killSettlement(s, '火山にのみこまれて滅んだ'); } else if (d < 5) s.pop *= .55;
+  }
+  paintTerrain(x, y, 2, T.WASTE); paintTerrain(x, y, .8, T.MOUNT);
+  volcanoes.push({ x:x + .5, y:y + .5, t:0 }); shake = Math.max(shake, .6); sfx('big', .7); markEvent(x, y, 2);
+  log(`${nearestCityName(x, y)}で火山が噴火した`, 'war');
+}
+function plagueAt(x, y){
+  let hit = 0;
+  for (const s of S){ if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y); if (d < 10){ s.pop *= .5 + d*.03; hit++; boom(s.x + .5, s.y + .5, 6, SICK, .7); } }
+  markEvent(x, y, 2);
+  log(hit ? `疫病が${nearestCityName(x, y)}で広がった（${hit}の街）` : '疫病はだれもいない土地で消えた', 'war');
+}
+function spawnTyphoon(x, y){
+  typhoons.push({ x:x + .5, y:y + .5, vx:-(.22 + rnd()*.15), vy:(latOf(y) >= 0 ? -1 : 1)*(.08 + rnd()*.1), life:140, hit:new Set() });
+  markEvent(x, y, 2); log(`${nearestCityName(x, y)}で台風が発生した`, 'war');
+}
+function updateTyphoons(){
+  for (const t of typhoons){
+    t.x += t.vx; t.y += t.vy; t.life--;
+    if (t.x < 0) t.x += W; if (t.x >= W) t.x -= W;
+    for (const s of S){
+      if (!s.alive || t.hit.has(s.id) || Math.hypot(s.x + .5 - t.x, s.y + .5 - t.y) > 2.6) continue;
+      t.hit.add(s.id); s.pop *= .8; boom(s.x + .5, s.y + .5, 8, FLOOD, .9);
+    }
+    if (isLand(terr[clamp(Math.floor(t.y), 0, H-1)*W + clamp(Math.floor(t.x), 0, W-1)])) t.life -= .6;
+  }
+  typhoons = typhoons.filter(t => t.life > 0 && t.y > 1 && t.y < H - 1);
+}
+function bless(x, y){
+  let hit = 0;
+  for (const s of S){ if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y); if (d < 6){ s.pop *= 1.35; hit++; boom(s.x + .5, s.y + .5, 8, ['#ffe08a','#fff2c8','#b6f0a0'], .8); } }
+  paintTerrain(x, y, 2.6, T.PLAIN, [T.DESERT, T.WASTE, T.TUNDRA]);
+  markEvent(x, y, 1); sfx('chime');
+  log(`恵みの雨が${nearestCityName(x, y)}をうるおした`, 'peace');
+}
+// 国旗
+const FLAG_COLS = ['#ffffff','#f2c94c','#1f2a44','#c0392b','#2e7d4f','#2b5fa8','#151515'];
+function flagOf(n){
+  if (!n.flag) n.flag = { p:Math.floor(hash2(n.id, 1, 9)*7), c2:FLAG_COLS[Math.floor(hash2(n.id, 2, 9)*7)], c3:FLAG_COLS[Math.floor(hash2(n.id, 3, 9)*7)] };
+  return n.flag;
+}
+function flagSVG(n, w = 18, h = 12){
+  const f = flagOf(n), a = n.css, b = f.c2, c = f.c3 === f.c2 ? '#ffffff' : f.c3;
+  const star = 'M15 3.5l1.9 4.6 4.9.4-3.7 3.2 1.1 4.8L15 14l-4.2 2.5 1.1-4.8-3.7-3.2 4.9-.4z';
+  const body = [
+    `<rect width="30" height="20" fill="${a}"/><rect y="6.67" width="30" height="6.66" fill="${b}"/><rect y="13.33" width="30" height="6.67" fill="${c}"/>`,
+    `<rect width="10" height="20" fill="${a}"/><rect x="10" width="10" height="20" fill="${b}"/><rect x="20" width="10" height="20" fill="${c}"/>`,
+    `<rect width="30" height="20" fill="${b}"/><circle cx="15" cy="10" r="6" fill="${a}"/>`,
+    `<rect width="30" height="20" fill="${a}"/><rect x="8" width="4" height="20" fill="${b}"/><rect y="8" width="30" height="4" fill="${b}"/>`,
+    `<rect width="30" height="20" fill="${a}"/><path d="${star}" fill="${b}"/>`,
+    `<rect width="30" height="20" fill="${a}"/><path d="M0 20L30 0v6L9 20z" fill="${b}"/>`,
+    `<rect width="30" height="20" fill="${a}"/><rect width="12" height="20" fill="${b}"/><circle cx="6" cy="10" r="3" fill="${c}"/>`,
+  ][f.p];
+  return `<svg class="flag" width="${w}" height="${h}" viewBox="0 0 30 20" aria-hidden="true">${body}</svg>`;
+}
+// 人口の記録とグラフ
+function recordHistory(){
+  nationStats();
+  for (const n of N){ if (!n.alive) continue; (n.hist = n.hist || []).push(Math.round(n.pop)); if (n.hist.length > 240) n.hist = n.hist.filter((_, i) => i % 2 === 0); }
+}
+function histSVG(n){
+  const h = n.hist || []; if (h.length < 2) return '<p class="hint" style="margin:0 0 10px">人口の記録がたまると、ここにグラフが出ます。</p>';
+  const w = 260, hh = 64, mx = Math.max(...h) || 1, base = hh - 3;
+  const pts = h.map((v, i) => [i / (h.length - 1) * w, base - v / mx * (hh - 10)]);
+  const line = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '), last = pts[pts.length - 1];
+  return `<svg class="chart" viewBox="0 0 ${w} ${hh}" preserveAspectRatio="none" role="img" aria-label="人口の移り変わり"><line x1="0" y1="${base}" x2="${w}" y2="${base}" stroke="#2a3a4d" stroke-width="1" vector-effect="non-scaling-stroke"/><polygon points="0,${base} ${line} ${w},${base}" fill="${n.css}" opacity=".25"/><polyline points="${line}" fill="none" stroke="${n.line}" stroke-width="1.8" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.6" fill="${n.line}"/></svg><div class="chart-cap"><span>人口の移り変わり</span><span>いちばん多いとき ${fmtPop(mx)}</span></div>`;
+}
+// 実績
+const ACH = [
+  ['birth', '人類の誕生', '最初の人類を生み出した'],
+  ['city', '城壁の街', '中世の街が生まれた'],
+  ['ind', '産業革命', '近代をむかえた'],
+  ['future', '未来へ', '未来の時代をむかえた'],
+  ['wonder', '驚異の建設', 'あなたの国が世界の驚異を手に入れた'],
+  ['ally', 'はじめての同盟', 'あなたの国が同盟を結んだ'],
+  ['conq', '征服者', 'あなたの国が10の街を占領した'],
+  ['big', '大国', 'あなたの国の街が100をこえた'],
+  ['nuke', '核の時代', '核ミサイルが使われた'],
+  ['pop', '1億人の地球', '世界の人口が1億人をこえた'],
+  ['god', '神の怒り', '天災を10回起こした'],
+  ['unify', '世界統一', 'あなたの国だけが残った'],
+];
+function unlock(k){
+  if (achDone[k] !== undefined) return;
+  const a = ACH.find(x => x[0] === k); if (!a) return;
+  achDone[k] = Math.floor(year);
+  log(`実績「${a[1]}」を達成した`, 'tech'); sfx('chime');
+  const el = $('achPop'); el.innerHTML = `<small>実績を達成</small><b>${a[1]}</b><span>${a[2]}</span>`;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+function checkAch(){
+  if (started) unlock('birth');
+  if (firstStage[3]) unlock('city');
+  if (eraIdx >= 4) unlock('ind');
+  if (eraIdx >= 6) unlock('future');
+  if (disCount >= 10) unlock('god');
+  if (S.reduce((a, s) => a + (s.alive ? s.pop : 0), 0) >= 1e8) unlock('pop');
+  if (!isMine(myNation)) return;
+  nationStats();
+  if (S.some(s => s.alive && s.nation === myNation && s.wonders && s.wonders.length)) unlock('wonder');
+  if (allyList(myNation).length) unlock('ally');
+  if (myCaptures >= 10) unlock('conq');
+  if (N[myNation].count >= 100) unlock('big');
+  if (!unified && N.length > 1 && aliveNations().length === 1){
+    unified = true; unlock('unify'); sfx('fanfare');
+    log(`${nm(myNation)}が世界を統一した！`, 'era');
+    setTimeout(() => showBanner('世界統一', fmtYear(year), `${nm(myNation)}が地球のすべてをひとつにまとめた`), 1200);
+  }
+}
+// 首都の移転・名前の変更・降伏勧告
+function moveCapital(s){
+  const n = N[s.nation], old = sById.get(n.capital);
+  if (old) old.capital = false;
+  s.capital = true; n.capital = s.id; terrDirty = true; cityDirty = true; linesDirty = true;
+  log(`${nm(n.id)}は首都を${s.name}へ移した`);
+}
+let renaming = null;
+const cleanName = v => v.replace(/[<>&"'`\\]/g, '').trim().slice(0, 10);
+function saveRename(){
+  const el = $('renIn'); if (!el || !renaming) return;
+  const v = cleanName(el.value); if (!v){ toast('名前を入れてください'); return; }
+  const [k, id] = renaming.split(':');
+  if (k === 'n'){ const n = N[+id]; if (n){ const old = nm(n.id); n.base = v; log(`${old}は国の名前を${nm(n.id)}に改めた`); } }
+  else { const c = sById.get(+id); if (c){ log(`${c.name}は${v}と名前を改めた`); c.name = v; } }
+  renaming = null; updateUI(true);
+}
+const renBox = v => `<div class="ren"><label for="renIn">新しい名前（10文字まで）</label><div class="ren-row"><input id="renIn" type="text" maxlength="10" value="${v}" autocomplete="off"><button class="btn peaceb" type="button" data-rensave="1">決定</button><button class="btn" type="button" data-rencancel="1">やめる</button></div></div>`;
+function demandSurrender(id){
+  const them = N[id], me = N[myNation];
+  if ((them.surrCd || 0) > tick){ toast(`まだ返事を考えています（あと${secs(them.surrCd - tick)}秒）`); return; }
+  nationStats();
+  const w = warOf(myNation, id), lost = w ? (w.a === id ? w.capB : w.capA) : 0;
+  const ratio = me.pop / Math.max(1, them.pop) * spec(myNation).atk / spec(id).def;
+  if (rnd() >= clamp((ratio - 1.5)*.25 + lost*.03, 0, .9)){
+    them.surrCd = tick + 300; log(`${nm(id)}は降伏を拒んだ`, 'war'); toast('降伏を拒まれた。もっと攻めて弱らせよう'); return;
+  }
+  const theirs = S.filter(s => s.alive && s.nation === id), mine = S.filter(s => s.alive && s.nation === myNation);
+  if (ratio > 6 || theirs.length <= 3){
+    for (const c of theirs){ c.nation = myNation; c.capital = false; }
+    nationDies(id, `${nm(myNation)}に併合された`);
+  } else {
+    const k = Math.max(1, Math.round(theirs.length * .3));
+    theirs.filter(c => !c.capital).sort((a, b) => nearestOf(mine, a)[1] - nearestOf(mine, b)[1]).slice(0, k).forEach(c => { c.nation = myNation; });
+    if (w){ wars.splice(wars.indexOf(w), 1); truce.set(pairKey(myNation, id), tick + 900); }
+    log(`${nm(id)}が降伏し、${k}の街を明け渡した`, 'peace');
+  }
+  myCaptures += 1; terrDirty = true; cityDirty = true; sfx('fanfare');
+  const c = sById.get(N[myNation].capital); if (c) markEvent(c.x, c.y, 1);
+}
+// 効果音（WebAudioで合成）
+let soundOn = false, actx = null, lastBoomS = 0, noiseB = null;
+function audio(){ if (!actx){ try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } } return actx; }
+function sfx(kind, vol = 1){
+  if (!soundOn || !actx || actx.state !== 'running') return;
+  const t0 = actx.currentTime;
+  if (kind === 'boom' || kind === 'big' || kind === 'rumble'){
+    const now = performance.now(); if (kind === 'boom'){ if (now - lastBoomS < 180) return; lastBoomS = now; }
+    if (!noiseB){ noiseB = actx.createBuffer(1, actx.sampleRate*2.5, actx.sampleRate); const d = noiseB.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random()*2 - 1; }
+    const dur = kind === 'boom' ? .5 : kind === 'big' ? 2.2 : 1.8;
+    const src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+    src.buffer = noiseB; f.type = 'lowpass';
+    f.frequency.setValueAtTime(kind === 'rumble' ? 140 : kind === 'big' ? 700 : 900, t0); f.frequency.exponentialRampToValueAtTime(50, t0 + dur);
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime((kind === 'boom' ? .12 : .45)*vol, t0 + .03); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(actx.destination); src.start(t0); src.stop(t0 + dur);
+    return;
+  }
+  const notes = kind === 'fanfare' ? [523, 659, 784, 1047] : kind === 'chime' ? [880, 1319] : kind === 'siren' ? [620, 880, 620, 880] : [440];
+  const st = kind === 'siren' ? .32 : .13;
+  notes.forEach((fq, i) => {
+    const o = actx.createOscillator(), g = actx.createGain(), t = t0 + i*st;
+    o.type = kind === 'siren' ? 'sawtooth' : 'triangle'; o.frequency.setValueAtTime(fq, t);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime((kind === 'siren' ? .05 : .12)*vol, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + st*1.9);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + st*2);
+  });
 }
 
 // ===== 自分の国 =====
@@ -1027,7 +1319,7 @@ function cmdNuke(t){
   ensureWar(t.nation);
   const [from, d] = nearestOf(mine, t); n.nukeCd = tick + 700;
   missiles.push({ x0:from.x + .5, y0:from.y + .5, x1:t.x + .5, y1:t.y + .5, t:0, dur:25 + d*.4, target:t.id, nation:myNation });
-  log(`${nm(myNation)}が${t.name}へ核ミサイルを発射した！`, 'war');
+  log(`${nm(myNation)}が${t.name}へ核ミサイルを発射した！`, 'war'); sfx('siren');
 }
 const CMD_HINT = { cmdAttack:'攻めたい相手の街をタップしてください。近くの街から軍が出ます。', cmdSettle:'新しい街をつくりたい陸地をタップしてください。', cmdJet:'爆撃したい相手の街をタップしてください。', cmdNuke:'核ミサイルを落とす相手の街をタップしてください。' };
 
@@ -1038,7 +1330,7 @@ function advanceEra(){
   const e = ERAS[eraIdx];
   if (year < e.start) year = e.start;
   log(`${e.name}が始まった。${e.msg}`, 'era');
-  showBanner(e.name, fmtYear(year), e.msg);
+  showBanner(e.name, fmtYear(year), e.msg); sfx('fanfare');
   terrDirty = true;
 }
 
@@ -1061,6 +1353,9 @@ function step(){
   }
   if (terrDirty || tick % 15 === 0) recomputeTerritory();
   if (tick % 10 === 0) considerWars();
+  updateTyphoons();
+  if (tick % 50 === 0) recordHistory();
+  if (tick % 30 === 0) checkAch();
   if (tick % 120 === 0) considerAlliances();
   if (tick % 600 === 0) considerBetrayal();
   if (offer && (offer.until < tick || !N[offer.from].alive || !isMine(myNation))) offer = null;
@@ -1097,7 +1392,7 @@ function boom(fx, fy, n, pal, power = 1){
 }
 
 function impact(x, y){
-  shake = 1;
+  shake = 1; sfx('big'); markEvent(x, y, 3);
   boom(x + .5, y + .5, 120, FIRE, 3);
   const hit = [];
   for (const s of S){
@@ -1108,7 +1403,7 @@ function impact(x, y){
   for (const a of armies) if (Math.hypot(a.x - x - .5, a.y - y - .5) < 3) a.dead = true;
   paintTerrain(x, y, 2.3, T.WASTE);
 }
-function paintTerrain(cx, cy, r, type){
+function paintTerrain(cx, cy, r, type, only){
   let changed = false;
   const R = Math.ceil(r);
   for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++){
@@ -1118,7 +1413,7 @@ function paintTerrain(cx, cy, r, type){
     let nt = t;
     if (type === 'land'){ if (!isLand(t)) nt = T.PLAIN; }
     else if (type === 'sea'){ if (isLand(t)) nt = T.SHALLOW; }
-    else if (isLand(t)) nt = type;
+    else if (isLand(t) && (!only || only.includes(t))) nt = type;
     if (nt !== t){ terr[i] = nt; changed = true;
       if (!isLand(nt)){ const s = S.find(o => o.alive && o.x === x && o.y === y); if (s){ log(`${s.name}は海に沈んだ`, 'war'); killSettlement(s, '海に沈んで滅んだ'); } }
     }
@@ -1143,7 +1438,7 @@ function fmtPop(p){
 function fmtArea(t){ const a = t * KM2_PER_TILE; return a >= 1e4 ? `約${Math.round(a / 1e4).toLocaleString('ja-JP')}万km²` : `約${a.toLocaleString('ja-JP')}km²`; }
 const logEl = document.getElementById('log');
 function log(text, kind = ''){
-  logs.unshift({ y:Math.floor(year), t:text, k:kind }); if (logs.length > 60) logs.length = 60;
+  logs.unshift({ y:Math.floor(year), t:text, k:kind }); if (logs.length > 300) logs.length = 300;
   renderLog();
 }
 function renderLog(){
@@ -1203,8 +1498,11 @@ const cv = $('cv'), ov = $('ov'), octx = ov.getContext('2d');
 const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
 renderer.setClearColor(0x03070e);
 const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(FOV, 1, .5, 4000);
-scene.add(new THREE.AmbientLight(0xffffff, .5));
+const amb = new THREE.AmbientLight(0xffffff, .5); scene.add(amb);
 const sun = new THREE.DirectionalLight(0xfff1dc, .9); scene.add(sun); scene.add(sun.target);
+// 昼と夜：太陽は地球のまわりをゆっくり回る
+let dayNight = true, sunAng = -.9;
+const sunDir = new THREE.Vector3(1, .2, 0).normalize();
 
 // 地球の表面の絵（正距円筒図法）
 const GW = 2048, GH = 1024, GY0 = (90 - LAT0) / 180 * GH, GY1 = (90 - LAT1) / 180 * GH;
@@ -1424,6 +1722,7 @@ function rebuildCities(){
     if (s.capital) capitals.push([b, pc.top]);
   }
   for (const k in CITY) flush(CITY[k]);
+  updateCityLights();
   cityDirty = false;
 }
 function part(pool, base, k, x, y, z, w, h, d, c){
@@ -1686,6 +1985,81 @@ function updateNukes(dt){
   }
   nukeFx = nukeFx.filter(f => !f.done);
 }
+// 夜の街明かり
+const LMAX = 600, lGeo = new THREE.BufferGeometry(), lPos = new Float32Array(LMAX*3), lSize = new Float32Array(LMAX);
+lGeo.setAttribute('position', new THREE.BufferAttribute(lPos, 3).setUsage(THREE.DynamicDrawUsage));
+lGeo.setAttribute('size', new THREE.BufferAttribute(lSize, 1).setUsage(THREE.DynamicDrawUsage));
+const lightsMat = new THREE.ShaderMaterial({
+  uniforms:{ scale:{ value:500 }, sunDir:{ value:sunDir }, on:{ value:1 }, col:{ value:new THREE.Color(0xff9a40) } },
+  transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  vertexShader:'attribute float size; uniform vec3 sunDir; uniform float scale; uniform float on; varying float vA; void main(){ vA = on * smoothstep(0.12, -0.2, dot(normalize(position), sunDir)); vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = size * scale / -mv.z; gl_Position = projectionMatrix * mv; }',
+  fragmentShader:'uniform vec3 col; varying float vA; void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5 || vA < 0.01) discard; gl_FragColor = vec4(col * vA * (1.0 - d*1.9), 1.0); }'
+});
+const cityLights = new THREE.Points(lGeo, lightsMat); cityLights.frustumCulled = false; scene.add(cityLights);
+function updateCityLights(){
+  let n = 0;
+  for (const s of S){
+    if (!s.alive || n >= LMAX) continue;
+    surfPos(s.x + .5, s.y + .5, .5, _pa); lPos[n*3] = _pa.x; lPos[n*3+1] = _pa.y; lPos[n*3+2] = _pa.z;
+    lSize[n] = U*(.6 + s.stage*.45)*(eraIdx >= 4 ? 1.4 : 1); n++;
+  }
+  lGeo.setDrawRange(0, n); lGeo.attributes.position.needsUpdate = true; lGeo.attributes.size.needsUpdate = true;
+  lightsMat.uniforms.col.value.set(eraIdx >= 6 ? 0x9fe8ff : eraIdx >= 4 ? 0xffd88a : 0xff9a40);
+}
+// オーロラ
+const aurMat = new THREE.ShaderMaterial({
+  uniforms:{ time:{ value:0 }, sunDir:{ value:sunDir }, on:{ value:1 } }, transparent:true, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending,
+  vertexShader:'varying vec2 vUv; varying vec3 vP; void main(){ vUv = uv; vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader:'uniform float time; uniform vec3 sunDir; uniform float on; varying vec2 vUv; varying vec3 vP; void main(){ float night = smoothstep(0.05, -0.3, dot(vP, sunDir)); float wave = 0.55 + 0.45 * sin(vUv.x*55.0 + time*0.9) * sin(vUv.x*21.0 - time*0.4); float fade = smoothstep(0.0, 0.3, vUv.y) * (1.0 - vUv.y); vec3 c = mix(vec3(0.2, 1.0, 0.55), vec3(0.75, 0.35, 1.0), vUv.y); gl_FragColor = vec4(c * night * wave * fade * on * 0.85, 1.0); }'
+});
+for (const sg of [1, -1]){
+  const lat = 67*D2R, r = (R + 2)*Math.cos(lat), y = (R + 2)*Math.sin(lat)*sg;
+  scene.add(new THREE.Mesh(new THREE.CylinderGeometry(sg > 0 ? r*.95 : r, sg > 0 ? r : r*.95, 7, 128, 1, true).translate(0, y + 3.5*sg, 0), aurMat));
+}
+// 台風と火山の演出
+const tyTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  const grd = g.createRadialGradient(128, 128, 8, 128, 128, 126); grd.addColorStop(0, 'rgba(255,255,255,0)'); grd.addColorStop(.12, 'rgba(255,255,255,.95)'); grd.addColorStop(.6, 'rgba(240,244,248,.6)'); grd.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = grd; g.beginPath(); g.arc(128, 128, 126, 0, TAU); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineCap = 'round';
+  for (let k = 0; k < 4; k++){ g.lineWidth = 10 - k; g.beginPath(); for (let a = 0; a < 7; a += .1){ const r = 14 + a*16, ang = a + k*TAU/4; g.lineTo(128 + Math.cos(ang)*r, 128 + Math.sin(ang)*r); } g.stroke(); }
+  g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.arc(128, 128, 9, 0, TAU); g.fill();
+  return new THREE.CanvasTexture(c);
+})();
+const tyMat = new THREE.MeshBasicMaterial({ map:tyTex, transparent:true, depthWrite:false }), tyGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI/2);
+const tyMeshes = new Map();
+function updateDisasterFx(dt, time){
+  for (const t of typhoons){
+    let m = tyMeshes.get(t);
+    if (!m){ m = new THREE.Mesh(tyGeo, tyMat); m.matrixAutoUpdate = false; m.frustumCulled = false; scene.add(m); tyMeshes.set(t, m); }
+    frameAt(t.x, t.y, 3.4, -time*2.4, m.matrix); m.matrix.scale(_sc.setScalar(U*5.4*clamp(t.life / 30, .35, 1)));
+  }
+  for (const [t, m] of tyMeshes) if (!typhoons.includes(t)){ scene.remove(m); tyMeshes.delete(t); }
+  for (const v of volcanoes){
+    v.t += dt; if (v.t > 6) continue;
+    const c = surfPos(v.x, v.y, U*.9), n = c.clone().normalize();
+    for (let k = 0; k < 2; k++) addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*1.1).addScaledVector(n, U*(1.6 + rnd()*1.5)), n, U*3, 1 + rnd()*.6, U*(.14 + rnd()*.14), hexRGB(pick(['#ff5a1f','#ffb347','#ff2d10','#ffd27a'])), false);
+    if (rnd() < .4) addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.4).addScaledVector(n, U*.9), n, -U*.05, 3.5, U*.35, [.32, .3, .3], true);
+  }
+  volcanoes = volcanoes.filter(v => v.t < 7);
+}
+// 流れ星（画面の上に描く）
+let shooters = [];
+function updateShooters(dt){
+  if (camS.alt > 110 && rnd() < .012){
+    const x = rnd()*vw, y = rnd()*vh*.6;
+    if (Math.hypot(x - vw/2, y - vh/2) > Math.min(vw, vh)*.42) shooters.push({ x, y, vx:-(260 + rnd()*260), vy:120 + rnd()*140, t:0 });
+  }
+  for (const sh of shooters){ sh.t += dt; sh.x += sh.vx*dt; sh.y += sh.vy*dt; }
+  shooters = shooters.filter(sh => sh.t < .9);
+}
+function clearTransient(){
+  for (const m of meteors) scene.remove(m.mesh);
+  for (const f of nukeFx) scene.remove(f.g);
+  for (const [, m] of tyMeshes) scene.remove(m);
+  tyMeshes.clear();
+  armies = []; traders = []; jets = []; missiles = []; sparks = []; planes = []; rockets = []; meteors = []; nukeFx = []; typhoons = []; volcanoes = []; shooters = [];
+}
 // 隕石
 const meteorGeo = new THREE.SphereGeometry(1, 16, 12), meteorMat = new THREE.MeshBasicMaterial({ color:0xfff0c8 });
 function launchMeteor(x, y){
@@ -1728,7 +2102,8 @@ function updateCamera(dt){
   camera.updateMatrixWorld();
   const d = camera.position.length();
   _side.setFromMatrixColumn(camera.matrixWorld, 0); _up.setFromMatrixColumn(camera.matrixWorld, 1);
-  sun.position.copy(camera.position).addScaledVector(_side, -.45*d).addScaledVector(_up, .7*d);
+  if (dayNight) sun.position.copy(sunDir).multiplyScalar(800);
+  else sun.position.copy(camera.position).addScaledVector(_side, -.45*d).addScaledVector(_up, .7*d);
 }
 function rotateBy(dx, dy){
   const deg = 2*camS.alt*Math.tan(FOV*D2R/2) / vh / R / D2R;
@@ -1744,6 +2119,7 @@ function resize(){
   camera.aspect = vw / vh; camera.updateProjectionMatrix();
   ov.width = Math.round(vw*dpr); ov.height = Math.round(vh*dpr);
   pMat.uniforms.scale.value = vh*dpr / (2*Math.tan(FOV*D2R/2));
+  lightsMat.uniforms.scale.value = pMat.uniforms.scale.value;
 }
 const _pr = new THREE.Vector3(), _ndc = new THREE.Vector2(), ray = new THREE.Raycaster(), _sph = new THREE.Sphere(new THREE.Vector3(), R + .35), _hit = new THREE.Vector3();
 function project(v){ _pr.copy(v).project(camera); if (_pr.z > 1 || _pr.z < -1) return null; return [(_pr.x + 1)/2*vw, (1 - _pr.y)/2*vh]; }
@@ -1770,6 +2146,11 @@ function strokeRing(pts, color, dash){
 }
 function drawOverlay(){
   octx.setTransform(dpr, 0, 0, dpr, 0, 0); octx.clearRect(0, 0, vw, vh);
+  for (const sh of shooters){
+    const g = octx.createLinearGradient(sh.x, sh.y, sh.x - sh.vx*.12, sh.y - sh.vy*.12), a = 1 - sh.t / .9;
+    g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+    octx.strokeStyle = g; octx.lineWidth = 1.6; octx.beginPath(); octx.moveTo(sh.x, sh.y); octx.lineTo(sh.x - sh.vx*.12, sh.y - sh.vy*.12); octx.stroke();
+  }
   octx.textAlign = 'center'; octx.textBaseline = 'middle'; octx.lineJoin = 'round';
   for (const n of N){
     if (!n.alive || n.tiles < 6) continue;
@@ -1799,14 +2180,14 @@ function drawOverlay(){
   }
   if (sel && sel.type === 'city'){ const s = sById.get(sel.id); if (s) strokeRing(ringPts(s.x + .5, s.y + .5, SZ[s.stage] + .35, .15), '#ffd36b', false); }
   if (hover && tool !== 'look' && !pinch){
-    const r = TERRAIN_TOOLS[tool] !== undefined ? BRUSH : tool === 'meteor' ? 3.2 : tool.startsWith('cmd') ? 1 : .7;
-    const col = tool === 'meteor' || tool === 'cmdAttack' || tool === 'cmdJet' || tool === 'cmdNuke' ? 'rgba(255,120,90,.95)' : tool === 'cmdSettle' ? 'rgba(130,220,160,.95)' : 'rgba(255,240,200,.9)';
+    const r = TERRAIN_TOOLS[tool] !== undefined ? BRUSH : tool === 'meteor' ? DIS_R[disaster] : tool.startsWith('cmd') ? 1 : .7;
+    const col = tool === 'meteor' && disaster === 'bless' ? 'rgba(160,230,140,.95)' : tool === 'meteor' || tool === 'cmdAttack' || tool === 'cmdJet' || tool === 'cmdNuke' ? 'rgba(255,120,90,.95)' : tool === 'cmdSettle' ? 'rgba(130,220,160,.95)' : 'rgba(255,240,200,.9)';
     strokeRing(ringPts(Math.floor(hover[0]) + .5, Math.floor(hover[1]) + .5, r, .15), col, true);
   }
 }
 
 // ===== ループ =====
-let lastT = performance.now(), acc = 0, frameNo = 0, uiT = 0, lastCompose = -1e9, lastElev = -1e9;
+let lastFocusT = 0, lastT = performance.now(), acc = 0, frameNo = 0, uiT = 0, lastCompose = -1e9, lastElev = -1e9;
 let globeDirty = true, linesDirty = true, cityDirty = true, elevDirty = true;
 function frame(now){
   const dt = Math.min(.1, (now - lastT) / 1000), time = now / 1000; lastT = now; frameNo++;
@@ -1822,6 +2203,12 @@ function frame(now){
   orbitRing.visible = eraIdx >= 6;
   updateSky(dt);
   updateNukes(dt);
+  if (dayNight && speed > 0) sunAng += dt * .05 * Math.min(speed, 3);
+  sunDir.set(Math.cos(sunAng), .22, Math.sin(sunAng)).normalize();
+  amb.intensity = dayNight ? .24 : .5; sun.intensity = dayNight ? 1.05 : .9;
+  lightsMat.uniforms.on.value = aurMat.uniforms.on.value = dayNight ? 1 : 0; aurMat.uniforms.time.value = time;
+  updateDisasterFx(dt, time); updateShooters(dt);
+  if (liveCam && lastEvt && !lastEvt.shown && now - lastFocusT > 3500){ focusOn(lastEvt.x, lastEvt.y, 55); lastEvt.shown = true; lastFocusT = now; }
   if (speed > 0){
     for (const p of planes) p.t += dt * Math.min(speed, 3);
     planes = planes.filter(p => p.t < p.dur);
@@ -1856,7 +2243,7 @@ document.querySelectorAll('[data-newspec]').forEach(b => b.addEventListener('cli
   document.querySelectorAll('[data-newspec]').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
 }));
 function setTool(t){
-  tool = t; $('specPick').hidden = t !== 'nation';
+  tool = t; $('specPick').hidden = t !== 'nation'; $('disPick').hidden = t !== 'meteor';
   document.querySelectorAll('[data-cmd]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cmd === t ? 'true' : 'false'));
   $('cmdHint').textContent = CMD_HINT[t] || 'ボタンを選んでから地球をタップすると命令できます。'; document.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
   cv.classList.toggle('look', t === 'look');
@@ -1864,6 +2251,87 @@ function setTool(t){
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
 function setSpeed(v){ speed = v; document.querySelectorAll('[data-speed]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.speed === v ? 'true' : 'false')); }
 document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.speed)));
+// 上のボタン（夜景・実況・音・メニュー）
+function syncOpts(){
+  $('nightBtn').setAttribute('aria-pressed', dayNight ? 'true' : 'false');
+  $('liveBtn').setAttribute('aria-pressed', liveCam ? 'true' : 'false');
+  $('soundBtn').setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+}
+$('nightBtn').addEventListener('click', () => { dayNight = !dayNight; syncOpts(); toast(dayNight ? '昼と夜がめぐります' : 'いつも昼の明るさで表示します'); });
+$('liveBtn').addEventListener('click', () => { liveCam = !liveCam; syncOpts(); toast(liveCam ? '大きな出来事が起きると、カメラが自動で向かいます' : '実況カメラを止めました'); });
+$('soundBtn').addEventListener('click', () => {
+  soundOn = !soundOn;
+  if (soundOn){ const a = audio(); if (!a){ soundOn = false; toast('このブラウザでは音が出せません'); } else a.resume().then(() => sfx('chime')).catch(() => {}); }
+  syncOpts();
+});
+$('menuBtn').addEventListener('click', () => openMenu());
+document.querySelectorAll('[data-dis]').forEach(b => b.addEventListener('click', () => {
+  disaster = b.dataset.dis;
+  document.querySelectorAll('[data-dis]').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
+}));
+// HUDの高さに合わせて右のパネルを置く
+const hudEl = document.querySelector('.hud');
+function setHud(){ document.documentElement.style.setProperty('--hud-h', Math.round(hudEl.getBoundingClientRect().bottom) + 'px'); }
+try { new ResizeObserver(setHud).observe(hudEl); } catch (e) { window.addEventListener('resize', setHud); }
+setHud();
+// メニュー（遊び方・年表・実績・保存）
+let menuTab = 'help', logFilter = 'all', resetArm = false;
+const SAVE_KEY = 'chikyu-bunmeiki-save';
+const HELP_HTML = `
+<h3>基本の操作</h3>
+<ol><li>ドラッグで地球を回します。</li><li>ホイールかピンチで近づいたり離れたりします。近づくと視点が傾いて街並みが見えます。</li><li>「見る」を選んで国や街をタップすると、右のパネルに詳しく出ます。</li></ol>
+<h3>神さまの道具</h3>
+<ol><li>人類：テントを建てて人類を生み出します。</li><li>建国：新しい国をつくります。特化（貿易・防衛・戦争）を選べます。</li><li>陸地・海・森・山：ドラッグして地形を描きかえます。</li><li>天災：隕石・地震・火山・疫病・台風・恵みの雨から選んで起こします。</li></ol>
+<h3>自分の国</h3>
+<ol><li>最初に生み出した国があなたの国です。ほかの国は「この国をあやつる」で選べます。</li><li>画面下の命令バーで、攻める・開拓・総攻撃・守りを固める・戦闘機・核が使えます。</li><li>戦争中の相手には「降伏を迫る」、ほかの国には「同盟を申し込む」ができます。</li><li>自分の国と街は、名前を変えたり、首都を移したりできます。</li></ol>
+<h3>画面の上のボタン</h3>
+<ol><li>夜景：太陽が回り、夜の側に街明かりとオーロラが見えます。</li><li>実況：戦争や天災など大きな出来事が起きると、カメラが自動で向かいます。</li><li>音：爆発や時代の変わり目に効果音が鳴ります。</li></ol>
+<h3>キーボード</h3>
+<ul><li><kbd>Space</kbd> 停止と再開</li><li><kbd>1</kbd>〜<kbd>4</kbd> 1倍・3倍・10倍・30倍</li><li><kbd>+</kbd> <kbd>-</kbd> 近づく・離れる、矢印キーで回す</li><li><kbd>N</kbd> 夜景、<kbd>C</kbd> 実況、<kbd>H</kbd> このメニュー、<kbd>Esc</kbd> 閉じる</li></ul>`;
+function readSave(){ try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
+function saveWorld(){
+  try { const d = serialize(); d.savedAt = Date.now(); localStorage.setItem(SAVE_KEY, JSON.stringify(d)); toast('世界を保存した'); }
+  catch (e) { toast('保存できませんでした。ブラウザの設定で保存が止められているかもしれません'); }
+  renderMenu();
+}
+function loadWorld(){
+  const d = readSave(); if (!d){ toast('保存した世界がありません'); return; }
+  clearTransient(); restore(d);
+  paintAll(); computeElev(); partCache.clear(); baseCache.clear();
+  elevDirty = globeDirty = linesDirty = cityDirty = true;
+  recomputeTerritory(); renderLog(); closeMenu(); sel = null; updateUI(true); toast('保存した世界を読み込んだ');
+}
+function openMenu(tab){ if (tab) menuTab = tab; resetArm = false; $('menu').hidden = false; renderMenu(); }
+function closeMenu(){ $('menu').hidden = true; }
+function renderMenu(){
+  document.querySelectorAll('[data-mtab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mtab === menuTab ? 'true' : 'false'));
+  const body = $('mbody');
+  if (menuTab === 'help') body.innerHTML = HELP_HTML;
+  else if (menuTab === 'log'){
+    const F = [['all', 'すべて'], ['war', '戦争・災害'], ['peace', '平和'], ['tech', '発明・実績'], ['era', '時代']];
+    const list = logs.filter(l => logFilter === 'all' || l.k === logFilter);
+    body.innerHTML = `<div class="chips">${F.map(([k, t]) => `<button class="btn" type="button" data-lf="${k}" aria-pressed="${logFilter === k}">${t}</button>`).join('')}</div>
+      <ol class="chron">${list.map(l => `<li class="k-${l.k}"><span class="y">${fmtYear(l.y)}</span><span>${l.t}</span></li>`).join('') || '<li>まだ出来事はありません</li>'}</ol>`;
+  } else if (menuTab === 'ach'){
+    const n = ACH.filter(a => achDone[a[0]] !== undefined).length;
+    body.innerHTML = `<p class="hint" style="margin:0 0 10px">${ACH.length}個のうち${n}個を達成しました。</p><div class="achs">${ACH.map(a => { const d = achDone[a[0]]; return `<div class="ach${d !== undefined ? ' on' : ''}"><b>${a[1]}</b><span>${a[2]}</span><small>${d !== undefined ? fmtYear(d) + 'に達成' : 'まだ'}</small></div>`; }).join('')}</div>`;
+  } else {
+    const d = readSave();
+    body.innerHTML = `<p class="hint" style="margin:0">今の世界を、この端末のブラウザに1つだけ保存できます。ほかの人や別の端末には届きません。</p>
+      <div class="acts"><button class="btn peaceb" type="button" data-save="1">今の世界を保存する</button><button class="btn" type="button" data-load="1"${d ? '' : ' disabled'}>${d ? `読み込む（${fmtYear(d.year)}の世界・${new Date(d.savedAt).toLocaleString('ja-JP')}に保存）` : '保存した世界はまだありません'}</button></div>
+      <div class="acts"><button class="btn warb" type="button" data-reset="1">${resetArm ? 'もう一度押すと、今の世界は消えて最初からになります' : '新しい世界をはじめる'}</button></div>`;
+  }
+}
+$('menu').addEventListener('click', e => {
+  if (e.target === $('menu')){ closeMenu(); return; }
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'menuClose') closeMenu();
+  else if (b.dataset.mtab){ menuTab = b.dataset.mtab; resetArm = false; renderMenu(); }
+  else if (b.dataset.lf){ logFilter = b.dataset.lf; renderMenu(); }
+  else if (b.dataset.save) saveWorld();
+  else if (b.dataset.load) loadWorld();
+  else if (b.dataset.reset){ if (resetArm) location.reload(); else { resetArm = true; renderMenu(); } }
+});
 $('nextEra').addEventListener('click', () => {
   if (!started){ toast('まず「人類」で地球に人を生み出してください'); return; }
   if (eraIdx >= ERAS.length - 1){ toast('これより先の時代はありません'); return; }
@@ -1929,7 +2397,7 @@ function applyTool(sx, sy){
     if (!started && !habitable(terr[y*W+x])){ toast('陸地をタップしてください'); return; }
     spawnHumans(x, y, true);
   }
-  else if (tool === 'meteor') launchMeteor(x, y);
+  else if (tool === 'meteor') doDisaster(x, y);
   else if (TERRAIN_TOOLS[tool] !== undefined) paintTerrain(x, y, BRUSH, TERRAIN_TOOLS[tool]);
   else if (tool.startsWith('cmd')) runCmd(sx, sy, x, y);
   else if (tool === 'look') selectAt(sx, sy);
@@ -1988,8 +2456,14 @@ cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hover 
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * .0015)); }, { passive:false });
 window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT'){ if (e.key === 'Enter' && e.target.id === 'renIn') saveRename(); return; }
+  if (e.key === 'Escape'){ closeMenu(); return; }
   if (e.target.closest && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
   if (e.key === ' '){ e.preventDefault(); setSpeed(speed ? 0 : 1); }
+  else if (['1', '2', '3', '4'].includes(e.key)) setSpeed([1, 3, 10, 30][+e.key - 1]);
+  else if (e.key === 'n' || e.key === 'N') $('nightBtn').click();
+  else if (e.key === 'c' || e.key === 'C') $('liveBtn').click();
+  else if (e.key === 'h' || e.key === 'H') ($('menu').hidden ? openMenu('help') : closeMenu());
   else if (e.key === '+' || e.key === '=') zoomBy(.8);
   else if (e.key === '-') zoomBy(1.25);
   else if (e.key === 'ArrowLeft') rotateBy(60, 0);
@@ -2010,7 +2484,7 @@ function updateCmdBar(){
   if (bar.hidden === on){ bar.hidden = !on; document.body.classList.toggle('has-cmd', on); }
   if (!on){ if (tool.startsWith('cmd')) setTool('look'); return; }
   const n = N[myNation];
-  $('myColor').style.background = n.css; $('myName').textContent = '★ ' + nm(myNation);
+  if ($('myFlag').dataset.k !== String(myNation)){ $('myFlag').innerHTML = flagSVG(n, 22, 15); $('myFlag').dataset.k = String(myNation); } $('myName').textContent = '★ ' + nm(myNation);
   const wc = warCount(myNation);
   $('myStat').textContent = `${fmtPop(n.pop)}・${n.count}の街${wc ? `・${wc}か国と交戦中` : ''}`;
   const jetOk = n.spec === 'war' && eraIdx >= 4, nukeOk = n.spec === 'war' && eraIdx >= 5;
@@ -2049,7 +2523,7 @@ function updateUI(force){
   const key = myNation + ':' + [...alliances].join('.') + ':' + top.map(n => n.id + n.spec + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx;
   if (key !== natKey || force){
     natKey = key;
-    natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}"><span class="sw" style="background:${n.css}"></span><span class="nm">${nm(n.id)}${n.id === myNation ? '<i class="me">あなた</i>' : ''}${allied(n.id, myNation) ? '<i class="al">同盟</i>' : ''}<i class="spb" style="color:${spec(n.id).color}">${spec(n.id).short}</i>${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
+    natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}">${flagSVG(n, 18, 12)}<span class="nm">${nm(n.id)}${n.id === myNation ? '<i class="me">あなた</i>' : ''}${allied(n.id, myNation) ? '<i class="al">同盟</i>' : ''}<i class="spb" style="color:${spec(n.id).color}">${spec(n.id).short}</i>${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
       + (list.length > 10 ? `<div class="more">ほか${list.length - 10}か国</div>` : '')
       : '<p class="hint">まだ国はありません。「人類」か「建国」で地球をタップしよう。</p>';
   }
@@ -2061,9 +2535,9 @@ function updateUI(force){
     const s = sById.get(sel.id);
     if (!s || !s.alive) sel = null;
     else {
-      k2 = `c${s.id}|${s.nation}|${s.capital}|${s.stage}|${eraIdx}|${(s.wonders || []).length}`;
-      if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${N[s.nation].css}"></span><b>${s.name}</b>${s.capital ? '<span class="tag">首都</span>' : ''}</div>
-        <dl><dt>すがた</dt><dd>${STAGE_NAME[s.stage]}</dd><dt>人口</dt><dd data-f="cpop"></dd><dt>国</dt><dd><button class="linkish" type="button" data-nation="${s.nation}">${nm(s.nation)}</button></dd><dt>地形</dt><dd>${TNAME[terr[s.y*W + s.x]]}</dd><dt>創設</dt><dd>${fmtYear(s.born)}</dd>${s.wonders && s.wonders.length ? `<dt>驚異</dt><dd>${wonderNames(s)}</dd>` : ''}</dl>`;
+      k2 = `c${s.id}|${s.nation}|${s.capital}|${s.stage}|${eraIdx}|${(s.wonders || []).length}|${myNation}|${renaming}|${s.name}`;
+      if (k2 !== infoKey || force) html = `<div class="ihead">${flagSVG(N[s.nation], 26, 17)}<b>${s.name}</b>${s.capital ? '<span class="tag">首都</span>' : ''}</div>
+        <dl><dt>すがた</dt><dd>${STAGE_NAME[s.stage]}</dd><dt>人口</dt><dd data-f="cpop"></dd><dt>国</dt><dd><button class="linkish" type="button" data-nation="${s.nation}">${nm(s.nation)}</button></dd><dt>地形</dt><dd>${TNAME[terr[s.y*W + s.x]]}</dd><dt>創設</dt><dd>${fmtYear(s.born)}</dd>${s.wonders && s.wonders.length ? `<dt>驚異</dt><dd>${wonderNames(s)}</dd>` : ''}</dl>${isMine(myNation) && s.nation === myNation ? (renaming === 'c:' + s.id ? renBox(s.name) : `<div class="acts">${s.capital ? '' : `<button class="btn" type="button" data-cap="${s.id}">ここを首都にする</button>`}<button class="btn" type="button" data-ren="c:${s.id}">名前を変える</button></div>`) : ''}`;
     }
   }
   if (sel && sel.type === 'nation'){
@@ -2073,12 +2547,13 @@ function updateUI(force){
       const ws = wars.filter(w => w.a === n.id || w.b === n.id), cap = sById.get(n.capital);
       const others = aliveNations().filter(o => o.id !== n.id && !warOf(n.id, o.id) && !allied(n.id, o.id));
       const allies = allyList(n.id), meOk = isMine(myNation) && n.id !== myNation;
-      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}|${myNation}|${allies.join('.')}|${meOk && allied(n.id, myNation)}`;
-      if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${n.css}"></span><b>${nm(n.id)}</b>${n.id === myNation ? '<span class="tag me">あなたの国</span>' : ''}${meOk && allied(n.id, myNation) ? '<span class="tag al">同盟国</span>' : ''}${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
+      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}|${myNation}|${allies.join('.')}|${meOk && allied(n.id, myNation)}|${renaming || (n.hist || []).length}|${n.base}`;
+      if (k2 !== infoKey || force) html = `<div class="ihead">${flagSVG(n, 26, 17)}<b>${nm(n.id)}</b>${n.id === myNation ? '<span class="tag me">あなたの国</span>' : ''}${meOk && allied(n.id, myNation) ? '<span class="tag al">同盟国</span>' : ''}${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
         <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd><dt>特化</dt><dd><b style="color:${spec(n.id).color}">${spec(n.id).name}</b><br><small class="sdesc">${spec(n.id).desc}</small></dd><dt>同盟国</dt><dd>${allies.length ? allies.map(a => `<button class="linkish" type="button" data-nation="${a}">${nm(a)}</button>`).join('、') : 'なし'}</dd></dl>
+        ${histSVG(n)}${renaming === 'n:' + n.id ? renBox(n.base) : ''}
         <div class="acts specs" role="group" aria-label="国の特化">${SPEC_KEYS.map(k => `<button class="btn" type="button" data-spec="${n.id}-${k}" aria-pressed="${n.spec === k}">${SPECS[k].short}</button>`).join('')}</div>
         ${ws.length ? `<div class="picks" style="margin:0 0 10px;padding-top:0;border-top:0"><p>戦争の相手</p>${ws.map(w => { const o = w.a === n.id ? w.b : w.a; return `<div class="row" style="cursor:default"><span class="sw" style="background:${N[o].css}"></span><span class="nm">${nm(o)}</span><button class="btn peaceb" type="button" data-peace="${w.a}-${w.b}">講和</button></div>`; }).join('')}</div>` : ''}
-        <div class="acts"><button class="btn" type="button" data-goto="${n.id}">首都を見る</button>${n.id === myNation ? '' : `<button class="btn next" type="button" data-mine="${n.id}">この国をあやつる</button>`}${meOk ? (allied(n.id, myNation) ? `<button class="btn warb" type="button" data-unally="${n.id}">同盟を解消する</button>` : warOf(n.id, myNation) ? '' : `<button class="btn peaceb" type="button" data-ally="${n.id}">同盟を申し込む</button>`) : ''}${others.length ? `<button class="btn warb" type="button" data-warpick="1">宣戦布告…</button>` : ''}</div>
+        <div class="acts"><button class="btn" type="button" data-goto="${n.id}">首都を見る</button>${n.id === myNation && renaming !== 'n:' + n.id ? `<button class="btn" type="button" data-ren="n:${n.id}">国の名前を変える</button>` : ''}${meOk && warOf(n.id, myNation) ? `<button class="btn warb" type="button" data-surr="${n.id}">降伏を迫る</button>` : ''}${n.id === myNation ? '' : `<button class="btn next" type="button" data-mine="${n.id}">この国をあやつる</button>`}${meOk ? (allied(n.id, myNation) ? `<button class="btn warb" type="button" data-unally="${n.id}">同盟を解消する</button>` : warOf(n.id, myNation) ? '' : `<button class="btn peaceb" type="button" data-ally="${n.id}">同盟を申し込む</button>`) : ''}${others.length ? `<button class="btn warb" type="button" data-warpick="1">宣戦布告…</button>` : ''}</div>
         ${warPick && others.length ? `<div class="picks"><p>どの国に宣戦布告しますか？</p>${others.map(o => `<button class="row" type="button" data-war="${n.id}-${o.id}"><span class="sw" style="background:${o.css}"></span><span class="nm">${nm(o.id)}</span><span class="pp">${fmtPop(o.pop)}</span></button>`).join('')}</div>` : ''}`;
     }
   }
@@ -2099,6 +2574,11 @@ document.getElementById('side').addEventListener('click', e => {
   else if (b.dataset.city){ const s = sById.get(+b.dataset.city); if (s){ sel = { type:'city', id:s.id }; focusOn(s.x, s.y); } updateUI(true); }
   else if (b.dataset.goto){ const c = sById.get(N[+b.dataset.goto].capital); if (c) focusOn(c.x, c.y); }
   else if (b.dataset.warpick){ warPick = !warPick; updateUI(true); }
+  else if (b.dataset.cap){ const c = sById.get(+b.dataset.cap); if (c && c.nation === myNation) moveCapital(c); updateUI(true); }
+  else if (b.dataset.ren){ renaming = b.dataset.ren; updateUI(true); const el = $('renIn'); if (el){ el.focus(); el.select(); } }
+  else if (b.dataset.rensave){ saveRename(); }
+  else if (b.dataset.rencancel){ renaming = null; updateUI(true); }
+  else if (b.dataset.surr){ if (isMine(myNation)) demandSurrender(+b.dataset.surr); updateUI(true); }
   else if (b.dataset.ally){ proposeAlliance(+b.dataset.ally); updateUI(true); }
   else if (b.dataset.unally){ breakAlliance(myNation, +b.dataset.unally, myNation); updateUI(true); }
   else if (b.dataset.war){ const [a, c] = b.dataset.war.split('-').map(Number); declareWar(a, c); warPick = false; updateUI(true); }
@@ -2109,7 +2589,7 @@ document.getElementById('side').addEventListener('click', e => {
 function focusOn(x, y, alt = 40){ const [la, lo] = llOfTile(x + .5, y + .5); camG.lat = clamp(la - Math.min(6, alt*.05), -70, 78); camG.lon = lo; camG.alt = Math.min(camG.alt, alt); }
 // ===== 保存と復元（ページ更新時に世界を引き継ぐ） =====
 function serialize(){
-  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, myNation, autoArmy, fortifyUntil, fortifyCd, alliances:[...alliances], camS:{ ...camS }, camG:{ ...camG } };
+  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, myNation, autoArmy, fortifyUntil, fortifyCd, alliances:[...alliances], achDone, myCaptures, disCount, unified, camS:{ ...camS }, camG:{ ...camG } };
 }
 function restore(d){
   if (!d || d.v !== 2 || !d.terr || d.terr.length !== W*H) return;
@@ -2120,6 +2600,7 @@ function restore(d){
   logs = d.logs || []; firstStage = d.firstStage || firstStage; started = d.started;
   nextInv = d.nextInv || 0; wonderBuilt = d.wonderBuilt || []; firstLaunch = !!d.firstLaunch;
   alliances = new Set(d.alliances || []);
+  achDone = d.achDone || {}; myCaptures = d.myCaptures || 0; disCount = d.disCount || 0; unified = !!d.unified;
   myNation = d.myNation ?? -1; autoArmy = d.autoArmy ?? true; fortifyUntil = d.fortifyUntil || 0; fortifyCd = d.fortifyCd || 0;
   Object.assign(camS, d.camS || {}); Object.assign(camG, d.camG || {});
   setSpeed(d.speed ?? 1);
