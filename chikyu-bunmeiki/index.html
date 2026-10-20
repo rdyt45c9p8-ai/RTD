@@ -72,6 +72,9 @@ body{background:var(--sea);color:var(--fg);font-family:var(--f-body);overflow:hi
 .row.sel{background:rgba(228,180,94,.13)}
 .sw{width:12px;height:12px;border-radius:3px;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
 .row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm .spb{font-style:normal;font-size:11px;margin-left:6px}
+.acts.specs{margin:-2px 0 10px}
+.sdesc{color:var(--muted);font-size:11.5px}
 .row .nm em{font-style:normal;color:var(--war);font-size:11px;margin-left:5px}
 .row .pp{font-family:var(--f-pixel);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
 .more{font-size:12px;color:var(--muted);padding:4px 6px}
@@ -195,7 +198,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
       <ol>
         <li><span>1</span><div>「人類」で地球をタップすると、最初のテントがひとつ建ちます。</div></li>
         <li><span>2</span><div>人が増えると村、町、城壁のある中世の街へと育ちます。</div></li>
-        <li><span>3</span><div>「建国」で別の国を生み出すと、国境で戦争が起きます。勝った国が街と土地を手に入れます。</div></li>
+        <li><span>3</span><div>「建国」で別の国を生み出すと、国境で戦争が起きます。勝った国が街と土地を手に入れます。国には貿易特化・防衛特化・戦争特化の3つの性格があります。</div></li>
         <li><span>4</span><div>近代には工場が、現代には高層ビルの大都市が並びます。その先の未来には、光る塔と空飛ぶ円盤の未来都市が生まれます。</div></li>
       </ol>
       <div class="acts">
@@ -454,7 +457,7 @@ function createNation(){
   const id = N.length, hue = (id * 137.508 + 14) % 360, l = 48 + (id % 3) * 7, rgb = hsl(hue, 70, l);
   const n = { id, base:uniqueName(), gov:rnd()*3|0, hue, rgb, css:`rgb(${rgb})`, cssA:`rgba(${rgb},.38)`, line:`rgb(${hsl(hue, 85, Math.min(78, l + 16))})`,
     hex:toHex(rgb), hexDim:toHex(hsl(hue, 45, l*.62)), lineRGB:hsl(hue, 85, Math.min(78, l + 16)).map(v => v/255),
-    alive:true, capital:-1, aggr:.6 + rnd()*.9, born:Math.floor(year), pop:0, count:0, tiles:0, cx:0, cy:0 };
+    alive:true, capital:-1, aggr:.6 + rnd()*.9, spec:pick(['trade', 'defense', 'war']), born:Math.floor(year), pop:0, count:0, tiles:0, cx:0, cy:0 };
   N.push(n); return n;
 }
 const aliveNations = () => N.filter(n => n.alive);
@@ -593,7 +596,7 @@ function considerWars(){
     if (!N[a] || !N[b] || !N[a].alive || !N[b].alive || warOf(a, b)) continue;
     if ((truce.get(key) || 0) > tick) continue;
     const busy = 1 / (1 + warCount(a) + warCount(b));
-    const p = .006 * ef * (N[a].aggr + N[b].aggr) / 2 * Math.min(2, .5 + cnt/20) * busy;
+    const p = .006 * ef * (N[a].aggr*spec(a).aggr + N[b].aggr*spec(b).aggr) / 2 * Math.min(2, .5 + cnt/20) * busy;
     if (rnd() < p){ const [x, y] = N[a].pop >= N[b].pop ? [a, b] : [b, a]; declareWar(x, y); }
   }
 }
@@ -612,6 +615,7 @@ function dispatch(w){
       for (const t of theirs){ const d = Math.hypot(t.x - s.x, t.y - s.y); if (d < bd){ bd = d; bt = t; } }
       if (bt) cand.push([bd, s, bt]);
     }
+    if (N[me].spec === 'war') airStrike(me, foe);
     cand.sort((p, q) => p[0] - q[0]);
     let sent = 0;
     for (const [, s, t] of cand.slice(0, 4)){
@@ -622,7 +626,7 @@ function dispatch(w){
 }
 function sendArmy(s, t){
   const str = s.pop * .15; s.pop -= str; s.cd = tick + 40 + rnd()*40;
-  armies.push({ x:s.x + .5, y:s.y + .5, from:s.id, target:t.id, nation:s.nation, str, sp:.11 + eraIdx*.035, phase:rnd()*6, dir:t.x >= s.x ? 1 : -1, dead:false });
+  armies.push({ x:s.x + .5, y:s.y + .5, from:s.id, target:t.id, nation:s.nation, str, sp:(.11 + eraIdx*.035) * (N[s.nation].spec === 'war' ? 1.3 : 1), phase:rnd()*6, dir:t.x >= s.x ? 1 : -1, dead:false });
 }
 function capture(t, nid){
   const old = t.nation, wasCap = t.capital, w = warOf(nid, old);
@@ -634,8 +638,8 @@ function capture(t, nid){
   else if (wasCap){ const c = setCapital(old); if (c) log(`${nm(old)}は首都を${c.name}へ移した`); }
 }
 function assault(a, t){
-  const def = t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5;
-  const atk = a.str * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
+  const def = (t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5) * spec(t.nation).def * ((t.weak || 0) > tick ? .45 : 1);
+  const atk = a.str * spec(a.nation).atk * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
   boom(t.x + .5, t.y + .5, 18, warPal());
   if (atk > dr){ capture(t, a.nation); t.pop = Math.max(5, t.pop * .65 + a.str * .3); }
   else t.pop = Math.max(3, t.pop - a.str * .4);
@@ -659,7 +663,7 @@ function updateArmies(){
     for (let j = i + 1; j < armies.length; j++){
       const b = armies[j]; if (b.dead || b.nation === a.nation) continue;
       if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1 || !warOf(a.nation, b.nation)) continue;
-      const ra = a.str * (.7 + rnd()*.6), rb = b.str * (.7 + rnd()*.6);
+      const ra = a.str * spec(a.nation).atk * (.7 + rnd()*.6), rb = b.str * spec(b.nation).atk * (.7 + rnd()*.6);
       boom((a.x + b.x)/2, (a.y + b.y)/2, 12, warPal());
       if (ra >= rb){ b.dead = true; a.str = Math.max(1, a.str - b.str*.6); } else { a.dead = true; b.str = Math.max(1, b.str - a.str*.6); break; }
     }
@@ -679,6 +683,67 @@ const WONDERS = [
   { era:4, name:'鉄の塔' }, { era:5, name:'宇宙センター' }, { era:6, name:'宇宙エレベーター' },
 ];
 let nextInv = 0, wonderBuilt = [], traders = [], firstLaunch = false;
+// ===== 特化国家 =====
+const SPECS = {
+  trade:   { name:'貿易特化', short:'貿易', growth:1.4,  expand:1.5, trade:2.5, def:1,   atk:1,   aggr:.9,  intercept:.05, color:'#e4b45e', desc:'交易がさかんで発展が速い' },
+  defense: { name:'防衛特化', short:'防衛', growth:.75,  expand:.7,  trade:.3,  def:2.3, atk:.9,  aggr:.6,  intercept:.5,  color:'#78c897', desc:'発展は遅いが守りがとても固い' },
+  war:     { name:'戦争特化', short:'戦争', growth:1.2,  expand:1.2, trade:2,   def:1.7, atk:1.7, aggr:1.6, intercept:.25, color:'#ec6048', desc:'交易も守りも強く、戦闘機や核で攻める' },
+};
+const SPEC_KEYS = ['trade', 'defense', 'war'];
+const spec = id => SPECS[N[id] && N[id].spec] || SPECS.trade;
+let jets = [], missiles = [];
+function nearestOf(list, t){ let b = null, bd = 1e9; for (const s of list){ const d = Math.hypot(s.x - t.x, s.y - t.y); if (d < bd){ bd = d; b = s; } } return [b, bd]; }
+function airStrike(me, foe){
+  if (eraIdx < 4) return;
+  const mine = S.filter(s => s.alive && s.nation === me && s.stage >= 3), theirs = S.filter(s => s.alive && s.nation === foe);
+  if (!mine.length || !theirs.length) return;
+  const n = N[me];
+  if (eraIdx >= 5 && (n.nukeCd || 0) <= tick && rnd() < .1){
+    const t = theirs.reduce((a, b) => b.pop > a.pop ? b : a), [from, d] = nearestOf(mine, t);
+    n.nukeCd = tick + 700;
+    missiles.push({ x0:from.x + .5, y0:from.y + .5, x1:t.x + .5, y1:t.y + .5, t:0, dur:25 + d*.4, target:t.id, nation:me });
+    log(`${nm(me)}が${t.name}へ核ミサイルを発射した！`, 'war');
+    return;
+  }
+  if (jets.length < 30 && rnd() < .6){
+    const t = pick(theirs), [from, d] = nearestOf(mine, t);
+    if (d < 80) jets.push({ x:from.x + .5, y:from.y + .5, target:t.id, nation:me, sp:.9 + eraIdx*.1, hx:1, hy:0, phase:rnd()*6 });
+  }
+}
+function updateAir(){
+  for (const j of jets){
+    const t = sById.get(j.target);
+    if (!t || !t.alive || t.nation === j.nation || !warOf(j.nation, t.nation)){ j.dead = true; continue; }
+    const dx = t.x + .5 - j.x, dy = t.y + .5 - j.y, d = Math.hypot(dx, dy);
+    if (d < .8){
+      j.dead = true;
+      if (rnd() < spec(t.nation).intercept){ boom(t.x + .5, t.y + .5, 6, ['#ffffff','#9fd4ff'], .8); continue; }
+      t.pop *= .86; t.weak = Math.max(t.weak || 0, tick + 150);
+      boom(t.x + .5, t.y + .5, 16, warPal(), 1.1);
+      continue;
+    }
+    j.x += dx / d * j.sp; j.y += dy / d * j.sp; j.hx = dx / d; j.hy = dy / d;
+  }
+  jets = jets.filter(j => !j.dead);
+  for (const m of missiles){
+    m.t += 1;
+    if (m.t < m.dur) continue;
+    m.dead = true;
+    const t = sById.get(m.target); if (!t || !t.alive) continue;
+    if (rnd() < spec(t.nation).intercept){ boom(m.x1, m.y1, 30, ['#ffffff','#9fd4ff','#ffe08a'], 1.6); log(`${nm(t.nation)}が核ミサイルを迎撃した`, 'peace'); continue; }
+    nukeHit(t, m.nation);
+  }
+  missiles = missiles.filter(m => !m.dead);
+}
+function nukeHit(t, by){
+  shake = 1;
+  boom(t.x + .5, t.y + .5, 140, ['#ffffff','#fff2c8','#ffd27a','#ff9a3d'], 3.5);
+  mushroom(t.x + .5, t.y + .5);
+  for (const o of S) if (o.alive && o !== t && Math.hypot(o.x - t.x, o.y - t.y) < 4) o.pop *= .6;
+  t.pop = Math.max(3, t.pop * .3); t.weak = tick + 400;
+  log(`${t.name}に${nm(by)}の核ミサイルが落ちた`, 'war');
+  paintTerrain(t.x, t.y, 1.6, T.WASTE);
+}
 function checkInventions(){
   while (nextInv < INVENTIONS.length && year >= INVENTIONS[nextInv][0]){ log(INVENTIONS[nextInv][1], 'tech'); nextInv++; }
 }
@@ -697,8 +762,8 @@ function considerWonders(){
   }
 }
 function spawnTrader(){
-  if (traders.length >= 36 || eraIdx < 1 || !S.length) return;
-  const s = pick(S); if (!s.alive || s.stage < 1) return;
+  if (traders.length >= 50 || eraIdx < 1 || !S.length) return;
+  const s = pick(S); if (!s.alive || s.stage < 1 || rnd() > spec(s.nation).trade / 2.5) return;
   for (let k = 0; k < 8; k++){
     const o = pick(S); if (o === s || !o.alive || o.nation !== s.nation || o.stage < 1) continue;
     const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < 6 || d > (eraIdx >= 3 ? 70 : 22)) continue;
@@ -711,7 +776,7 @@ function updateTraders(){
   for (const t of traders){
     const o = sById.get(t.to); if (!o || !o.alive || o.nation !== t.nation){ t.dead = true; continue; }
     const dx = o.x + .5 - t.x, dy = o.y + .5 - t.y, d = Math.hypot(dx, dy);
-    if (d < .5){ o.pop *= 1.01; t.dead = true; continue; }
+    if (d < .5){ o.pop *= 1 + .006*spec(o.nation).trade; t.dead = true; continue; }
     t.x += dx / d * t.sp; t.y += dy / d * t.sp; t.hx = dx / d; t.hy = dy / d;
   }
   traders = traders.filter(t => !t.dead);
@@ -763,17 +828,19 @@ function step(){
   for (let k = 0; k < n0; k++){
     const s = S[k]; if (!s.alive) continue;
     const cap = capOf(s);
-    s.pop += .015 * s.pop * (1 - s.pop / cap) + .02;
+    const sp = spec(s.nation);
+    s.pop += .015 * sp.growth * s.pop * (1 - s.pop / cap) + .02;
     if (s.pop < 1) s.pop = 1;
     const st = stageOf(s);
     if (st !== s.stage){ if (st > s.stage) terrDirty = true; s.stage = st; if (!firstStage[st]){ firstStage[st] = true; log(`${STAGE_FIRST[st]}（${nm(s.nation)}の${s.name}）`, 'era'); } }
-    if (s.pop > cap * .55 && s.pop >= 16 && S.length < MAXS && rnd() < .012) tryExpand(s);
+    if (s.pop > cap * .55 && s.pop >= 16 && S.length < MAXS && rnd() < .012 * sp.expand) tryExpand(s);
   }
   if (terrDirty || tick % 15 === 0) recomputeTerritory();
   if (tick % 10 === 0) considerWars();
   checkInventions();
   if (tick % 20 === 0) considerWonders();
-  if (tick % 8 === 0) spawnTrader();
+  if (tick % 4 === 0) spawnTrader();
+  updateAir();
   updateTraders();
   if (tick % 250 === 0 && rnd() < .55) runEvent();
   for (const w of wars.slice()){
@@ -980,7 +1047,8 @@ function pool(geo, cap, mat){
 }
 const glowMat = () => new THREE.MeshBasicMaterial({ color:0xffffff });
 const CITY = { box:pool(GEO.box, 20000), pyr:pool(GEO.pyr, 9000), cone:pool(GEO.cone, 4000), cyl:pool(GEO.cyl, 9000),
-  dome:pool(GEO.dome, 8000, new THREE.MeshPhongMaterial({ color:0xffffff, shininess:80, specular:0x99bbcc })), ring:pool(GEO.ring, 1200, glowMat()), glow:pool(GEO.cyl, 14000, glowMat()),
+  dome:pool(GEO.dome, 8000, new THREE.MeshPhongMaterial({ color:0xffffff, shininess:80, specular:0x99bbcc })),
+  shield:pool(GEO.dome, 600, new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.22, depthWrite:false })), ring:pool(GEO.ring, 1200, glowMat()), glow:pool(GEO.cyl, 14000, glowMat()),
   sky:pool(GEO.box, 9000, new THREE.MeshLambertMaterial({ color:0xffffff, map:winTex, emissive:0x3a3426, emissiveMap:winTex })) };
 const MOB = { box:pool(GEO.box, 2600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 500), dome:pool(GEO.dome, 400), glow:pool(GEO.box, 1000, glowMat()), pyr:pool(GEO.pyr, 300) };
 // 未来の時代：地球をめぐる軌道リングと人工衛星
@@ -999,7 +1067,7 @@ const partCache = new Map(), baseCache = new Map();
 function partsFor(s){
   const st = s.stage, n = N[s.nation];
   const bucket = st === 0 ? Math.min(2, Math.floor(s.pop / 18)) : st === 1 ? Math.min(2, Math.floor(s.pop / 140)) : st === 5 ? Math.min(7, Math.floor(s.pop / 400000)) : st === 6 ? Math.min(6, Math.floor(s.pop / 3e6)) : 0;
-  const key = `${st}|${s.nation}|${bucket}|${(s.wonders || []).join('.')}`;
+  const key = `${st}|${s.nation}|${bucket}|${(s.wonders || []).join('.')}|${n.spec}|${eraIdx >= 5 ? 2 : eraIdx >= 4 ? 1 : 0}`;
   const c = partCache.get(s.id); if (c && c.key === key) return c;
   const Rn = mulberry(s.seed), P = []; let top = .4;
   const add = (g, x, z, y, w, h, d, col, rot = 0, smoke = false) => { P.push({ g, x, z, y, w, h, d, c:col, rot, smoke }); if (y + h > top) top = y + h; };
@@ -1052,6 +1120,7 @@ function partsFor(s){
     add('sky', 0, 0, 0, .28, th, .28, '#a3b9ca'); add('cyl', 0, 0, th, .04, .5, .04, '#cfd6dc'); add('box', 0, 0, th + .5, .07, .07, .07, '#ff4a3a');
   }
   (s.wonders || []).forEach((wi, slot) => wonderParts(P, s, wi, slot));
+  if (st >= 1) specParts(P, s, n);
   const out = { key, P, top }; partCache.set(s.id, out); return out;
 }
 function baseOf(s){
@@ -1082,6 +1151,34 @@ function wonderParts(P, s, wi, slot){
   } else {
     A('dome', 0, 0, 0, 1.2, .7, 1.2, '#bfeaff', 'pad'); A('glow', 0, 0, 0, .09, ELEV_H, .09, '#7fe8ff');
     A('glow', 0, 0, ELEV_H*.3, .3, .08, .3, '#ff7ae0'); A('glow', 0, 0, ELEV_H*.65, .3, .08, .3, '#ff7ae0'); A('box', 0, 0, ELEV_H - .2, .7, .4, .7, '#e8eef2');
+  }
+}
+function specParts(P, s, n){
+  const r0 = SZ[s.stage], A = (g, x, z, y, w, h, d, c, rot = 0) => P.push({ g, x, z, y, w, h, d, c, rot, smoke:false });
+  if (n.spec === 'defense'){
+    for (let k = 0; k < 6; k++){
+      const a = k / 6 * TAU + .3, x = Math.cos(a)*(r0 + .3), z = Math.sin(a)*(r0 + .3);
+      if (eraIdx >= 4){ A('box', x, z, 0, .26, .22, .26, '#7d8288', a); A('box', x, z, .22, .3, .04, .04, '#3c4046', a); }
+      else { A('cyl', x, z, 0, .22, .5, .22, '#9b958a'); A('cone', x, z, .5, .28, .22, .28, n.hex); }
+    }
+    if (eraIdx >= 5 && s.stage >= 3) A('shield', 0, 0, 0, (r0 + .5)*2, (r0 + .5)*1.1, (r0 + .5)*2, '#8fe8ff');
+  } else if (n.spec === 'trade'){
+    const ox = -Math.cos(.4)*(r0 + .45), oz = -Math.sin(.4)*(r0 + .45);
+    if (eraIdx >= 4){
+      const cols = ['#d0533c','#3a78c2','#e0a83a','#4aa36a'];
+      for (let i = 0; i < 6; i++) A('box', ox + (i % 3)*.2 - .2, oz + Math.floor(i / 3)*.24, 0, .18, .12 + (i % 2)*.12, .22, cols[i % 4]);
+      A('box', ox + .4, oz - .25, 0, .06, .9, .06, '#e0a83a'); A('box', ox + .25, oz - .25, .86, .45, .05, .05, '#e0a83a');
+    } else for (let i = 0; i < 3; i++){ const x = ox + (i - 1)*.26; A('box', x, oz, 0, .2, .14, .2, '#c9a36a'); A('pyr', x, oz, .14, .3, .14, .3, ['#e4b45e','#d0533c','#3a78c2'][i]); }
+  } else if (n.spec === 'war'){
+    const ox = Math.cos(2.6)*(r0 + .5), oz = Math.sin(2.6)*(r0 + .5);
+    if (eraIdx >= 4){
+      A('box', ox, oz, 0, 1.3, .02, .24, '#3a3d42', .6); A('box', ox, oz, .02, 1.1, .01, .03, '#f0f0f0', .6);
+      A('box', ox + .1, oz + .35, 0, .4, .2, .3, '#6b7178', .6);
+      if (eraIdx >= 5){ A('cyl', ox - .35, oz + .4, 0, .2, .12, .2, '#5b6168'); A('cone', ox - .35, oz + .4, .12, .12, .18, .12, '#c0503c'); }
+    } else {
+      A('box', ox, oz, 0, .5, .22, .3, '#8a6a4a', .4); A('pyr', ox, oz, .22, .6, .14, .4, '#5a3f2c', .4);
+      A('cyl', ox + .3, oz, 0, .03, .55, .03, '#4a3a2c'); A('box', ox + .42, oz, .42, .22, .13, .02, n.hex);
+    }
   }
 }
 let chimneys = [], capitals = [];
@@ -1178,6 +1275,22 @@ function rebuildMobiles(time){
       part('box', _W2, k, -.06, .03, 0, .34, .12, .22, '#8a6440'); part('pyr', _W2, k, -.06, .15, 0, .38, .14, .26, '#eadfc6');
       part('box', _W2, k, .28, bob, 0, .18, .13, .08, '#7a5a3a'); part('box', _W2, k, .38, .1 + bob, 0, .08, .08, .06, '#7a5a3a');
     }
+  }
+  for (const j of jets){
+    frameAt(j.x, j.y, U*2.2, Math.atan2(-j.hy, j.hx), _W2);
+    const c = eraIdx >= 6 ? '#dfe7ee' : '#5b6470';
+    part('box', _W2, 1.2, -.3, 0, 0, .75, .09, .12, c); part('box', _W2, 1.2, -.38, .01, 0, .32, .025, .78, c);
+    part('box', _W2, 1.2, -.66, .05, 0, .14, .2, .03, c); part('glow', _W2, 1.2, -.7, .02, 0, .06, .05, .07, eraIdx >= 6 ? '#5fe3ff' : '#ffb347');
+    if (rnd() < .4){ surfPos(j.x, j.y, U*2.25, _pa); addSpark(_pa, _tv.set(0, 0, 0), _up.copy(_pa).normalize(), 0, .8, U*.08, [.9, .9, .92], true); }
+  }
+  for (const m of missiles){
+    const t = m.t / m.dur, x = m.x0 + (m.x1 - m.x0)*t, y = m.y0 + (m.y1 - m.y0)*t, lift = Math.sin(t*Math.PI)*U*9;
+    const t2 = Math.min(1, t + .02), lift2 = Math.sin(t2*Math.PI)*U*9;
+    surfPos(x, y, lift, _pa); surfPos(m.x0 + (m.x1 - m.x0)*t2, m.y0 + (m.y1 - m.y0)*t2, lift2, _pb);
+    _up.copy(_pb).sub(_pa).normalize(); _e.copy(_pa).normalize().cross(_up); if (_e.lengthSq() < 1e-6) _e.set(1, 0, 0); _e.normalize(); _s.crossVectors(_e, _up);
+    _W2.makeBasis(_e, _up, _s).setPosition(_pa);
+    part('cyl', _W2, 1, 0, 0, 0, .14, .9, .14, '#eef0f2'); part('cone', _W2, 1, 0, .9, 0, .14, .28, .14, '#c0503c'); part('glow', _W2, 1, 0, -.15, 0, .12, .15, .12, '#ffcf6a');
+    addSpark(_pa, _tv.set(0, 0, 0), _f.copy(_pa).normalize(), 0, 1.6, U*.18, [.85, .85, .85], true);
   }
   for (const r of rockets){
     const h = U*(.3 + r.t*r.t*2.2); _pa.copy(r.p).addScaledVector(r.n, h);
@@ -1302,6 +1415,38 @@ function updateSky(dt){
     for (let k = 0; k < 2; k++) addSpark(_pa, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.3), r.n, 0, 1.6, U*(.2 + rnd()*.2), k ? [1, .75, .4] : [.85, .85, .85], true);
   }
   rockets = rockets.filter(r => r.t < 7);
+}
+// 核爆発：閃光・きのこ雲・衝撃波
+let nukeFx = [];
+function mushroom(fx, fy){
+  const g = new THREE.Group(), base = new THREE.Matrix4();
+  frameAt(fx, fy, 0, 0, base); g.matrixAutoUpdate = false; g.matrix.copy(base);
+  const mk = (geo, color, add) => new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent:true, depthWrite:false, blending:add ? THREE.AdditiveBlending : THREE.NormalBlending }));
+  const flash = mk(new THREE.SphereGeometry(1, 24, 16), 0xfff4d0, true);
+  const stem = mk(new THREE.CylinderGeometry(.35, .6, 1, 16).translate(0, .5, 0), 0xb59a86, false);
+  const cap = mk(new THREE.SphereGeometry(1, 24, 16), 0xd98a4a, false);
+  const capGlow = mk(new THREE.SphereGeometry(1, 24, 16), 0xff7a2a, true);
+  const wave = mk(new THREE.TorusGeometry(1, .08, 8, 48).rotateX(Math.PI/2), 0xffe8c0, true);
+  g.add(flash, stem, cap, capGlow, wave); scene.add(g);
+  nukeFx.push({ g, flash, stem, cap, capGlow, wave, t:0 });
+  for (let k = 0; k < 40; k++){
+    const c = surfPos(fx, fy, 0), n = c.clone().normalize();
+    addSpark(c, new THREE.Vector3(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*2.2).addScaledVector(n, U*.3), n, U*.4, 2 + rnd(), U*(.3 + rnd()*.3), [.72, .66, .6], true);
+  }
+}
+function updateNukes(dt){
+  for (const f of nukeFx){
+    f.t += dt; const t = f.t, life = 6, fade = clamp((life - t) / 2.5, 0, 1);
+    const fl = clamp(1 - t / .6, 0, 1); f.flash.scale.setScalar(U*(.5 + t*7)); f.flash.material.opacity = fl;
+    const rise = Math.min(1, t / 2.2), h = U*(.4 + rise*5.2);
+    f.stem.scale.set(U*(.6 + rise*.5), h, U*(.6 + rise*.5)); f.stem.material.opacity = .9*fade;
+    const cr = U*(.6 + rise*1.9); f.cap.position.y = h; f.cap.scale.set(cr, cr*.62, cr); f.cap.material.opacity = .95*fade;
+    f.capGlow.position.y = h; f.capGlow.scale.set(cr*.85, cr*.5, cr*.85); f.capGlow.material.opacity = .55*clamp(1 - t / 3, 0, 1);
+    f.cap.material.color.setRGB(.85 - rise*.2, .54 + rise*.1, .3 + rise*.3);
+    f.wave.scale.setScalar(U*(.5 + t*5)); f.wave.material.opacity = clamp(1 - t / 1.6, 0, 1);
+    if (t > life){ scene.remove(f.g); f.g.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); f.done = true; }
+  }
+  nukeFx = nukeFx.filter(f => !f.done);
 }
 // 隕石
 const meteorGeo = new THREE.SphereGeometry(1, 16, 12), meteorMat = new THREE.MeshBasicMaterial({ color:0xfff0c8 });
@@ -1436,6 +1581,7 @@ function frame(now){
   updateMeteors(dt);
   orbitRing.visible = eraIdx >= 6;
   updateSky(dt);
+  updateNukes(dt);
   if (speed > 0){
     for (const p of planes) p.t += dt * Math.min(speed, 3);
     planes = planes.filter(p => p.t < p.dur);
@@ -1516,7 +1662,7 @@ function spawnHumans(x, y, forceNation){
   }
   boom(x + .5, y + .5, 14, ['#fff2c8','#ffe08a','#ffffff']);
   if (first) log(`人類が誕生した。${nm(n.id)}の最初のテントが建った`, 'era');
-  else log(`${nm(n.id)}が誕生した`, forceNation ? 'war' : '');
+  else log(`${nm(n.id)}が誕生した（${spec(n.id).name}）`, forceNation ? 'war' : '');
   sel = { type:'nation', id:n.id }; warPick = false;
   recomputeTerritory();
   return true;
@@ -1630,10 +1776,10 @@ function updateUI(force){
   // 国の一覧
   const list = alive.slice().sort((a, b) => b.pop - a.pop);
   const top = list.slice(0, 10);
-  const key = top.map(n => n.id + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx;
+  const key = top.map(n => n.id + n.spec + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx;
   if (key !== natKey || force){
     natKey = key;
-    natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}"><span class="sw" style="background:${n.css}"></span><span class="nm">${nm(n.id)}${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
+    natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}"><span class="sw" style="background:${n.css}"></span><span class="nm">${nm(n.id)}<i class="spb" style="color:${spec(n.id).color}">${spec(n.id).short}</i>${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
       + (list.length > 10 ? `<div class="more">ほか${list.length - 10}か国</div>` : '')
       : '<p class="hint">まだ国はありません。「人類」か「建国」で地球をタップしよう。</p>';
   }
@@ -1656,9 +1802,10 @@ function updateUI(force){
     else {
       const ws = wars.filter(w => w.a === n.id || w.b === n.id), cap = sById.get(n.capital);
       const others = aliveNations().filter(o => o.id !== n.id && !warOf(n.id, o.id));
-      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}`;
+      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}`;
       if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${n.css}"></span><b>${nm(n.id)}</b>${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
-        <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd></dl>
+        <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd><dt>特化</dt><dd><b style="color:${spec(n.id).color}">${spec(n.id).name}</b><br><small class="sdesc">${spec(n.id).desc}</small></dd></dl>
+        <div class="acts specs" role="group" aria-label="国の特化">${SPEC_KEYS.map(k => `<button class="btn" type="button" data-spec="${n.id}-${k}" aria-pressed="${n.spec === k}">${SPECS[k].short}</button>`).join('')}</div>
         ${ws.length ? `<div class="picks" style="margin:0 0 10px;padding-top:0;border-top:0"><p>戦争の相手</p>${ws.map(w => { const o = w.a === n.id ? w.b : w.a; return `<div class="row" style="cursor:default"><span class="sw" style="background:${N[o].css}"></span><span class="nm">${nm(o)}</span><button class="btn peaceb" type="button" data-peace="${w.a}-${w.b}">講和</button></div>`; }).join('')}</div>` : ''}
         <div class="acts"><button class="btn" type="button" data-goto="${n.id}">首都を見る</button>${others.length ? `<button class="btn warb" type="button" data-warpick="1">宣戦布告…</button>` : ''}</div>
         ${warPick && others.length ? `<div class="picks"><p>どの国に宣戦布告しますか？</p>${others.map(o => `<button class="row" type="button" data-war="${n.id}-${o.id}"><span class="sw" style="background:${o.css}"></span><span class="nm">${nm(o.id)}</span><span class="pp">${fmtPop(o.pop)}</span></button>`).join('')}</div>` : ''}`;
@@ -1682,6 +1829,7 @@ document.getElementById('side').addEventListener('click', e => {
   else if (b.dataset.goto){ const c = sById.get(N[+b.dataset.goto].capital); if (c) focusOn(c.x, c.y); }
   else if (b.dataset.warpick){ warPick = !warPick; updateUI(true); }
   else if (b.dataset.war){ const [a, c] = b.dataset.war.split('-').map(Number); declareWar(a, c); warPick = false; updateUI(true); }
+  else if (b.dataset.spec){ const [id, k] = b.dataset.spec.split('-'); const n = N[+id]; if (n && n.spec !== k){ n.spec = k; cityDirty = true; log(`${nm(n.id)}は${SPECS[k].name}の国になった`, 'era'); } updateUI(true); }
   else if (b.dataset.peace){ const [a, c] = b.dataset.peace.split('-').map(Number); const w = warOf(a, c); if (w) makePeace(w); updateUI(true); }
 });
 function focusOn(x, y, alt = 40){ const [la, lo] = llOfTile(x + .5, y + .5); camG.lat = clamp(la - Math.min(6, alt*.05), -70, 78); camG.lon = lo; camG.alt = Math.min(camG.alt, alt); }
@@ -1692,7 +1840,7 @@ function serialize(){
 function restore(d){
   if (!d || d.v !== 2 || !d.terr || d.terr.length !== W*H) return;
   terr.set(d.terr); computeDepth(); computeFert();
-  N = d.N; N.forEach(n => usedNames.add(n.base));
+  N = d.N; N.forEach(n => { usedNames.add(n.base); if (!n.spec) n.spec = pick(SPEC_KEYS); });
   S = d.S; sById = new Map(S.map(s => [s.id, s]));
   wars = d.wars; truce = new Map(d.truce); tick = d.tick; year = d.year; eraIdx = d.eraIdx; nextId = d.nextId;
   logs = d.logs || []; firstStage = d.firstStage || firstStage; started = d.started;
