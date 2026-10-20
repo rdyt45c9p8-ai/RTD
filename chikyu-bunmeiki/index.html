@@ -168,6 +168,44 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 .ach span{display:block;font-size:12px;color:var(--muted);line-height:1.5}
 .ach small{display:block;font-size:11px;color:var(--brass);margin-top:3px}
 .mbody .acts{margin:10px 0}
+.eraBar{height:3px;background:rgba(255,255,255,.1);border-radius:2px;margin-top:4px;overflow:hidden}
+.eraBar i{display:block;height:100%;width:0;background:var(--brass)}
+.pz{font-size:10px;color:var(--war);letter-spacing:.12em;margin-top:2px}
+.mini{position:absolute;z-index:5;left:max(16px,env(safe-area-inset-left,0px));top:calc(var(--hud-h,70px) + 10px);width:200px;height:100px;padding:0;cursor:pointer;display:none}
+body.has-mini .mini{display:block}
+@media (min-width:761px){ body.has-mini .tools{top:calc(var(--hud-h,70px) + 122px);transform:none;max-height:calc(100% - var(--hud-h,70px) - 140px);overflow-y:auto} }
+.cmd.pol{display:inline-flex;align-items:center;gap:6px;cursor:default}
+.pol select{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;font:inherit;font-size:12.5px;padding:2px 4px}
+.scen-h{margin:14px 0 6px;font-size:12px;color:var(--muted);letter-spacing:.08em}
+.scen .btn{font-size:13px}
+.photoExit{position:absolute;z-index:9;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 12px);background:var(--panel)}
+body.photo .hud,body.photo .tools,body.photo .side,body.photo .log,body.photo .cmdbar,body.photo .specpick,body.photo .mini{display:none !important}
+.set{display:grid;grid-template-columns:1fr auto;gap:8px 14px;align-items:center;margin-bottom:6px}
+.set span small{display:block;color:var(--muted);font-size:11.5px;line-height:1.4}
+.set select{background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;font:inherit;font-size:13px;padding:3px 6px}
+.set input[type=range]{width:120px}
+.set .btn{padding:4px 12px;font-size:12px;min-width:4.5em}
+.rank{width:100%;border-collapse:collapse;font-size:13px}
+.rank th{color:var(--muted);font-weight:400;text-align:left;font-size:11.5px;padding:4px 6px;border-bottom:1px solid var(--line)}
+.rank td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.05);font-variant-numeric:tabular-nums}
+.rank td:first-child{color:var(--muted);width:2em}
+.rank .nmc{display:flex;align-items:center;gap:6px}
+.goal{margin-bottom:12px}
+.goal b{font-size:13.5px}
+.goal .gbar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden;margin:4px 0 2px}
+.goal .gbar i{display:block;height:100%;background:var(--peace)}
+.goal small{color:var(--muted);font-size:11.5px}
+.findIn{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:7px;color:var(--fg);font:inherit;padding:7px 9px;margin-bottom:8px}
+.lrow{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.lrow span{flex:1;min-width:0}
+.lrow small{color:var(--muted)}
+.lrow .btn{padding:3px 9px;font-size:12px}
+.colors{gap:5px}
+.colors button{width:22px;height:22px;border-radius:6px;border:2px solid transparent;cursor:pointer;padding:0}
+.colors button[aria-pressed="true"]{border-color:var(--fg)}
+details.nhist{margin:0 0 10px;font-size:12.5px}
+details.nhist summary{cursor:pointer;color:var(--muted)}
+details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
 .banner{position:absolute;z-index:6;left:50%;top:30%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;padding-inline:16px}
 .banner.show{animation:ban 3.2s ease-out forwards}
 .banner small{display:block;font-family:var(--f-pixel);font-size:18px;color:var(--fg);letter-spacing:.2em;text-shadow:0 2px 8px rgba(0,0,0,.8)}
@@ -179,9 +217,9 @@ dd{margin:0;font-variant-numeric:tabular-nums}
   background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:8px 18px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap}
 .toast.show{opacity:1}
 
-.intro{position:absolute;z-index:8;inset:0;display:grid;place-items:center;background:rgba(6,14,22,.42);
+.intro{position:absolute;z-index:8;inset:0;display:flex;overflow:auto;padding-block:16px;background:rgba(6,14,22,.42);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.intro .card{max-width:440px;width:100%;padding:24px 24px 20px}
+.intro .card{max-width:440px;width:100%;padding:24px 24px 20px;margin:auto}
 .intro h1{font-family:var(--f-display);font-weight:400;font-size:30px;margin:0 0 4px;letter-spacing:.06em;text-wrap:balance}
 .intro .sub{color:var(--muted);margin:0 0 16px;font-size:13.5px;line-height:1.7}
 .intro ol{margin:0 0 18px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.55}
@@ -203,7 +241,8 @@ dd{margin:0;font-variant-numeric:tabular-nums}
   .speed{margin-left:0;width:100%;padding:5px}
   .speed .btn{padding:5px 8px;font-size:12px}
   .opts{width:auto}
-  .sp-opts.dis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sp-opts.dis{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .mini{display:none !important}
   .only-m{display:inline-block}
   .tools{top:auto;transform:none;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
     flex-direction:row;overflow-x:auto;padding:4px}
@@ -238,7 +277,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 
   <header class="hud">
     <div class="plate brand"><b>地球文明記</b><small>テントから大都市へ</small></div>
-    <div class="plate clock"><div class="era" id="eraName">原始時代</div><div class="year" id="yearTxt">紀元前10000年</div></div>
+    <div class="plate clock"><div class="era" id="eraName">原始時代</div><div class="year" id="yearTxt">紀元前10000年</div><div class="eraBar" title="次の時代までの進み具合"><i id="eraFill"></i></div><span class="pz" id="pauseTag" hidden>一時停止中</span></div>
     <div class="plate stats">
       <div class="stat"><span>総人口</span><b id="popTxt">0人</b></div>
       <div class="stat"><span>国の数</span><b id="natTxt">0</b></div>
@@ -261,6 +300,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
     </div>
   </header>
 
+  <canvas class="plate mini" id="mini" width="400" height="200" aria-label="世界地図（タップでその場所へ移動）"></canvas>
   <nav class="plate tools" aria-label="道具">
     <button class="tool" type="button" data-tool="look" title="国や街を調べる・地図を動かす"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>見る</button>
     <button class="tool" type="button" data-tool="human" aria-pressed="true" title="人類を生み出す"><svg viewBox="0 0 24 24"><path d="M3 20L12 5l9 15z"/><path d="M10 20l2-5 2 5"/></svg>人類</button>
@@ -272,6 +312,9 @@ dd{margin:0;font-variant-numeric:tabular-nums}
     <button class="tool" type="button" data-tool="mount" title="山を作る"><svg viewBox="0 0 24 24"><path d="M2 20l7-12 4 6 3-4 6 10z"/><path d="M7.5 11l1.5 1.5 1.5-1.5"/></svg>山</button>
     <hr>
     <button class="tool" type="button" data-tool="meteor" title="天変地異を起こす"><svg viewBox="0 0 24 24"><path d="M13 2L5 13h6l-2 9 9-12h-6z"/></svg>天災</button>
+    <hr>
+    <button class="tool" type="button" id="zoomIn" title="近づく"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M11 8v6M8 11h6M16 16l5 5"/></svg>近く</button>
+    <button class="tool" type="button" id="zoomOut" title="離れる"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6M16 16l5 5"/></svg>遠く</button>
   </nav>
 
   <div class="plate specpick" id="specPick" role="group" aria-label="新しい国の特化" hidden>
@@ -293,6 +336,12 @@ dd{margin:0;font-variant-numeric:tabular-nums}
       <button class="sp" type="button" data-dis="plague" aria-pressed="false"><b>疫病</b><small>広い範囲で人が減る</small></button>
       <button class="sp" type="button" data-dis="typhoon" aria-pressed="false"><b>台風</b><small>動きながら街をおそう</small></button>
       <button class="sp" type="button" data-dis="bless" aria-pressed="false"><b style="color:#9fdc8a">恵みの雨</b><small>人が増え、砂漠が緑に</small></button>
+      <button class="sp" type="button" data-dis="tsunami" aria-pressed="false"><b>津波</b><small>海辺の街をおそう</small></button>
+      <button class="sp" type="button" data-dis="tornado" aria-pressed="false"><b>竜巻</b><small>陸をうろつき街を荒らす</small></button>
+      <button class="sp" type="button" data-dis="cold" aria-pressed="false"><b>大寒波</b><small>大地がこおりつく</small></button>
+      <button class="sp" type="button" data-dis="fire" aria-pressed="false"><b>山火事</b><small>森が焼けて荒地に</small></button>
+      <button class="sp" type="button" data-dis="fish" aria-pressed="false"><b style="color:#9fd4ff">大漁</b><small>港町の人が増える</small></button>
+      <button class="sp" type="button" data-dis="gold" aria-pressed="false"><b style="color:#ffd36b">金の発見</b><small>人が押し寄せる</small></button>
     </div>
   </div>
 
@@ -311,6 +360,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
       <button class="cmd" type="button" data-cmd="cmdJet" id="cJet" title="戦争特化の国が近代から使えます">戦闘機</button>
       <button class="cmd" type="button" data-cmd="cmdNuke" id="cNuke" title="戦争特化の国が現代から使えます">核</button>
       <button class="cmd" type="button" data-act="auto" id="cAuto" aria-pressed="true" title="オンのとき、戦争中は軍が自動で戦います">自動で戦う</button>
+      <label class="cmd pol" for="policySel">政策 <select id="policySel"></select></label>
     </div>
     <div class="offer" id="offerBox" hidden><span id="offerTxt"></span><button class="btn peaceb" type="button" id="offerYes">受ける</button><button class="btn" type="button" id="offerNo">断る</button></div>
     <p class="cb-hint" id="cmdHint">ボタンを選んでから地球をタップすると命令できます。</p>
@@ -319,6 +369,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
   <div class="log" id="log" aria-live="polite"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast"></div>
+  <button class="btn photoExit" type="button" id="photoExit" hidden>画面の表示を戻す</button>
   <div class="achpop" id="achPop" aria-live="polite"></div>
 
   <div class="modal" id="menu" hidden>
@@ -328,6 +379,10 @@ dd{margin:0;font-variant-numeric:tabular-nums}
         <button class="btn" type="button" data-mtab="help">遊び方</button>
         <button class="btn" type="button" data-mtab="log">年表</button>
         <button class="btn" type="button" data-mtab="ach">実績</button>
+        <button class="btn" type="button" data-mtab="goal">目標</button>
+        <button class="btn" type="button" data-mtab="rank">ランキング</button>
+        <button class="btn" type="button" data-mtab="list">一覧</button>
+        <button class="btn" type="button" data-mtab="set">設定</button>
         <button class="btn" type="button" data-mtab="save">保存</button>
       </div>
       <div class="mbody" id="mbody"></div>
@@ -348,6 +403,12 @@ dd{margin:0;font-variant-numeric:tabular-nums}
       <div class="acts">
         <button class="btn go" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
         <button class="btn" type="button" id="startFree">好きな場所に置く</button>
+      </div>
+      <p class="scen-h">シナリオで始める</p>
+      <div class="acts scen">
+        <button class="btn" type="button" data-scen="rivals">群雄割拠（6つの国から）</button>
+        <button class="btn" type="button" data-scen="modern">現代の世界から</button>
+        <button class="btn" type="button" data-scen="future">未来の世界から</button>
       </div>
     </div>
   </div>
@@ -379,7 +440,7 @@ const POP_ST = [0, 50, 300, 1000, 12000, 300000, 2500000];
 const SZ   = [.7, .95, 1.2, 1.5, 1.7, 2.0, 2.1];
 const MINU = [7, 6.2, 5.4, 4.8, 4.4, 4, 3.8];
 const GOV = [['族','族','族'],['王国','都市国家','王国'],['王国','帝国','公国'],['王国','帝国','共和国'],['帝国','共和国','連邦'],['共和国','連邦','合衆国'],['連邦','惑星連合','同盟']];
-const MAXS = 500, MAXN = 28;
+let MAXS = 500; const MAXN = 28;
 const KM2_PER_TILE = 22000;
 
 // ===== 乱数・ノイズ =====
@@ -605,7 +666,7 @@ function createNation(){
   N.push(n); return n;
 }
 const aliveNations = () => N.filter(n => n.alive);
-function capOf(s){ return 70 * s.fert * ERAS[eraIdx].mult * (s.capital ? 1.6 : 1) * (s.wonders ? 1 + .2*s.wonders.length : 1); }
+function capOf(s){ return 70 * s.fert * ERAS[eraIdx].mult * (s.capital ? 1.6 : 1) * (s.wonders ? 1 + .2*s.wonders.length : 1) * pol(s.nation, 'cap'); }
 function stageOf(s){ let st = 0; for (let k = 1; k < POP_ST.length; k++) if (s.pop >= POP_ST[k]) st = k; return Math.min(st, ERAS[eraIdx].maxStage); }
 function addSettlement(x, y, nid, pop){
   const s = { id:nextId++, x, y, nation:nid, pop, name:genName(), capital:false, seed:(rnd()*1e9)|0, fert:fertAround(x, y), stage:0, cd:0, alive:true, born:Math.floor(year) };
@@ -741,13 +802,14 @@ function makePeace(w){
   log(`${nm(w.a)}と${nm(w.b)}が講和${res}`, 'peace');
 }
 function considerWars(){
+  if (CFG.peace) return;
   const ef = ERAS[eraIdx].war;
   for (const [key, cnt] of contacts){
     const a = (key / 1000) | 0, b = key % 1000;
     if (!N[a] || !N[b] || !N[a].alive || !N[b].alive || warOf(a, b) || allied(a, b)) continue;
     if ((truce.get(key) || 0) > tick) continue;
     const busy = 1 / (1 + warCount(a) + warCount(b));
-    const p = .006 * ef * (N[a].aggr*spec(a).aggr + N[b].aggr*spec(b).aggr) / 2 * Math.min(2, .5 + cnt/20) * busy;
+    const p = .006 * ef * (N[a].aggr*spec(a).aggr + N[b].aggr*spec(b).aggr) / 2 * Math.min(2, .5 + cnt/20) * busy * (a === myNation || b === myNation ? DIFF.war[CFG.difficulty] : 1);
     if (rnd() < p){ const [x, y] = N[a].pop >= N[b].pop ? [a, b] : [b, a]; if (x !== myNation) declareWar(x, y); }
   }
 }
@@ -792,8 +854,8 @@ function capture(t, nid){
   else if (wasCap){ const c = setCapital(old); if (c) log(`${nm(old)}は首都を${c.name}へ移した`); }
 }
 function assault(a, t){
-  const def = (t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5) * spec(t.nation).def * ((t.weak || 0) > tick ? .45 : 1) * (t.nation === myNation && fortifyUntil > tick ? 1.8 : 1);
-  const atk = a.str * spec(a.nation).atk * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
+  const def = (t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5) * spec(t.nation).def * ((t.weak || 0) > tick ? .45 : 1) * (t.nation === myNation && fortifyUntil > tick ? 1.8 : 1) * pol(t.nation, 'def');
+  const atk = a.str * spec(a.nation).atk * pol(a.nation, 'atk') * (t.nation === myNation && a.nation !== myNation ? DIFF.atk[CFG.difficulty] : 1) * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
   boom(t.x + .5, t.y + .5, 18, warPal()); sfx('boom');
   if (atk > dr){ capture(t, a.nation); t.pop = Math.max(5, t.pop * .65 + a.str * .3); }
   else t.pop = Math.max(3, t.pop - a.str * .4);
@@ -817,7 +879,7 @@ function updateArmies(){
     for (let j = i + 1; j < armies.length; j++){
       const b = armies[j]; if (b.dead || b.nation === a.nation) continue;
       if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1 || !warOf(a.nation, b.nation)) continue;
-      const ra = a.str * spec(a.nation).atk * (.7 + rnd()*.6), rb = b.str * spec(b.nation).atk * (.7 + rnd()*.6);
+      const ra = a.str * spec(a.nation).atk * pol(a.nation, 'atk') * (.7 + rnd()*.6), rb = b.str * spec(b.nation).atk * pol(b.nation, 'atk') * (.7 + rnd()*.6);
       boom((a.x + b.x)/2, (a.y + b.y)/2, 12, warPal());
       if (ra >= rb){ b.dead = true; a.str = Math.max(1, a.str - b.str*.6); } else { a.dead = true; b.str = Math.max(1, b.str - a.str*.6); break; }
     }
@@ -826,15 +888,20 @@ function updateArmies(){
 }
 // ===== 発明・世界の驚異・交易・出来事 =====
 const INVENTIONS = [
-  [-9000, '農業が始まり、麦が育てられるようになった'], [-6000, '土器がつくられるようになった'], [-3500, '車輪が発明された'],
-  [-3200, '文字が発明された'], [-1200, '鉄の道具が広まった'], [-600, 'お金（貨幣）が使われはじめた'], [105, '紙がつくられるようになった'],
-  [1050, '羅針盤が航海に使われはじめた'], [1450, '活版印刷が広まり、本が増えた'], [1608, '望遠鏡が発明された'], [1769, '蒸気機関が改良された'],
-  [1879, '電球が実用化された'], [1903, '飛行機が初めて空を飛んだ'], [1969, '人類が月に降り立った'], [1990, 'インターネットが世界に広まった'],
-  [2045, '核融合発電が実用化された'], [2150, '火星に最初の街が築かれた'], [2250, '恒星間の旅が始まった'],
+  [-9500, '弓矢で狩りをするようになった'], [-9000, '農業が始まり、麦が育てられるようになった'], [-6000, '土器がつくられるようになった'],
+  [-4000, '帆を張った船が海に出た'], [-3500, '車輪が発明された'], [-3200, '文字が発明された'], [-3000, '青銅の道具がつくられた'],
+  [-2500, '暦がつくられ、季節がわかるようになった'], [-1200, '鉄の道具が広まった'], [-600, 'お金（貨幣）が使われはじめた'], [105, '紙がつくられるようになった'],
+  [900, '火薬が発明された'], [1050, '羅針盤が航海に使われはじめた'], [1450, '活版印刷が広まり、本が増えた'], [1608, '望遠鏡が発明された'],
+  [1769, '蒸気機関が改良された'], [1876, '電話が発明された'], [1879, '電球が実用化された'], [1903, '飛行機が初めて空を飛んだ'],
+  [1926, 'テレビ放送が始まった'], [1946, 'コンピューターが生まれた'], [1969, '人類が月に降り立った'], [1990, 'インターネットが世界に広まった'],
+  [2030, '人工知能が人と話すようになった'], [2045, '核融合発電が実用化された'], [2150, '火星に最初の街が築かれた'], [2250, '恒星間の旅が始まった'],
+  [2350, 'ワープ航法で遠い星へ行けるようになった'],
 ];
 const WONDERS = [
   { era:1, name:'ピラミッド' }, { era:2, name:'大聖堂' }, { era:3, name:'大天守閣' },
   { era:4, name:'鉄の塔' }, { era:5, name:'宇宙センター' }, { era:6, name:'宇宙エレベーター' },
+  { era:0, name:'ストーンヘンジ' }, { era:1, name:'万里の長城' }, { era:1, name:'巨大像' }, { era:1, name:'コロッセオ' }, { era:1, name:'大図書館' },
+  { era:2, name:'五重塔' }, { era:3, name:'時計塔' }, { era:4, name:'自由の像' }, { era:5, name:'巨大ダム' }, { era:6, name:'ドーム都市' },
 ];
 let nextInv = 0, wonderBuilt = [], traders = [], firstLaunch = false;
 // ===== 特化国家 =====
@@ -917,7 +984,7 @@ function considerWonders(){
 }
 function spawnTrader(){
   if (traders.length >= 50 || eraIdx < 1 || !S.length) return;
-  const s = pick(S); if (!s.alive || s.stage < 1 || rnd() > spec(s.nation).trade / 2.5) return;
+  const s = pick(S); if (!s.alive || s.stage < 1 || rnd() > spec(s.nation).trade * pol(s.nation, 'trade') / 2.5) return;
   for (let k = 0; k < 8; k++){
     const o = pick(S); if (o === s || !o.alive || (o.nation !== s.nation && !allied(o.nation, s.nation)) || o.stage < 1) continue;
     const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < 6 || d > (eraIdx >= 3 ? 70 : 22)) continue;
@@ -1024,6 +1091,33 @@ function considerBetrayal(){
   }
 }
 
+// ===== 設定・政策・統計 =====
+const CFG_DEF = { borders:true, labels:true, clouds:true, autoRotate:false, lite:false, minimap:true, difficulty:1, peace:false, disFreq:1, eraLock:false, growth:1, maxCities:500, autoSave:false, quiet:false, volume:.8, daySpeed:1, bgm:false };
+const CFG = Object.assign({}, CFG_DEF);
+try { Object.assign(CFG, JSON.parse(localStorage.getItem('chikyu-bunmeiki-cfg') || '{}')); } catch (e) {}
+function saveCfg(){ try { localStorage.setItem('chikyu-bunmeiki-cfg', JSON.stringify(CFG)); } catch (e) {} }
+MAXS = CFG.maxCities;
+const POLICIES = {
+  none:     { name:'なし',     desc:'特別な方針はとらない' },
+  closed:   { name:'鎖国',     desc:'交易をやめ、守りを固める', trade:0, def:1.3 },
+  free:     { name:'自由貿易', desc:'交易が増えて発展するが、守りは少し弱い', trade:1.8, growth:1.15, def:.9 },
+  draft:    { name:'徴兵',     desc:'攻める力が上がるが、人口の伸びは落ちる', atk:1.4, growth:.85 },
+  tax:      { name:'減税',     desc:'人口がよく増えるが、守りは少し弱い', growth:1.25, def:.9 },
+  colony:   { name:'植民',     desc:'新しい街をどんどん開く', expand:2.2 },
+  fortress: { name:'要塞化',   desc:'守りがとても固いが、広がりにくい', def:1.6, expand:.6 },
+  study:    { name:'学問',     desc:'街が大きく育つ（人口の上限が上がる）', cap:1.15 },
+  festival: { name:'祭り',     desc:'人がとても増えるが、攻める力は落ちる', growth:1.4, atk:.8 },
+};
+let myPolicy = 'none', scenarioBoost = 1, worldHist = [], stat = { dis:{}, peace:0, surr:0, cap:0, ren:0 }, eclipseT = 0, tornados = [], fires = [], rainbows = [];
+const pol = (id, k) => id === myNation && myNation >= 0 ? (POLICIES[myPolicy][k] ?? 1) : 1;
+const DIFF = { war:[.35, 1, 1.8], atk:[.7, 1, 1.35] };
+const GROW = [.6, 1, 1.6], DISF = [0, 1, 2.2], DAYS = [.5, 1, 2.5];
+function setPolicy(k){
+  if (!POLICIES[k] || !isMine(myNation)) return;
+  myPolicy = k; cityDirty = true;
+  log(k === 'none' ? `${nm(myNation)}は特別な政策をやめた` : `${nm(myNation)}が「${POLICIES[k].name}」の政策をとった`, 'era');
+}
+const personality = id => { const v = N[id].aggr * spec(id).aggr; return v > 1.5 ? '好戦的' : v > .9 ? 'ふつう' : 'おだやか'; };
 // ===== 天災・実績・記録など =====
 let disaster = 'meteor', volcanoes = [], typhoons = [];
 let achDone = {}, myCaptures = 0, disCount = 0, unified = false;
@@ -1038,8 +1132,15 @@ function doDisaster(x, y){
   else if (disaster === 'plague') plagueAt(x, y);
   else if (disaster === 'typhoon') spawnTyphoon(x, y);
   else if (disaster === 'bless') bless(x, y);
+  else if (disaster === 'tsunami') tsunami(x, y);
+  else if (disaster === 'tornado') spawnTornado(x, y);
+  else if (disaster === 'cold') coldWave(x, y);
+  else if (disaster === 'fire') wildfire(x, y);
+  else if (disaster === 'fish') bigCatch(x, y);
+  else if (disaster === 'gold') goldRush(x, y);
+  stat.dis[disaster] = (stat.dis[disaster] || 0) + 1;
 }
-const DIS_R = { meteor:3.2, quake:7, volcano:2.2, plague:10, typhoon:2.6, bless:6 };
+const DIS_R = { meteor:3.2, quake:7, volcano:2.2, plague:10, typhoon:2.6, bless:6, tsunami:10, tornado:1.3, cold:6, fire:3.5, fish:9, gold:2 };
 function quake(x, y){
   shake = Math.max(shake, .9); sfx('rumble'); markEvent(x, y, 2);
   let hit = 0;
@@ -1083,8 +1184,79 @@ function bless(x, y){
   let hit = 0;
   for (const s of S){ if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y); if (d < 6){ s.pop *= 1.35; hit++; boom(s.x + .5, s.y + .5, 8, ['#ffe08a','#fff2c8','#b6f0a0'], .8); } }
   paintTerrain(x, y, 2.6, T.PLAIN, [T.DESERT, T.WASTE, T.TUNDRA]);
-  markEvent(x, y, 1); sfx('chime');
+  markEvent(x, y, 1); sfx('chime'); rainbows.push({ x:x + .5, y:y + .5, t:0, yaw:rnd()*TAU });
   log(`恵みの雨が${nearestCityName(x, y)}をうるおした`, 'peace');
+}
+function tsunami(x, y){
+  let hit = 0;
+  for (const s of S){ if (!s.alive || !coastal(s.x, s.y)) continue; const d = Math.hypot(s.x - x, s.y - y); if (d < 10){ s.pop *= .45 + d*.04; hit++; boom(s.x + .5, s.y + .5, 12, FLOOD, 1.2); } }
+  waves.push({ x:x + .5, y:y + .5, t:0 }); shake = Math.max(shake, .5); sfx('rumble'); markEvent(x, y, 2);
+  log(`津波が${nearestCityName(x, y)}の海辺をおそった（${hit}の街）`, 'war');
+}
+function spawnTornado(x, y){
+  if (!isLand(terr[y*W + x])){ toast('竜巻は陸地で起こしてください'); return; }
+  tornados.push({ x:x + .5, y:y + .5, a:rnd()*TAU, life:90, hit:new Set(), phase:rnd()*6 });
+  markEvent(x, y, 2); log(`${nearestCityName(x, y)}で竜巻が発生した`, 'war');
+}
+function updateTornados(){
+  for (const t of tornados){
+    t.a += (rnd() - .5)*.5; t.x += Math.cos(t.a)*.18; t.y += Math.sin(t.a)*.14; t.life--;
+    if (!isLand(terr[clamp(Math.floor(t.y), 0, H-1)*W + clamp(Math.floor(t.x), 0, W-1)])) t.life -= 3;
+    for (const s of S){
+      if (!s.alive || t.hit.has(s.id) || Math.hypot(s.x + .5 - t.x, s.y + .5 - t.y) > 1.3) continue;
+      t.hit.add(s.id); boom(s.x + .5, s.y + .5, 10, DUST, 1);
+      if (s.stage === 0){ log(`竜巻が${s.name}のテントを吹き飛ばした`, 'war'); killSettlement(s, '竜巻で消えた'); } else s.pop *= .72;
+    }
+  }
+  tornados = tornados.filter(t => t.life > 0);
+}
+function coldWave(x, y){
+  let hit = 0;
+  for (const s of S){ if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y); if (d < 6){ s.pop *= .65 + d*.04; hit++; boom(s.x + .5, s.y + .5, 8, ['#ffffff','#dff2ff','#bfe2ff'], .6); } }
+  paintTerrain(x, y, 3.5, T.TUNDRA, [T.PLAIN, T.FOREST, T.DESERT]);
+  markEvent(x, y, 1); log(`大寒波が${nearestCityName(x, y)}をこおらせた（${hit}の街）`, 'war');
+}
+function wildfire(x, y){
+  let hit = 0;
+  for (const s of S){ if (!s.alive) continue; if (Math.hypot(s.x - x, s.y - y) < 3.5){ s.pop *= .78; hit++; } }
+  paintTerrain(x, y, 3, T.WASTE, [T.FOREST, T.PLAIN]);
+  fires.push({ x:x + .5, y:y + .5, t:0 }); markEvent(x, y, 2);
+  log(`山火事が${nearestCityName(x, y)}の森を焼いた`, 'war');
+}
+function bigCatch(x, y){
+  let hit = 0;
+  for (const s of S){ if (!s.alive || !coastal(s.x, s.y)) continue; if (Math.hypot(s.x - x, s.y - y) < 9){ s.pop *= 1.25; hit++; boom(s.x + .5, s.y + .5, 8, ['#cfe9ff','#9fd4ff','#ffffff'], .7); } }
+  sfx('chime'); log(hit ? `${nearestCityName(x, y)}の海で大漁がつづいた（${hit}の港町）` : 'あたりに港町がなく、大漁は人知れず終わった', 'peace');
+}
+function goldRush(x, y){
+  let best = null, bd = 1e9; for (const s of S){ if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y); if (d < bd){ bd = d; best = s; } }
+  boom(x + .5, y + .5, 30, ['#ffd36b','#fff2c8','#ffb347'], 1.2); sfx('chime'); markEvent(x, y, 1);
+  if (!best || bd > 8){ log('人のいない土地で金が見つかった'); return; }
+  best.pop *= 1.6; for (let k = 0; k < 3 && S.length < MAXS; k++) tryExpand(best);
+  log(`${best.name}の近くで金が見つかり、人々が押し寄せた（ゴールドラッシュ）`, 'peace');
+}
+let waves = [];
+function runEvent2(){
+  const alive = aliveNations(); if (!alive.length) return;
+  const n = pick(alive), cities = S.filter(s => s.alive && s.nation === n.id); if (!cities.length) return;
+  const r = rnd();
+  if (r < .25){
+    const c = pick(cities); let dry = false;
+    for (let dy = -3; dy <= 3 && !dry; dy++) for (let dx = -3; dx <= 3; dx++){ const xx = c.x + dx, yy = c.y + dy; if (xx >= 0 && yy >= 0 && xx < W && yy < H && terr[yy*W + xx] === T.DESERT){ dry = true; break; } }
+    if (!dry) return;
+    paintTerrain(c.x, c.y, 2.5, T.DESERT, [T.PLAIN]); for (const o of cities) if (Math.hypot(o.x - c.x, o.y - c.y) < 6) o.pop *= .82;
+    log(`日照りが続き、${c.name}のまわりが砂漠になった`, 'war');
+  } else if (r < .5){
+    if (eraIdx < 2 || eraIdx > 3) return;
+    for (const c of cities) c.pop *= 1.15;
+    log(`${nm(n.id)}で学問と芸術が花開いた（ルネサンス）`, 'peace');
+  } else if (r < .75){
+    const c = cities.reduce((a, b) => b.pop > a.pop ? b : a); let k = 0;
+    for (; k < 3 && S.length < MAXS; k++) tryExpand(c);
+    log(`${c.name}から多くの人々が新しい土地へ移り住んだ（大移民）`);
+  } else {
+    eclipseT = 4; log('皆既日食が起き、昼なのに空が暗くなった', 'tech');
+  }
 }
 // 国旗
 const FLAG_COLS = ['#ffffff','#f2c94c','#1f2a44','#c0392b','#2e7d4f','#2b5fa8','#151515'];
@@ -1109,6 +1281,7 @@ function flagSVG(n, w = 18, h = 12){
 // 人口の記録とグラフ
 function recordHistory(){
   nationStats();
+  worldHist.push(Math.round(S.reduce((a, c) => a + (c.alive ? c.pop : 0), 0))); if (worldHist.length > 240) worldHist = worldHist.filter((_, i) => i % 2 === 0);
   for (const n of N){ if (!n.alive) continue; (n.hist = n.hist || []).push(Math.round(n.pop)); if (n.hist.length > 240) n.hist = n.hist.filter((_, i) => i % 2 === 0); }
 }
 function histSVG(n){
@@ -1132,6 +1305,16 @@ const ACH = [
   ['pop', '1億人の地球', '世界の人口が1億人をこえた'],
   ['god', '神の怒り', '天災を10回起こした'],
   ['unify', '世界統一', 'あなたの国だけが残った'],
+  ['quakeA', '大地をゆらす者', '地震を起こした'],
+  ['volcA', '火山の神', '火山を噴火させた'],
+  ['stormA', '嵐を呼ぶ者', '台風か竜巻を起こした'],
+  ['wonder3', '驚異のコレクター', 'あなたの国が驚異を3つ持った'],
+  ['peace3', '平和の使者', 'あなたの国が3回講和した'],
+  ['ally3', '同盟の輪', 'あなたの国の同盟国が3つになった'],
+  ['surr', '無血開城', '戦わずに相手を降伏させた'],
+  ['capital', '遷都', '首都を移した'],
+  ['rename', '名付け親', '国か街の名前を変えた'],
+  ['futurecity', '未来都市の主', 'あなたの国に未来都市が生まれた'],
 ];
 function unlock(k){
   if (achDone[k] !== undefined) return;
@@ -1147,6 +1330,12 @@ function checkAch(){
   if (eraIdx >= 4) unlock('ind');
   if (eraIdx >= 6) unlock('future');
   if (disCount >= 10) unlock('god');
+  if (stat.dis.quake) unlock('quakeA');
+  if (stat.dis.volcano) unlock('volcA');
+  if (stat.dis.typhoon || stat.dis.tornado) unlock('stormA');
+  if (stat.surr) unlock('surr');
+  if (stat.cap) unlock('capital');
+  if (stat.ren) unlock('rename');
   if (S.reduce((a, s) => a + (s.alive ? s.pop : 0), 0) >= 1e8) unlock('pop');
   if (!isMine(myNation)) return;
   nationStats();
@@ -1154,6 +1343,10 @@ function checkAch(){
   if (allyList(myNation).length) unlock('ally');
   if (myCaptures >= 10) unlock('conq');
   if (N[myNation].count >= 100) unlock('big');
+  if (S.reduce((a, s) => a + (s.alive && s.nation === myNation && s.wonders ? s.wonders.length : 0), 0) >= 3) unlock('wonder3');
+  if (stat.peace >= 3) unlock('peace3');
+  if (allyList(myNation).length >= 3) unlock('ally3');
+  if (S.some(s => s.alive && s.nation === myNation && s.stage === 6)) unlock('futurecity');
   if (!unified && N.length > 1 && aliveNations().length === 1){
     unified = true; unlock('unify'); sfx('fanfare');
     log(`${nm(myNation)}が世界を統一した！`, 'era');
@@ -1166,6 +1359,7 @@ function moveCapital(s){
   if (old) old.capital = false;
   s.capital = true; n.capital = s.id; terrDirty = true; cityDirty = true; linesDirty = true;
   log(`${nm(n.id)}は首都を${s.name}へ移した`);
+  if (n.id === myNation) stat.cap++;
 }
 let renaming = null;
 const cleanName = v => v.replace(/[<>&"'`\\]/g, '').trim().slice(0, 10);
@@ -1175,7 +1369,7 @@ function saveRename(){
   const [k, id] = renaming.split(':');
   if (k === 'n'){ const n = N[+id]; if (n){ const old = nm(n.id); n.base = v; log(`${old}は国の名前を${nm(n.id)}に改めた`); } }
   else { const c = sById.get(+id); if (c){ log(`${c.name}は${v}と名前を改めた`); c.name = v; } }
-  renaming = null; updateUI(true);
+  stat.ren++; renaming = null; updateUI(true);
 }
 const renBox = v => `<div class="ren"><label for="renIn">新しい名前（10文字まで）</label><div class="ren-row"><input id="renIn" type="text" maxlength="10" value="${v}" autocomplete="off"><button class="btn peaceb" type="button" data-rensave="1">決定</button><button class="btn" type="button" data-rencancel="1">やめる</button></div></div>`;
 function demandSurrender(id){
@@ -1197,12 +1391,26 @@ function demandSurrender(id){
     if (w){ wars.splice(wars.indexOf(w), 1); truce.set(pairKey(myNation, id), tick + 900); }
     log(`${nm(id)}が降伏し、${k}の街を明け渡した`, 'peace');
   }
-  myCaptures += 1; terrDirty = true; cityDirty = true; sfx('fanfare');
+  myCaptures += 1; stat.surr++; terrDirty = true; cityDirty = true; sfx('fanfare');
   const c = sById.get(N[myNation].capital); if (c) markEvent(c.x, c.y, 1);
 }
+// BGM：時代ごとの和音をゆっくり鳴らす
+const BGM_CHORDS = [[110, 165, 220], [98, 147, 196], [131, 165, 196], [117, 147, 175], [110, 139, 165], [131, 165, 247], [147, 220, 277]];
+let bgmNodes = null, bgmTimer = 0;
+function startBgm(){
+  if (!audio() || bgmNodes) return;
+  const g = actx.createGain(), f = actx.createBiquadFilter(); g.gain.value = .0001; f.type = 'lowpass'; f.frequency.value = 900;
+  f.connect(g); g.connect(master);
+  const osc = [0, 1, 2].map(() => { const o = actx.createOscillator(); o.type = 'sine'; o.connect(f); o.start(); return o; });
+  bgmNodes = { g, osc }; g.gain.exponentialRampToValueAtTime(.05, actx.currentTime + 2);
+  const play = () => { if (!bgmNodes) return; const ch = BGM_CHORDS[eraIdx], t = actx.currentTime, sh = [1, 1.122, .891][Math.floor(rnd()*3)]; bgmNodes.osc.forEach((o, i) => o.frequency.setTargetAtTime(ch[i]*sh, t, 1.5)); };
+  play(); bgmTimer = setInterval(play, 8000);
+}
+function stopBgm(){ if (!bgmNodes) return; const n = bgmNodes; bgmNodes = null; clearInterval(bgmTimer); n.g.gain.setTargetAtTime(.0001, actx.currentTime, .5); setTimeout(() => n.osc.forEach(o => o.stop()), 1500); }
 // 効果音（WebAudioで合成）
 let soundOn = false, actx = null, lastBoomS = 0, noiseB = null;
-function audio(){ if (!actx){ try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; } } return actx; }
+let master = null;
+function audio(){ if (!actx){ try { actx = new (window.AudioContext || window.webkitAudioContext)(); master = actx.createGain(); master.gain.value = CFG.volume; master.connect(actx.destination); } catch (e) { actx = null; } } return actx; }
 function sfx(kind, vol = 1){
   if (!soundOn || !actx || actx.state !== 'running') return;
   const t0 = actx.currentTime;
@@ -1214,7 +1422,7 @@ function sfx(kind, vol = 1){
     src.buffer = noiseB; f.type = 'lowpass';
     f.frequency.setValueAtTime(kind === 'rumble' ? 140 : kind === 'big' ? 700 : 900, t0); f.frequency.exponentialRampToValueAtTime(50, t0 + dur);
     g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime((kind === 'boom' ? .12 : .45)*vol, t0 + .03); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
-    src.connect(f); f.connect(g); g.connect(actx.destination); src.start(t0); src.stop(t0 + dur);
+    src.connect(f); f.connect(g); g.connect(master); src.start(t0); src.stop(t0 + dur);
     return;
   }
   const notes = kind === 'fanfare' ? [523, 659, 784, 1047] : kind === 'chime' ? [880, 1319] : kind === 'siren' ? [620, 880, 620, 880] : [440];
@@ -1223,7 +1431,7 @@ function sfx(kind, vol = 1){
     const o = actx.createOscillator(), g = actx.createGain(), t = t0 + i*st;
     o.type = kind === 'siren' ? 'sawtooth' : 'triangle'; o.frequency.setValueAtTime(fq, t);
     g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime((kind === 'siren' ? .05 : .12)*vol, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + st*1.9);
-    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + st*2);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t + st*2);
   });
 }
 
@@ -1338,18 +1546,20 @@ function advanceEra(){
 function step(){
   tick++;
   if (!S.length) return;
-  year += ERAS[eraIdx].rate;
-  if (eraIdx < ERAS.length - 1 && year >= ERAS[eraIdx + 1].start) advanceEra();
+  if (!CFG.eraLock){
+    year += ERAS[eraIdx].rate;
+    if (eraIdx < ERAS.length - 1 && year >= ERAS[eraIdx + 1].start) advanceEra();
+  }
   const n0 = S.length;
   for (let k = 0; k < n0; k++){
     const s = S[k]; if (!s.alive) continue;
     const cap = capOf(s);
     const sp = spec(s.nation);
-    s.pop += .015 * sp.growth * s.pop * (1 - s.pop / cap) + .02;
+    s.pop += .015 * sp.growth * pol(s.nation, 'growth') * GROW[CFG.growth] * scenarioBoost * s.pop * (1 - s.pop / cap) + .02;
     if (s.pop < 1) s.pop = 1;
     const st = stageOf(s);
     if (st !== s.stage){ if (st > s.stage) terrDirty = true; s.stage = st; if (!firstStage[st]){ firstStage[st] = true; log(`${STAGE_FIRST[st]}（${nm(s.nation)}の${s.name}）`, 'era'); } }
-    if (s.pop > cap * .55 && s.pop >= 16 && S.length < MAXS && rnd() < .012 * sp.expand) tryExpand(s);
+    if (s.pop > cap * .55 && s.pop >= 16 && S.length < MAXS && rnd() < .012 * sp.expand * pol(s.nation, 'expand') * scenarioBoost) tryExpand(s);
   }
   if (terrDirty || tick % 15 === 0) recomputeTerritory();
   if (tick % 10 === 0) considerWars();
@@ -1364,7 +1574,9 @@ function step(){
   if (tick % 4 === 0) spawnTrader();
   updateAir();
   updateTraders();
-  if (tick % 250 === 0 && rnd() < .55) runEvent();
+  if (tick % 250 === 0 && rnd() < .55 * DISF[CFG.disFreq]) runEvent();
+  if (tick % 330 === 0 && rnd() < .5 * DISF[CFG.disFreq]) runEvent2();
+  updateTornados();
   for (const w of wars.slice()){
     if (!N[w.a].alive || !N[w.b].alive){ wars.splice(wars.indexOf(w), 1); continue; }
     if (tick % 6 === 0) dispatch(w);
@@ -1380,7 +1592,7 @@ const warPal = () => eraIdx >= 6 ? PLASMA : eraIdx >= 4 ? FIRE : DUST;
 let sparks = [];
 function hexRGB(h){ const v = parseInt(h.slice(1), 16); return [(v >> 16 & 255)/255, (v >> 8 & 255)/255, (v & 255)/255]; }
 function addSpark(p, v, n, g, life, size, c, grow){
-  if (sparks.length > 1500) return;
+  if (sparks.length > (CFG.lite ? 500 : 1500)) return;
   sparks.push({ x:p.x, y:p.y, z:p.z, vx:v.x, vy:v.y, vz:v.z, nx:n.x, ny:n.y, nz:n.z, g, life, max:life, size, c, grow });
 }
 function boom(fx, fy, n, pal, power = 1){
@@ -1442,7 +1654,7 @@ function log(text, kind = ''){
   renderLog();
 }
 function renderLog(){
-  logEl.innerHTML = logs.slice(0, 6).map(l => `<div class="k-${l.k}"><span class="y">${fmtYear(l.y)}</span><span>${l.t}</span></div>`).join('');
+  logEl.innerHTML = (CFG.quiet ? logs.filter(l => l.k === 'war' || l.k === 'era' || l.k === 'tech') : logs).slice(0, 6).map(l => `<div class="k-${l.k}"><span class="y">${fmtYear(l.y)}</span><span>${l.t}</span></div>`).join('');
 }
 let bannerT = 0;
 function showBanner(name, sub, msg){
@@ -1575,7 +1787,7 @@ const CITY = { box:pool(GEO.box, 20000), pyr:pool(GEO.pyr, 9000), cone:pool(GEO.
   dome:pool(GEO.dome, 8000, new THREE.MeshPhongMaterial({ color:0xffffff, shininess:80, specular:0x99bbcc })),
   shield:pool(GEO.dome, 600, new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:.22, depthWrite:false })), ring:pool(GEO.ring, 1200, glowMat()), glow:pool(GEO.cyl, 14000, glowMat()),
   sky:pool(GEO.box, 9000, new THREE.MeshLambertMaterial({ color:0xffffff, map:winTex, emissive:0x3a3426, emissiveMap:winTex })) };
-const MOB = { box:pool(GEO.box, 2600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 500), dome:pool(GEO.dome, 400), glow:pool(GEO.box, 1000, glowMat()), pyr:pool(GEO.pyr, 300) };
+const MOB = { box:pool(GEO.box, 3600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 900), dome:pool(GEO.dome, 500), glow:pool(GEO.box, 1100, glowMat()), pyr:pool(GEO.pyr, 300) };
 // 未来の時代：地球をめぐる軌道リングと人工衛星
 const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(R*1.32, .45, 8, 180), new THREE.MeshBasicMaterial({ color:0x7fdcff, transparent:true, opacity:.5 }));
 orbitRing.rotation.x = Math.PI/2 + .38; orbitRing.visible = false; scene.add(orbitRing);
@@ -1592,11 +1804,12 @@ const partCache = new Map(), baseCache = new Map();
 function partsFor(s){
   const st = s.stage, n = N[s.nation];
   const bucket = st === 0 ? Math.min(2, Math.floor(s.pop / 18)) : st === 1 ? Math.min(2, Math.floor(s.pop / 140)) : st === 5 ? Math.min(7, Math.floor(s.pop / 400000)) : st === 6 ? Math.min(6, Math.floor(s.pop / 3e6)) : 0;
-  const key = `${st}|${s.nation}|${bucket}|${(s.wonders || []).join('.')}|${n.spec}|${eraIdx >= 5 ? 2 : eraIdx >= 4 ? 1 : 0}`;
+  const key = `${st}|${s.nation}|${bucket}|${(s.wonders || []).join('.')}|${n.spec}|${eraIdx}`;
   const c = partCache.get(s.id); if (c && c.key === key) return c;
   const Rn = mulberry(s.seed), P = []; let top = .4;
   const add = (g, x, z, y, w, h, d, col, rot = 0, smoke = false) => { P.push({ g, x, z, y, w, h, d, c:col, rot, smoke }); if (y + h > top) top = y + h; };
-  const house = (x, z, k, wall, roof) => { const r = Rn()*3; add('box', x, z, 0, .26*k, .17*k, .22*k, wall, r); add('pyr', x, z, .17*k, .36*k, .17*k, .3*k, roof, r); };
+  const snowy = siteInfo(s).snow && eraIdx <= 4;
+  const house = (x, z, k, wall, roof) => { const r = Rn()*3; add('box', x, z, 0, .26*k, .17*k, .22*k, wall, r); add('pyr', x, z, .17*k, .36*k, .17*k, .3*k, snowy ? '#e9eef3' : roof, r); };
   add('cyl', 0, 0, -.05, SZ[st]*(st >= 4 ? 1.5 : 1.9), .08, SZ[st]*(st >= 4 ? 1.5 : 1.9), n.hexDim);
   if (st === 0){
     const pos = [[0, 0, 1], [-.42, .14, .82], [.4, .2, .82]];
@@ -1605,7 +1818,7 @@ function partsFor(s){
   } else if (st === 1){
     const k = 3 + bucket, hs = [[0, 0, 1.2]];
     for (let i = 0; i < k; i++){ const a = i / k * TAU + Rn()*.6, r = .5 + Rn()*.12; hs.push([Math.cos(a)*r, Math.sin(a)*r, .9]); }
-    for (const h of hs){ const r = Rn()*3; add('box', h[0], h[1], 0, .26*h[2], .16*h[2], .26*h[2], '#8d6b45', r); add('pyr', h[0], h[1], .16*h[2], .36*h[2], .2*h[2], .36*h[2], '#cfa553', r); }
+    for (const h of hs){ const r = Rn()*3; add('box', h[0], h[1], 0, .26*h[2], .16*h[2], .26*h[2], '#8d6b45', r); add('pyr', h[0], h[1], .16*h[2], .36*h[2], .2*h[2], .36*h[2], snowy ? '#e9eef3' : '#cfa553', r); }
   } else if (st === 2){
     for (let i = 0; i < 7; i++){ const a = i / 7 * TAU + Rn()*.5, r = .62 + Rn()*.22; house(Math.cos(a)*r, Math.sin(a)*r, 1, WALLS[Rn()*3|0], ROOFS[Rn()*4|0]); }
     add('box', 0, 0, 0, .55, .26, .38, '#ece2cd'); add('pyr', 0, 0, .26, .72, .16, .5, '#c8b088');
@@ -1646,6 +1859,7 @@ function partsFor(s){
   }
   (s.wonders || []).forEach((wi, slot) => wonderParts(P, s, wi, slot));
   if (st >= 1) specParts(P, s, n);
+  if (st >= 1) sceneryParts(P, s);
   const out = { key, P, top }; partCache.set(s.id, out); return out;
 }
 function baseOf(s){
@@ -1673,9 +1887,70 @@ function wonderParts(P, s, wi, slot){
   } else if (wi === 4){
     A('cyl', 0, 0, 0, 1.3, .06, 1.3, '#9aa1a8', 'pad'); A('cyl', 0, 0, .06, .2, 1.2, .2, '#f2f4f6'); A('cone', 0, 0, 1.26, .2, .32, .2, '#f2f4f6');
     A('box', -.3, 0, .06, .12, 1.5, .12, '#c0503c'); A('box', -.18, 0, 1, .24, .04, .04, '#c0503c');
-  } else {
+  } else if (wi === 5){
     A('dome', 0, 0, 0, 1.2, .7, 1.2, '#bfeaff', 'pad'); A('glow', 0, 0, 0, .09, ELEV_H, .09, '#7fe8ff');
     A('glow', 0, 0, ELEV_H*.3, .3, .08, .3, '#ff7ae0'); A('glow', 0, 0, ELEV_H*.65, .3, .08, .3, '#ff7ae0'); A('box', 0, 0, ELEV_H - .2, .7, .4, .7, '#e8eef2');
+  } else if (wi === 6){
+    for (let k = 0; k < 8; k++){ const a = k / 8 * TAU; A('box', Math.cos(a)*.55, Math.sin(a)*.55, 0, .14, .5, .1, '#9a968e'); if (k % 2 === 0) A('box', Math.cos(a + .39)*.55, Math.sin(a + .39)*.55, .5, .36, .08, .12, '#8c887f'); }
+  } else if (wi === 7){
+    for (let k = 0; k < 9; k++){ const x = k*.36, z = Math.sin(k*.9)*.25; A('box', x, z, 0, .4, .22, .1, '#a39a86'); if (k % 3 === 0) A('box', x, z, 0, .16, .36, .16, '#8f8674'); }
+  } else if (wi === 8){
+    A('box', 0, 0, 0, .5, .3, .5, '#8b8477'); A('cyl', 0, 0, .3, .26, .9, .26, '#b87333'); A('dome', 0, 0, 1.2, .22, .26, .22, '#b87333'); A('box', .16, 0, .95, .08, .45, .08, '#b87333'); A('glow', .16, 0, 1.4, .1, .1, .1, '#ffcf6a');
+  } else if (wi === 9){
+    A('cyl', 0, 0, 0, 1.15, .02, 1.15, '#d8c79a');
+    for (let k = 0; k < 16; k++){ const m = (k + .5) / 16 * TAU; A('box', Math.cos(m)*.62, Math.sin(m)*.62, 0, .26, .42, .12, k % 2 ? '#cbb994' : '#bfae88', Math.atan2(-Math.cos(m), -Math.sin(m))); }
+  } else if (wi === 10){
+    A('box', 0, 0, 0, 1, .12, .62, '#ded6c4'); for (let k = 0; k < 6; k++) A('cyl', -.4 + k*.16, .24, .12, .07, .38, .07, '#efe9db');
+    A('box', 0, 0, .12, .8, .38, .44, '#e6dfcf'); A('pyr', 0, 0, .5, 1.2, .2, .8, '#c9b48a');
+  } else if (wi === 11){
+    A('box', 0, 0, 0, .5, .1, .5, '#8b8477');
+    for (let k = 0; k < 5; k++){ const w = .42 - k*.06, y = .1 + k*.26; A('box', 0, 0, y, w, .14, w, '#7b2e22'); A('pyr', 0, 0, y + .14, w*1.6, .12, w*1.6, '#3b4552'); }
+    A('cyl', 0, 0, 1.4, .03, .4, .03, '#c9a24f');
+  } else if (wi === 12){
+    A('box', 0, 0, 0, .36, 1.5, .36, '#b9a07a'); A('glow', 0, .19, 1.15, .22, .22, .02, '#fff2c8'); A('glow', .19, 0, 1.15, .02, .22, .22, '#fff2c8'); A('pyr', 0, 0, 1.5, .52, .5, .52, '#4a5a6a');
+  } else if (wi === 13){
+    A('box', 0, 0, 0, .55, .45, .55, '#a39c8f'); A('cone', 0, 0, .45, .36, .85, .36, '#5fa58f'); A('dome', 0, 0, 1.25, .2, .22, .2, '#5fa58f');
+    A('box', .14, 0, 1.05, .07, .5, .07, '#5fa58f'); A('glow', .14, 0, 1.55, .1, .12, .1, '#ffcf6a');
+  } else if (wi === 14){
+    for (let k = 0; k < 7; k++){ const m = -.9 + k*.3; A('box', Math.cos(m)*.9 - .5, Math.sin(m)*.9, 0, .32, .6, .14, '#b7b9b6', Math.atan2(-Math.cos(m), -Math.sin(m))); }
+    A('box', -.85, 0, 0, .7, .45, 1.2, '#3b78c2');
+  } else {
+    A('dome', 0, 0, 0, 2, 1.3, 2, '#bfeaff'); for (let k = 0; k < 5; k++){ const a = k / 5 * TAU; A('cyl', Math.cos(a)*.4, Math.sin(a)*.4, 0, .16, .7 + k*.08, .16, '#eef3f7'); }
+    A('cyl', 0, 0, 0, .2, 1.1, .2, '#f4f8fb'); A('ring', 0, 0, .7, 2.1, 1, 2.1, '#5fe3ff');
+  }
+}
+// 街のまわりの景色（畑・風車・灯台・桟橋・風力発電）
+function siteInfo(s){
+  if (s.site) return s.site;
+  let sx = 0, sz = 0, c = false;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){
+    const xx = s.x + dx, yy = s.y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+    if (!isLand(terr[yy*W + xx])){ sx += dx; sz += dy; c = true; }
+  }
+  return (s.site = { coast:c, ang:Math.atan2(sz, sx), snow:Math.abs(latOf(s.y)) > 50 });
+}
+function sceneryParts(P, s){
+  const st = s.stage, r0 = SZ[st], si = siteInfo(s), hs = hash2(s.id, 5, 5);
+  const A = (g, x, z, y, w, h, d, c, rot = 0) => P.push({ g, x, z, y, w, h, d, c, rot, smoke:false });
+  if (eraIdx >= 1 && eraIdx <= 4 && st <= 3) for (let k = 0; k < 5; k++){
+    const a = k*1.3 + hs*6, r = r0 + .55 + (k % 2)*.3;
+    if (si.coast && Math.cos(a - si.ang) > .3) continue;
+    A('box', Math.cos(a)*r, Math.sin(a)*r, -.02, .55, .03, .38, si.snow ? '#e3e8ea' : ['#c9b458','#8fae4a','#a7c25a','#d6c17a'][k % 4], a);
+  }
+  if (eraIdx >= 2 && eraIdx <= 4 && st >= 2 && st <= 3 && hs > .45){
+    const a = hs*TAU, x = Math.cos(a)*(r0 + .35), z = Math.sin(a)*(r0 + .35);
+    A('cyl', x, z, 0, .16, .55, .16, '#efe7d6'); A('cone', x, z, .55, .2, .14, .2, '#8a5a3a');
+    A('box', x, z + .1, .6, .7, .05, .02, '#6b4a2e'); A('box', x, z + .1, .27, .05, .7, .02, '#6b4a2e');
+  }
+  if (si.coast && st >= 2 && eraIdx >= 2){
+    const x = Math.cos(si.ang)*(r0 + .2), z = Math.sin(si.ang)*(r0 + .2);
+    A('cyl', x, z, 0, .14, .7, .14, '#f4f1ea'); A('cyl', x, z, .3, .15, .1, .15, '#c0503c'); A('glow', x, z, .7, .1, .1, .1, '#ffe9a0');
+    const a2 = si.ang + .6;
+    for (const o of [-.12, .12]) A('box', Math.cos(a2)*(r0 + .35) - Math.sin(a2)*o, Math.sin(a2)*(r0 + .35) + Math.cos(a2)*o, -.02, .7, .04, .07, '#7a5a3a', -a2);
+  }
+  if (eraIdx >= 5 && st >= 3 && hs < .5) for (let k = 0; k < 2; k++){
+    const a = hs*TAU + k*.5 + 2, x = Math.cos(a)*(r0 + .5), z = Math.sin(a)*(r0 + .5);
+    A('cyl', x, z, 0, .05, 1.1, .05, '#f2f4f6'); A('box', x, z, .8, .03, .6, .03, '#f2f4f6'); A('box', x, z, 1.08, .6, .03, .03, '#f2f4f6');
   }
 }
 function specParts(P, s, n){
@@ -1722,9 +1997,21 @@ function rebuildCities(){
     if (s.capital) capitals.push([b, pc.top]);
   }
   for (const k in CITY) flush(CITY[k]);
+  boats = [];
+  if (eraIdx >= 1) for (const s of S){
+    if (!s.alive || s.stage < 1 || boats.length >= 80) continue;
+    const si = siteInfo(s); if (!si.coast) continue;
+    const bx = s.x + .5 + Math.cos(si.ang)*(SZ[s.stage] + 1.3), by = s.y + .5 + Math.sin(si.ang)*(SZ[s.stage] + 1.3);
+    if (bx < 0 || by < 0 || bx >= W || by >= H || isLand(terr[Math.floor(by)*W + Math.floor(bx)])) continue;
+    boats.push({ x:bx, y:by, ph:hash2(s.id, 8, 8)*TAU });
+  }
   updateCityLights();
   cityDirty = false;
 }
+function partR(pool, base, k, x, y, z, w, h, d, c, rot){
+  _q.setFromAxisAngle(YAX, rot); _p.set(x*U*k, y*U*k, z*U*k); _sc.set(w*U*k, h*U*k, d*U*k); _L.compose(_p, _q, _sc); _W.multiplyMatrices(base, _L); put(MOB[pool], _W, c);
+}
+function basisUp(dir, m){ _up.copy(dir).normalize(); _e.set(0, 1, 0).cross(_up); if (_e.lengthSq() < 1e-6) _e.set(1, 0, 0); _e.normalize(); _s.crossVectors(_e, _up); return m.makeBasis(_e, _up, _s); }
 function part(pool, base, k, x, y, z, w, h, d, c){
   _p.set(x*U*k, y*U*k, z*U*k); _sc.set(w*U*k, h*U*k, d*U*k); _L.compose(_p, IDQ, _sc); _W.multiplyMatrices(base, _L); put(MOB[pool], _W, c);
 }
@@ -1746,18 +2033,24 @@ function rebuildMobiles(time){
       part('glow', _W2, k, 0, hov - .04, 0, .52, .03, .3, '#5fe3ff'); part('glow', _W2, k, .31, hov + .04, 0, .04, .04, .22, '#ff7ae0');
     } else if (water){
       const bob = Math.sin(time*3 + a.phase)*.03;
-      part('box', _W2, k, 0, bob, 0, .72, .14, .26, eraIdx >= 4 ? '#59606a' : '#6b4a2e');
-      if (eraIdx >= 4){ part('box', _W2, k, -.05, .14 + bob, 0, .26, .16, .18, '#8a929c'); part('box', _W2, k, 0, .3 + bob, 0, .06, .12, .06, nc); }
-      else { part('cyl', _W2, k, 0, .14 + bob, 0, .04, .62, .04, '#5a4330'); part('box', _W2, k, .02, .3 + bob, 0, .03, .38, .32, nc); }
+      if (eraIdx >= 4){
+        part('box', _W2, k, 0, bob, 0, 1.0, .13, .26, '#59606a'); part('box', _W2, k, -.05, .13 + bob, 0, .26, .18, .18, '#8a929c'); part('box', _W2, k, -.05, .31 + bob, 0, .06, .14, .06, nc);
+        for (const tx of [.3, -.34]){ part('box', _W2, k, tx, .13 + bob, 0, .14, .07, .14, '#6b737c'); part('box', _W2, k, tx + (tx > 0 ? .12 : -.12), .16 + bob, 0, .2, .03, .03, '#3d434a'); }
+      } else { part('box', _W2, k, 0, bob, 0, .72, .14, .26, '#6b4a2e'); part('cyl', _W2, k, 0, .14 + bob, 0, .04, .62, .04, '#5a4330'); part('box', _W2, k, .02, .3 + bob, 0, .03, .38, .32, nc); }
     } else if (eraIdx >= 5){
       part('box', _W2, k, 0, 0, 0, .6, .1, .38, '#2d2f30'); part('box', _W2, k, 0, .1, 0, .54, .13, .32, nc);
       part('box', _W2, k, -.03, .23, 0, .26, .11, .22, nc); part('box', _W2, k, .26, .26, 0, .34, .04, .05, '#2d2f30');
     } else {
-      const bob = Math.abs(Math.sin(time*9 + a.phase))*.05;
-      part('box', _W2, k, 0, bob, 0, .14, .14, .1, '#3b3026'); part('box', _W2, k, 0, .14 + bob, 0, .2, .24, .14, nc);
-      part('box', _W2, k, 0, .38 + bob, 0, .13, .13, .13, eraIdx >= 2 && eraIdx < 4 ? '#a9aeb4' : '#efcfa2');
+      const bob = Math.abs(Math.sin(time*9 + a.phase))*.05, ride = eraIdx === 2 ? .2 : 0;
+      if (eraIdx === 2){
+        part('box', _W2, k, 0, .12 + bob*.5, 0, .44, .16, .14, '#7a5634'); part('box', _W2, k, .24, .2 + bob*.5, 0, .12, .16, .1, '#7a5634');
+        part('box', _W2, k, .15, 0, 0, .06, .14, .1, '#5a3f28'); part('box', _W2, k, -.15, 0, 0, .06, .14, .1, '#5a3f28');
+      } else part('box', _W2, k, 0, bob, 0, .14, .14, .1, '#3b3026');
+      part('box', _W2, k, 0, .14 + bob + ride, 0, .2, .24, .14, nc);
+      part('box', _W2, k, 0, .38 + bob + ride, 0, .13, .13, .13, eraIdx >= 2 && eraIdx < 4 ? '#a9aeb4' : '#efcfa2');
       if (eraIdx >= 4) part('box', _W2, k, .14, .28 + bob, 0, .36, .04, .04, '#2b2420');
-      else { part('cyl', _W2, k, -.04, bob, .12, .03, .86, .03, '#5a4330'); part('box', _W2, k, .09, .62 + bob, .12, .24, .15, .02, nc); }
+      else { part('cyl', _W2, k, -.04, bob + ride, .12, .03, .86, .03, '#5a4330'); part('box', _W2, k, .09, .62 + bob + ride, .12, .24, .15, .02, nc); }
+      if (eraIdx === 3){ part('box', _W2, k, .36, 0, 0, .22, .08, .16, '#4a3a2c'); part('box', _W2, k, .5, .07, 0, .3, .05, .05, '#2b2b2b'); }
     }
   }
   for (const pl of planes){
@@ -1794,12 +2087,47 @@ function rebuildMobiles(time){
         part('cyl', _W2, k, -.14, .13 + bob, 0, .035, .6, .035, '#5a4330'); part('cyl', _W2, k, .16, .13 + bob, 0, .035, .5, .035, '#5a4330');
         part('box', _W2, k, -.14, .26 + bob, 0, .03, .36, .32, '#f3eee2'); part('box', _W2, k, .16, .24 + bob, 0, .03, .28, .26, '#f3eee2');
       }
+    } else if (eraIdx >= 5){
+      for (const ox of [.25, -.22]){ part('box', _W2, k, ox, 0, 0, .44, .14, .16, '#f4f6f8'); part('box', _W2, k, ox, .05, 0, .45, .03, .17, '#2b5fa8'); }
     } else if (eraIdx >= 4){
-      part('box', _W2, k, .2, 0, 0, .18, .17, .2, N[t.nation].hex); part('box', _W2, k, -.1, 0, 0, .4, .19, .22, '#e8e2d6');
+      part('box', _W2, k, .3, 0, 0, .3, .12, .16, '#2b2b2e'); part('cyl', _W2, k, .38, .12, 0, .06, .12, .06, '#2b2b2e'); part('box', _W2, k, .18, .12, 0, .1, .1, .16, '#2b2b2e');
+      part('box', _W2, k, -.05, 0, 0, .28, .14, .16, '#8a3d32'); part('box', _W2, k, -.38, 0, 0, .28, .14, .16, '#3d5a7a');
+      if (rnd() < .2){ surfPos(t.x, t.y, U*.6, _pa); addSpark(_pa, _tv.set(0, 0, 0), _up.copy(_pa).normalize(), -U*.05, 1.2, U*.12, [.8, .8, .8], true); }
     } else {
       const bob = Math.abs(Math.sin(time*7 + t.phase))*.03;
       part('box', _W2, k, -.06, .03, 0, .34, .12, .22, '#8a6440'); part('pyr', _W2, k, -.06, .15, 0, .38, .14, .26, '#eadfc6');
       part('box', _W2, k, .28, bob, 0, .18, .13, .08, '#7a5a3a'); part('box', _W2, k, .38, .1 + bob, 0, .08, .08, .06, '#7a5a3a');
+    }
+  }
+  for (const b of boats){ frameAt(b.x, b.y, 0, b.ph, _W2); const bob = Math.sin(time*2 + b.ph)*.03; part('box', _W2, .9, 0, bob, 0, .4, .09, .16, '#8a6440'); part('cyl', _W2, .9, 0, .09 + bob, 0, .025, .3, .025, '#5a4330'); part('box', _W2, .9, .03, .14 + bob, 0, .02, .18, .16, '#f3eee2'); }
+  for (const w of whales){ const v = Math.sin(w.t / w.dur * Math.PI); frameAt(w.x, w.y, 0, -w.a, _W2); part('box', _W2, 1, 0, -.2 + v*.22, 0, .7, .16, .24, '#2f3e4f'); part('box', _W2, 1, -.42, -.12 + v*.2, 0, .12, .06, .32, '#2f3e4f'); }
+  for (const b of birds){ frameAt(b.x, b.y, 0, -b.a, _W2); const fl = Math.sin(time*12 + b.x)*.03; for (let i = 0; i < 5; i++) part('box', _W2, 1, -Math.abs(i - 2)*.22, 2.6 + (i % 2 ? fl : -fl), (i - 2)*.2, .1, .02, .14, '#26292d'); }
+  for (const t of tornados){
+    frameAt(t.x, t.y, 0, time*7 + t.phase, _W2);
+    [[.14, 0], [.28, .4], [.45, .8], [.68, 1.2]].forEach(([w, y], i) => partR('cyl', _W2, 1, Math.sin(time*5 + i)*.05, y, 0, w, .42, w, i % 2 ? '#8c8a86' : '#7a7874', time*(3 + i)));
+    if (rnd() < .5){ surfPos(t.x, t.y, U*.2, _pa); addSpark(_pa, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.8).addScaledVector(_up.copy(_pa).normalize(), U*.6), _up, U*.8, .8, U*.12, hexRGB(pick(DUST)), false); }
+  }
+  for (const f of flyers){
+    const t = f.t / f.dur;
+    if (f.kind === 'balloon' || f.kind === 'heli'){
+      if (f.kind === 'balloon') slerpDir(f.a, f.b, t, _pa); else _pa.copy(f.a);
+      basisUp(_pa, _W2);
+      if (f.kind === 'heli'){ const r = 1.6*U, ang = f.t*.7 + f.ph; _pb.set(Math.cos(ang)*r, 0, Math.sin(ang)*r).applyMatrix4(_m.extractRotation(_W2)); _pa.multiplyScalar(R + 2).add(_pb); }
+      else _pa.multiplyScalar(R + f.h + Math.sin(f.t*.5)*.4);
+      _W2.setPosition(_pa);
+      if (f.kind === 'balloon'){ part('cyl', _W2, 1, 0, 0, 0, .5, .3, .5, f.col); part('dome', _W2, 1, 0, .3, 0, .5, .5, .5, f.col); part('box', _W2, 1, 0, -.3, 0, .14, .1, .14, '#7a5634'); }
+      else { part('box', _W2, 1, 0, 0, 0, .42, .16, .16, '#3a4a5a'); part('box', _W2, 1, -.35, .05, 0, .4, .04, .04, '#3a4a5a'); partR('box', _W2, 1, 0, .17, 0, .9, .01, .05, '#1d1f22', time*22); partR('box', _W2, 1, 0, .17, 0, .9, .01, .05, '#1d1f22', time*22 + Math.PI/2); }
+    } else if (f.kind === 'airship'){
+      planePos(f, t, _pa); planePos(f, Math.min(1, t + .01), _pb);
+      _up.copy(_pa).normalize(); _f.copy(_pb).sub(_pa); _f.addScaledVector(_up, -_f.dot(_up)).normalize(); _side.crossVectors(_f, _up);
+      _W2.makeBasis(_f, _up, _side).setPosition(_pa);
+      part('box', _W2, 1, 0, 0, 0, 1.5, .34, .34, '#d9dde2'); part('box', _W2, 1, -.7, .05, 0, .16, .3, .04, '#b0b6bd'); part('box', _W2, 1, 0, -.12, 0, .3, .1, .12, '#6b4a2e');
+    } else if (f.kind === 'ship'){
+      const e = t*t; _pa.copy(f.from).lerp(moon.position, e); _f.copy(moon.position).sub(f.from).normalize();
+      _up.copy(f.from).normalize(); _side.crossVectors(_f, _up).normalize(); _up.crossVectors(_side, _f);
+      _W2.makeBasis(_f, _up, _side).setPosition(_pa);
+      part('box', _W2, 1.4, 0, 0, 0, .7, .2, .2, '#f2f4f6'); part('box', _W2, 1.4, -.05, 0, 0, .3, .04, .6, '#c9d2da'); part('glow', _W2, 1.4, -.42, .03, 0, .12, .12, .14, '#7fe8ff');
+      addSpark(_pa, _tv.set(0, 0, 0), _up, 0, .8, U*.15, [.5, .9, 1], true);
     }
   }
   for (const j of jets){
@@ -1850,7 +2178,7 @@ function buildLines(){
   }
   let g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
-  borderLines = new THREE.LineSegments(g, lineMat); borderLines.frustumCulled = false; scene.add(borderLines);
+  borderLines = new THREE.LineSegments(g, lineMat); borderLines.frustumCulled = false; borderLines.visible = CFG.borders; scene.add(borderLines);
   const rp = [];
   for (let k = 0; k < roadSegs.length; k += 4){
     const [x0, y0, x1, y1] = [roadSegs[k], roadSegs[k+1], roadSegs[k+2], roadSegs[k+3]];
@@ -1938,7 +2266,7 @@ function launchRocket(){
 }
 function updateSky(dt){
   const vis = clamp((camS.alt - 45) / 90, 0, 1) * .7;
-  clouds.material.opacity = vis; clouds.visible = vis > .01;
+  clouds.material.opacity = vis; clouds.visible = vis > .01 && CFG.clouds && !CFG.lite;
   if (speed > 0) clouds.rotation.y += dt * .012;
   moonAng += dt * .015;
   moon.position.set(Math.cos(moonAng)*R*6.5, Math.sin(moonAng*.7)*R*1.4, Math.sin(moonAng)*R*6.5);
@@ -2012,9 +2340,10 @@ const aurMat = new THREE.ShaderMaterial({
   vertexShader:'varying vec2 vUv; varying vec3 vP; void main(){ vUv = uv; vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader:'uniform float time; uniform vec3 sunDir; uniform float on; varying vec2 vUv; varying vec3 vP; void main(){ float night = smoothstep(0.05, -0.3, dot(vP, sunDir)); float wave = 0.55 + 0.45 * sin(vUv.x*55.0 + time*0.9) * sin(vUv.x*21.0 - time*0.4); float fade = smoothstep(0.0, 0.3, vUv.y) * (1.0 - vUv.y); vec3 c = mix(vec3(0.2, 1.0, 0.55), vec3(0.75, 0.35, 1.0), vUv.y); gl_FragColor = vec4(c * night * wave * fade * on * 0.85, 1.0); }'
 });
+const aurMeshes = [];
 for (const sg of [1, -1]){
   const lat = 67*D2R, r = (R + 2)*Math.cos(lat), y = (R + 2)*Math.sin(lat)*sg;
-  scene.add(new THREE.Mesh(new THREE.CylinderGeometry(sg > 0 ? r*.95 : r, sg > 0 ? r : r*.95, 7, 128, 1, true).translate(0, y + 3.5*sg, 0), aurMat));
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(sg > 0 ? r*.95 : r, sg > 0 ? r : r*.95, 7, 128, 1, true).translate(0, y + 3.5*sg, 0), aurMat); aurMeshes.push(m); scene.add(m);
 }
 // 台風と火山の演出
 const tyTex = (() => {
@@ -2053,12 +2382,62 @@ function updateShooters(dt){
   for (const sh of shooters){ sh.t += dt; sh.x += sh.vx*dt; sh.y += sh.vy*dt; }
   shooters = shooters.filter(sh => sh.t < .9);
 }
+// 空と海の生き物・乗り物
+let flyers = [], boats = [], whales = [], birds = [];
+const bigCity = min => { const c = S.filter(s => s.alive && s.stage >= min); return c.length ? pick(c) : null; };
+function spawnAmbient(dt){
+  if (speed <= 0) return;
+  const k = Math.min(speed, 3), cnt = kind => flyers.reduce((a, f) => a + (f.kind === kind ? 1 : 0), 0);
+  if (eraIdx >= 3 && eraIdx <= 5 && cnt('balloon') < 6 && rnd() < .01*k){ const c = bigCity(2); if (c) flyers.push({ kind:'balloon', a:surfPos(c.x + .5, c.y + .5).normalize(), b:surfPos(c.x + .5 + (rnd() - .5)*6, c.y + .5 + (rnd() - .5)*4).normalize(), t:0, dur:20, h:2.5, col:pick(['#e05a4a','#f2c94c','#2b8fd6','#9b59b6']) }); }
+  if (eraIdx === 4 && cnt('airship') < 3 && rnd() < .006*k){ const a = bigCity(3), b = bigCity(3); if (a && b && a !== b){ const d = Math.hypot(a.x - b.x, a.y - b.y); if (d > 6) flyers.push({ kind:'airship', a:surfPos(a.x + .5, a.y + .5).normalize(), b:surfPos(b.x + .5, b.y + .5).normalize(), t:0, dur:clamp(d / 2, 8, 30), h:3.5 }); } }
+  if (eraIdx >= 5 && cnt('heli') < 5 && rnd() < .01*k){ const c = bigCity(4); if (c) flyers.push({ kind:'heli', a:surfPos(c.x + .5, c.y + .5).normalize(), t:0, dur:16, ph:rnd()*6 }); }
+  if (eraIdx >= 6 && cnt('ship') < 2 && rnd() < .004*k){ const c = bigCity(5); if (c) flyers.push({ kind:'ship', from:surfPos(c.x + .5, c.y + .5, .5), t:0, dur:9 }); }
+  for (const f of flyers) f.t += dt * k;
+  flyers = flyers.filter(f => f.t < f.dur);
+  if (birds.length < 4 && S.length && rnd() < .01){ const c = pick(S); if (c.alive) birds.push({ x:c.x + (rnd() - .5)*10, y:c.y + (rnd() - .5)*6, a:rnd()*TAU, t:0, dur:14 }); }
+  for (const b of birds){ b.t += dt; b.x += Math.cos(b.a)*dt*.6; b.y += Math.sin(b.a)*dt*.4; }
+  birds = birds.filter(b => b.t < b.dur && b.y > 1 && b.y < H - 1);
+  if (whales.length < 6 && rnd() < .02) for (let n = 0; n < 10; n++){ const x = Math.floor(rnd()*W), y = Math.floor(10 + rnd()*(H - 25)); if (terr[y*W + x] === T.DEEP){ whales.push({ x:x + .5, y:y + .5, t:0, dur:12, a:rnd()*TAU }); break; } }
+  for (const w of whales){
+    w.t += dt; w.x += Math.cos(w.a)*dt*.08; w.y += Math.sin(w.a)*dt*.06;
+    if (rnd() < .02 && w.t > 3 && w.t < 9){ surfPos(w.x, w.y, U*.15, _pa); _up.copy(_pa).normalize(); for (let n = 0; n < 4; n++) addSpark(_pa, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.2).addScaledVector(_up, U*1.4), _up, U*2, .9, U*.08, [.85, .95, 1], false); }
+  }
+  whales = whales.filter(w => w.t < w.dur);
+}
+// 津波の輪・虹
+const waveGeo = new THREE.TorusGeometry(1, .05, 6, 64).rotateX(Math.PI/2), waveMeshes = new Map();
+const RAINBOW = [0xff4a4a, 0xff9a3d, 0xffe14a, 0x5fd16b, 0x4aa8ff, 0x9b6bff];
+const rainGeos = RAINBOW.map((c, i) => new THREE.TorusGeometry(1 - i*.05, .022, 6, 48, Math.PI)), rainMeshes = new Map();
+function updateWavesRain(dt){
+  for (const w of waves){
+    w.t += dt; let m = waveMeshes.get(w);
+    if (!m){ m = new THREE.Mesh(waveGeo, new THREE.MeshBasicMaterial({ color:0x9fd4ff, transparent:true, depthWrite:false })); m.matrixAutoUpdate = false; m.frustumCulled = false; scene.add(m); waveMeshes.set(w, m); }
+    frameAt(w.x, w.y, .25, 0, m.matrix); m.matrix.scale(_sc.setScalar(U*(1 + w.t*6))); m.material.opacity = clamp(1 - w.t / 2.5, 0, 1);
+  }
+  waves = waves.filter(w => w.t < 2.5);
+  for (const [w, m] of waveMeshes) if (!waves.includes(w)){ scene.remove(m); m.material.dispose(); waveMeshes.delete(w); }
+  for (const r of rainbows){
+    r.t += dt; let g = rainMeshes.get(r);
+    if (!g){ g = new THREE.Group(); g.matrixAutoUpdate = false; RAINBOW.forEach((c, i) => g.add(new THREE.Mesh(rainGeos[i], new THREE.MeshBasicMaterial({ color:c, transparent:true, depthWrite:false })))); scene.add(g); rainMeshes.set(r, g); }
+    frameAt(r.x, r.y, 0, r.yaw, g.matrix); g.matrix.scale(_sc.setScalar(U*3.2));
+    const op = clamp(Math.min(r.t, 8 - r.t) / 1.5, 0, 1) * .7; g.children.forEach(c => { c.material.opacity = op; });
+  }
+  rainbows = rainbows.filter(r => r.t < 8);
+  for (const [r, g] of rainMeshes) if (!rainbows.includes(r)){ scene.remove(g); g.children.forEach(c => c.material.dispose()); rainMeshes.delete(r); }
+  for (const f of fires){
+    f.t += dt; if (f.t > 6) continue;
+    for (let k = 0; k < 2; k++){ const c = surfPos(f.x + (rnd() - .5)*4, f.y + (rnd() - .5)*3, .2), n = c.clone().normalize(); addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.3).addScaledVector(n, U*.9), n, -U*.1, .9, U*.14, hexRGB(pick(['#ff5a1f','#ffb347','#ff2d10'])), false); if (rnd() < .3) addSpark(c, _f.set(0, 0, 0).addScaledVector(n, U*.5), n, -U*.05, 2.5, U*.25, [.3, .28, .27], true); }
+  }
+  fires = fires.filter(f => f.t < 7);
+}
 function clearTransient(){
   for (const m of meteors) scene.remove(m.mesh);
   for (const f of nukeFx) scene.remove(f.g);
   for (const [, m] of tyMeshes) scene.remove(m);
   tyMeshes.clear();
+  for (const [, m] of waveMeshes) scene.remove(m); waveMeshes.clear(); for (const [, g] of rainMeshes) scene.remove(g); rainMeshes.clear();
   armies = []; traders = []; jets = []; missiles = []; sparks = []; planes = []; rockets = []; meteors = []; nukeFx = []; typhoons = []; volcanoes = []; shooters = [];
+  flyers = []; whales = []; birds = []; tornados = []; fires = []; waves = []; rainbows = [];
 }
 // 隕石
 const meteorGeo = new THREE.SphereGeometry(1, 16, 12), meteorMat = new THREE.MeshBasicMaterial({ color:0xfff0c8 });
@@ -2114,7 +2493,7 @@ function rotateBy(dx, dy){
 function zoomBy(f){ camG.alt = clamp(camG.alt * f, ALT_MIN, ALT_MAX); }
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function resize(){
-  dpr = Math.min(2, window.devicePixelRatio || 1); vw = window.innerWidth; vh = window.innerHeight;
+  dpr = CFG.lite ? 1 : Math.min(2, window.devicePixelRatio || 1); vw = window.innerWidth; vh = window.innerHeight;
   renderer.setPixelRatio(dpr); renderer.setSize(vw, vh, false);
   camera.aspect = vw / vh; camera.updateProjectionMatrix();
   ov.width = Math.round(vw*dpr); ov.height = Math.round(vh*dpr);
@@ -2153,7 +2532,7 @@ function drawOverlay(){
   }
   octx.textAlign = 'center'; octx.textBaseline = 'middle'; octx.lineJoin = 'round';
   for (const n of N){
-    if (!n.alive || n.tiles < 6) continue;
+    if (!CFG.labels || !n.alive || n.tiles < 6) continue;
     const v = surfPos(n.cx / n.tiles + .5, n.cy / n.tiles + .5, 1.6*U, _pa), f = facing(v);
     if (f < .12) continue;
     const p = project(v); if (!p || p[0] < -120 || p[0] > vw + 120 || p[1] < -40 || p[1] > vh + 40) continue;
@@ -2167,7 +2546,7 @@ function drawOverlay(){
   octx.globalAlpha = 1;
   const center = _pb.copy(camera.position).normalize().multiplyScalar(R);
   const pptC = pxPerTile(center);
-  if (pptC >= 15){
+  if (pptC >= 15 && CFG.labels){
     octx.font = `700 ${clamp(pptC*.32, 11, 14)}px 'Zen Kaku Gothic New', sans-serif`;
     for (const s of S){
       if (!s.alive || (s.stage < 1 && pptC < 26)) continue;
@@ -2203,10 +2582,14 @@ function frame(now){
   orbitRing.visible = eraIdx >= 6;
   updateSky(dt);
   updateNukes(dt);
-  if (dayNight && speed > 0) sunAng += dt * .05 * Math.min(speed, 3);
+  if (dayNight && speed > 0) sunAng += dt * .05 * Math.min(speed, 3) * DAYS[CFG.daySpeed];
   sunDir.set(Math.cos(sunAng), .22, Math.sin(sunAng)).normalize();
   amb.intensity = dayNight ? .24 : .5; sun.intensity = dayNight ? 1.05 : .9;
   lightsMat.uniforms.on.value = aurMat.uniforms.on.value = dayNight ? 1 : 0; aurMat.uniforms.time.value = time;
+  if (eclipseT > 0){ eclipseT -= dt; const e = Math.sin(clamp(eclipseT / 4, 0, 1)*Math.PI); sun.intensity *= 1 - e*.8; amb.intensity *= 1 - e*.5; }
+  aurMeshes.forEach(m => { m.visible = !CFG.lite; });
+  if (CFG.autoRotate && performance.now() - lastInput > 8000) camG.lon = wrapLon(camG.lon + dt*3);
+  spawnAmbient(dt); updateWavesRain(dt);
   updateDisasterFx(dt, time); updateShooters(dt);
   if (liveCam && lastEvt && !lastEvt.shown && now - lastFocusT > 3500){ focusOn(lastEvt.x, lastEvt.y, 55); lastEvt.shown = true; lastFocusT = now; }
   if (speed > 0){
@@ -2274,6 +2657,133 @@ const hudEl = document.querySelector('.hud');
 function setHud(){ document.documentElement.style.setProperty('--hud-h', Math.round(hudEl.getBoundingClientRect().bottom) + 'px'); }
 try { new ResizeObserver(setHud).observe(hudEl); } catch (e) { window.addEventListener('resize', setHud); }
 setHud();
+// ===== 100の追加要素：画面と設定 =====
+let lastInput = performance.now(), showAllNat = false;
+const POL_KEYS = Object.keys(POLICIES);
+$('policySel').innerHTML = POL_KEYS.map(k => `<option value="${k}">${POLICIES[k].name}</option>`).join('');
+$('policySel').addEventListener('change', e => { setPolicy(e.target.value); toast(POLICIES[e.target.value].desc); });
+$('zoomIn').addEventListener('click', () => zoomBy(.7));
+$('zoomOut').addEventListener('click', () => zoomBy(1.4));
+// ミニマップ
+const mini = $('mini'), mctx = mini.getContext('2d');
+function drawMini(){
+  if (!CFG.minimap || innerWidth <= 760) return;
+  mctx.imageSmoothingEnabled = true; mctx.drawImage(tcv, 0, 0, 400, 200);
+  mctx.imageSmoothingEnabled = false; mctx.globalAlpha = .9; mctx.drawImage(terCv, 0, 0, 400, 200); mctx.globalAlpha = 1;
+  const fx = (camS.lon + 180) / 360 * 400, fy = (LAT0 - camS.lat) / (LAT0 - LAT1) * 200;
+  mctx.strokeStyle = '#fff'; mctx.lineWidth = 3; mctx.beginPath(); mctx.arc(fx, fy, clamp(camS.alt / 6, 6, 40), 0, TAU); mctx.stroke();
+  if (isMine(myNation)){ const c = sById.get(N[myNation].capital); if (c){ mctx.fillStyle = '#ffd36b'; mctx.beginPath(); mctx.arc((c.x + .5) / W * 400, (c.y + .5) / H * 200, 5, 0, TAU); mctx.fill(); } }
+}
+mini.addEventListener('click', e => {
+  const r = mini.getBoundingClientRect(), fx = (e.clientX - r.left) / r.width * W, fy = (e.clientY - r.top) / r.height * H;
+  const [la, lo] = llOfTile(fx, fy); camG.lat = clamp(la, -70, 78); camG.lon = lo; lastInput = performance.now();
+});
+function applyCfg(k){
+  if (k === 'borders' && borderLines) borderLines.visible = CFG.borders;
+  if (k === 'minimap' || k === 'all') document.body.classList.toggle('has-mini', CFG.minimap);
+  if (k === 'lite') resize();
+  if (k === 'maxCities' || k === 'all') MAXS = CFG.maxCities;
+  if (k === 'volume' && master) master.gain.value = CFG.volume;
+  if (k === 'bgm'){ if (CFG.bgm){ soundOn = true; syncOpts(); const a = audio(); if (a) a.resume().then(startBgm).catch(() => {}); } else stopBgm(); }
+  if (k === 'quiet') renderLog();
+  saveCfg();
+}
+applyCfg('all');
+// 写真モード
+function setPhoto(on){ document.body.classList.toggle('photo', on); $('photoExit').hidden = !on; if (on) closeMenu(); }
+$('photoExit').addEventListener('click', () => setPhoto(false));
+// 色を変える
+const HUES = [8, 32, 52, 95, 150, 190, 220, 265, 300, 335];
+function recolor(n, hue){
+  const l = 48 + (n.id % 3)*7, rgb = hsl(hue, 70, l), ln = hsl(hue, 85, Math.min(78, l + 16));
+  Object.assign(n, { hue, rgb, css:`rgb(${rgb})`, cssA:`rgba(${rgb},.38)`, line:`rgb(${ln})`, hex:toHex(rgb), hexDim:toHex(hsl(hue, 45, l*.62)), lineRGB:ln.map(v => v/255) });
+  partCache.clear(); terrDirty = true; linesDirty = true; cityDirty = true; $('myFlag').dataset.k = ''; updateUI(true);
+}
+// シナリオ
+function startScenario(kind){
+  const target = kind === 'modern' ? 5 : kind === 'future' ? 6 : 0;
+  eraIdx = target; year = ERAS[target].start;
+  while (nextInv < INVENTIONS.length && INVENTIONS[nextInv][0] <= year) nextInv++;
+  for (let k = 1; k <= ERAS[target].maxStage && k < firstStage.length; k++) firstStage[k] = true;
+  const spots = [[36, -2], [12, 48], [100, 32], [-98, 40], [-60, -12], [135, -25]];
+  spots.forEach(([lo, la], i) => {
+    const p = findHabitableNear(Math.round(lonX(lo)), Math.round(latY(la))); if (!p) return;
+    spawnHumans(p[0], p[1], i > 0);
+    if (i > 0) N[N.length - 1].spec = SPEC_KEYS[i % 3];
+  });
+  scenarioBoost = 8; for (let k = 0; k < 500; k++) step(); scenarioBoost = 1;
+  recomputeTerritory(); cityDirty = true;
+  showBanner(kind === 'rivals' ? '群雄割拠' : ERAS[target].name, fmtYear(year), kind === 'rivals' ? '6つの国が、それぞれの大陸で産声をあげた' : '6つの国がすでに栄えている世界から始まる');
+  log(kind === 'rivals' ? 'シナリオ「群雄割拠」が始まった' : `シナリオ「${ERAS[target].name}の世界」が始まった`, 'era');
+  const c = sById.get(N[myNation].capital); if (c) focusOn(c.x, c.y, 120);
+}
+document.querySelectorAll('[data-scen]').forEach(b => b.addEventListener('click', () => startScenario(b.dataset.scen)));
+// 自動セーブ
+setInterval(() => { if (CFG.autoSave && started){ try { const d = serialize(); d.savedAt = Date.now(); localStorage.setItem('chikyu-bunmeiki-auto', JSON.stringify(d)); } catch (e) {} } }, 60000);
+// グラフ（世界の人口）
+function lineSVG(h, stroke, fill, label){
+  if (h.length < 2) return '<p class="hint" style="margin:0 0 10px">記録がたまると、ここにグラフが出ます。</p>';
+  const w = 260, hh = 64, mx = Math.max(...h) || 1, base = hh - 3, pts = h.map((v, i) => [i / (h.length - 1) * w, base - v / mx * (hh - 10)]);
+  const line = pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '), last = pts[pts.length - 1];
+  return `<svg class="chart" viewBox="0 0 ${w} ${hh}" preserveAspectRatio="none" role="img" aria-label="${label}"><line x1="0" y1="${base}" x2="${w}" y2="${base}" stroke="#2a3a4d" vector-effect="non-scaling-stroke"/><polygon points="0,${base} ${line} ${w},${base}" fill="${fill}" opacity=".25"/><polyline points="${line}" fill="none" stroke="${stroke}" stroke-width="1.8" vector-effect="non-scaling-stroke"/><circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.6" fill="${stroke}"/></svg><div class="chart-cap"><span>${label}</span><span>いちばん多いとき ${fmtPop(mx)}</span></div>`;
+}
+let rankBy = 'pop';
+function menuExtra(tab){
+  nationStats();
+  const alive = aliveNations();
+  if (tab === 'goal'){
+    const mine = isMine(myNation) ? N[myNation] : null;
+    const myW = mine ? S.reduce((a, c) => a + (c.alive && c.nation === myNation && c.wonders ? c.wonders.length : 0), 0) : 0;
+    const wp = S.reduce((a, c) => a + (c.alive ? c.pop : 0), 0);
+    const G = [
+      ['世界統一', 'あなたの国だけが残る', mine ? (N.length > 1 ? 1 - (alive.length - 1) / Math.max(1, N.length - 1) : 0) : 0, mine ? `残りの国 ${alive.length - 1}` : 'あなたの国がありません'],
+      ['1億人の地球', '世界の人口を1億人にする', wp / 1e8, fmtPop(wp)],
+      ['大国', 'あなたの国の街を100にする', mine ? mine.count / 100 : 0, mine ? `${mine.count}の街` : '—'],
+      ['驚異の都', 'あなたの国が驚異を5つ持つ', myW / 5, `${myW}つ`],
+      ['未来へ', '未来の時代までたどりつく', eraIdx / 6, ERAS[eraIdx].name],
+    ];
+    return G.map(([t, d, v, cap]) => `<div class="goal"><b>${t}</b>　<small>${d}</small><div class="gbar"><i style="width:${Math.round(clamp(v, 0, 1)*100)}%"></i></div><small>${clamp(v, 0, 1) >= 1 ? '達成！' : Math.floor(clamp(v, 0, 1)*100) + '%'}・${cap}</small></div>`).join('');
+  }
+  if (tab === 'rank'){
+    const M = [['pop', '人口'], ['tiles', '領土'], ['count', '街の数'], ['won', '驚異']];
+    const won = id => S.reduce((a, c) => a + (c.alive && c.nation === id && c.wonders ? c.wonders.length : 0), 0);
+    const val = n => rankBy === 'won' ? won(n.id) : n[rankBy];
+    const list = alive.slice().sort((a, b) => val(b) - val(a));
+    const fmt = n => rankBy === 'pop' ? fmtPop(n.pop) : rankBy === 'tiles' ? fmtArea(n.tiles) : rankBy === 'count' ? `${n.count}` : `${won(n.id)}`;
+    return lineSVG(worldHist, '#8fd3ff', '#8fd3ff', '世界の人口の移り変わり') + `<div class="chips">${M.map(([k, t]) => `<button class="btn" type="button" data-rank="${k}" aria-pressed="${rankBy === k}">${t}</button>`).join('')}</div>
+      <table class="rank"><thead><tr><th>順位</th><th>国</th><th>${M.find(m => m[0] === rankBy)[1]}</th></tr></thead><tbody>${list.map((n, i) => `<tr><td>${i + 1}</td><td><span class="nmc">${flagSVG(n, 18, 12)}${nm(n.id)}${n.id === myNation ? '<small style="color:var(--peace)">あなた</small>' : ''}</span></td><td>${fmt(n)}</td></tr>`).join('')}</tbody></table>`;
+  }
+  if (tab === 'list'){
+    const won = S.filter(c => c.alive && c.wonders && c.wonders.length);
+    return `<input class="findIn" id="findIn" type="search" placeholder="街の名前でさがす" autocomplete="off"><div id="findRes"></div>
+      <h3>世界の驚異（${won.reduce((a, c) => a + c.wonders.length, 0)}）</h3>${won.length ? won.map(c => `<div class="lrow">${flagSVG(N[c.nation], 18, 12)}<span>★ ${wonderNames(c)} <small>${c.name}・${nm(c.nation)}</small></span><button class="btn" type="button" data-jump="${c.id}">見る</button></div>`).join('') : '<p class="hint">まだ驚異はありません。</p>'}
+      <h3>いまの戦争（${wars.length}）</h3>${wars.length ? wars.map(w => `<div class="lrow">${flagSVG(N[w.a], 18, 12)}<span>${nm(w.a)} 対 ${nm(w.b)} <small>占領した街 ${w.capA}対${w.capB}</small></span>${w.a === myNation || w.b === myNation ? `<button class="btn peaceb" type="button" data-mpeace="${w.a}-${w.b}">講和</button>` : ''}</div>`).join('') : '<p class="hint">いまは戦争がありません。</p>'}`;
+  }
+  if (tab === 'set'){
+    const T = (k, t, d) => `<div class="set"><span>${t}${d ? `<small>${d}</small>` : ''}</span><button class="btn" type="button" data-cfg="${k}" aria-pressed="${!!CFG[k]}">${CFG[k] ? 'オン' : 'オフ'}</button></div>`;
+    const Sel = (k, t, opts, d) => `<div class="set"><span>${t}${d ? `<small>${d}</small>` : ''}</span><select data-cfgsel="${k}">${opts.map(([v, l]) => `<option value="${v}"${CFG[k] == v ? ' selected' : ''}>${l}</option>`).join('')}</select></div>`;
+    return `<h3>表示</h3>${T('borders', '国境線')}${T('labels', '国名と街の名前')}${T('clouds', '雲')}${T('minimap', 'ミニマップ', 'パソコンの画面で左上に出ます')}${T('autoRotate', '自動回転', 'しばらく操作しないと地球がゆっくり回ります')}${T('lite', '軽量モード', '動きが重いときに。画質を下げ、雲やオーロラを消します')}${T('quiet', '通知を減らす', '年代記に戦争・時代・発明だけを出します')}
+      <div class="set"><span>写真モード<small>画面のボタンをすべて隠します（Escで戻ります）</small></span><button class="btn" type="button" data-photo="1">隠す</button></div>
+      <h3>ゲームのルール</h3>${Sel('difficulty', '難易度', [[0, 'やさしい'], [1, 'ふつう'], [2, 'むずかしい']], 'あなたの国が攻められやすさと、敵の強さが変わります')}${T('peace', '平和モード', 'コンピューターの国どうしは戦争を始めません')}${Sel('disFreq', '自然の天災や出来事', [[0, '起きない'], [1, 'ふつう'], [2, '多い']])}${T('eraLock', '時代を進めない', 'オンのあいだは年が進まず、今の時代のままです')}${Sel('growth', '人口の増え方', [[0, 'ゆっくり'], [1, 'ふつう'], [2, 'はやい']])}${Sel('maxCities', '街の数の上限', [[300, '300（軽い）'], [500, '500'], [700, '700（にぎやか）']])}${T('autoSave', '自動セーブ', '1分ごとにこのブラウザへ保存します')}
+      <h3>音と時間</h3><div class="set"><span>効果音の音量</span><input type="range" min="0" max="1" step=".05" value="${CFG.volume}" data-cfgrange="volume" aria-label="効果音の音量"></div>${T('bgm', 'BGM', '時代ごとの和音が静かに流れます')}${Sel('daySpeed', '昼と夜の長さ', [[0, '長い'], [1, 'ふつう'], [2, '短い']])}`;
+  }
+  return '';
+}
+function renderFind(q){
+  const el = $('findRes'); if (!el) return;
+  q = (q || '').trim();
+  if (!q){ el.innerHTML = ''; return; }
+  const hits = S.filter(c => c.alive && c.name.includes(q)).slice(0, 20);
+  el.innerHTML = hits.length ? hits.map(c => `<div class="lrow">${flagSVG(N[c.nation], 18, 12)}<span>${c.name} <small>${STAGE_NAME[c.stage]}・${nm(c.nation)}</small></span><button class="btn" type="button" data-jump="${c.id}">見る</button></div>`).join('') : '<p class="hint">見つかりませんでした。</p>';
+}
+$('menu').addEventListener('input', e => {
+  if (e.target.id === 'findIn') renderFind(e.target.value);
+  else if (e.target.dataset.cfgrange){ CFG[e.target.dataset.cfgrange] = +e.target.value; applyCfg(e.target.dataset.cfgrange); }
+});
+$('menu').addEventListener('change', e => {
+  const k = e.target.dataset.cfgsel; if (!k) return;
+  CFG[k] = +e.target.value; applyCfg(k); renderMenu();
+});
 // メニュー（遊び方・年表・実績・保存）
 let menuTab = 'help', logFilter = 'all', resetArm = false;
 const SAVE_KEY = 'chikyu-bunmeiki-save';
@@ -2303,7 +2813,9 @@ function loadWorld(){
 }
 function openMenu(tab){ if (tab) menuTab = tab; resetArm = false; $('menu').hidden = false; renderMenu(); }
 function closeMenu(){ $('menu').hidden = true; }
+const MTITLE = { help:'遊び方', log:'年表', ach:'実績', goal:'目標', rank:'ランキング', list:'一覧', set:'設定', save:'保存' };
 function renderMenu(){
+  $('mtitle').textContent = MTITLE[menuTab] || 'メニュー';
   document.querySelectorAll('[data-mtab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mtab === menuTab ? 'true' : 'false'));
   const body = $('mbody');
   if (menuTab === 'help') body.innerHTML = HELP_HTML;
@@ -2315,9 +2827,11 @@ function renderMenu(){
   } else if (menuTab === 'ach'){
     const n = ACH.filter(a => achDone[a[0]] !== undefined).length;
     body.innerHTML = `<p class="hint" style="margin:0 0 10px">${ACH.length}個のうち${n}個を達成しました。</p><div class="achs">${ACH.map(a => { const d = achDone[a[0]]; return `<div class="ach${d !== undefined ? ' on' : ''}"><b>${a[1]}</b><span>${a[2]}</span><small>${d !== undefined ? fmtYear(d) + 'に達成' : 'まだ'}</small></div>`; }).join('')}</div>`;
+  } else if (menuTab !== 'save'){
+    body.innerHTML = menuExtra(menuTab);
   } else {
-    const d = readSave();
-    body.innerHTML = `<p class="hint" style="margin:0">今の世界を、この端末のブラウザに1つだけ保存できます。ほかの人や別の端末には届きません。</p>
+    const d = readSave(), ad = (() => { try { const t = localStorage.getItem('chikyu-bunmeiki-auto'); return t ? JSON.parse(t) : null; } catch (e) { return null; } })();
+    body.innerHTML = (ad ? `<div class="acts"><button class="btn" type="button" data-loadauto="1">自動セーブから読み込む（${fmtYear(ad.year)}の世界・${new Date(ad.savedAt).toLocaleString('ja-JP')}）</button></div>` : '') + `<p class="hint" style="margin:0">今の世界を、この端末のブラウザに1つだけ保存できます。ほかの人や別の端末には届きません。</p>
       <div class="acts"><button class="btn peaceb" type="button" data-save="1">今の世界を保存する</button><button class="btn" type="button" data-load="1"${d ? '' : ' disabled'}>${d ? `読み込む（${fmtYear(d.year)}の世界・${new Date(d.savedAt).toLocaleString('ja-JP')}に保存）` : '保存した世界はまだありません'}</button></div>
       <div class="acts"><button class="btn warb" type="button" data-reset="1">${resetArm ? 'もう一度押すと、今の世界は消えて最初からになります' : '新しい世界をはじめる'}</button></div>`;
   }
@@ -2330,6 +2844,12 @@ $('menu').addEventListener('click', e => {
   else if (b.dataset.lf){ logFilter = b.dataset.lf; renderMenu(); }
   else if (b.dataset.save) saveWorld();
   else if (b.dataset.load) loadWorld();
+  else if (b.dataset.loadauto){ try { const t = localStorage.getItem('chikyu-bunmeiki-auto'); if (t){ localStorage.setItem(SAVE_KEY, t); loadWorld(); } } catch (e) { toast('読み込めませんでした'); } }
+  else if (b.dataset.rank){ rankBy = b.dataset.rank; renderMenu(); }
+  else if (b.dataset.cfg){ const k = b.dataset.cfg; CFG[k] = !CFG[k]; applyCfg(k); renderMenu(); }
+  else if (b.dataset.photo) setPhoto(true);
+  else if (b.dataset.jump){ const c = sById.get(+b.dataset.jump); if (c){ closeMenu(); sel = { type:'city', id:c.id }; focusOn(c.x, c.y, 30); openSide(); } }
+  else if (b.dataset.mpeace){ const [a, c] = b.dataset.mpeace.split('-').map(Number); const w = warOf(a, c); if (w){ makePeace(w); stat.peace++; } renderMenu(); }
   else if (b.dataset.reset){ if (resetArm) location.reload(); else { resetArm = true; renderMenu(); } }
 });
 $('nextEra').addEventListener('click', () => {
@@ -2415,6 +2935,7 @@ function openSide(){ if (innerWidth <= 760){ $('side').classList.add('open'); $(
 // ポインター操作：ドラッグで地球を回す、ホイールとピンチで近づく
 const pointers = new Map(); let drag = null, pinch = null;
 cv.addEventListener('pointerdown', e => {
+  lastInput = performance.now();
   cv.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
   if (pointers.size === 2){
@@ -2454,10 +2975,11 @@ cv.addEventListener('pointerup', endPointer);
 cv.addEventListener('pointercancel', e => { pointers.delete(e.pointerId); pinch = null; drag = null; });
 cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hover = null; });
 cv.addEventListener('contextmenu', e => e.preventDefault());
-cv.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * .0015)); }, { passive:false });
+cv.addEventListener('wheel', e => { e.preventDefault(); lastInput = performance.now(); zoomBy(Math.exp(e.deltaY * .0015)); }, { passive:false });
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT'){ if (e.key === 'Enter' && e.target.id === 'renIn') saveRename(); return; }
-  if (e.key === 'Escape'){ closeMenu(); return; }
+  lastInput = performance.now();
+  if (e.key === 'Escape'){ closeMenu(); setPhoto(false); return; }
   if (e.target.closest && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
   if (e.key === ' '){ e.preventDefault(); setSpeed(speed ? 0 : 1); }
   else if (['1', '2', '3', '4'].includes(e.key)) setSpeed([1, 3, 10, 30][+e.key - 1]);
@@ -2513,18 +3035,22 @@ function updateUI(force){
   const alive = aliveNations();
   $('eraName').textContent = ERAS[eraIdx].name;
   $('yearTxt').textContent = fmtYear(year);
+  $('eraFill').style.width = (eraIdx >= ERAS.length - 1 ? 100 : clamp((year - ERAS[eraIdx].start) / (ERAS[eraIdx + 1].start - ERAS[eraIdx].start), 0, 1)*100) + '%';
+  $('pauseTag').hidden = !(speed === 0 && started);
+  drawMini();
+  const ps = $('policySel'); if (document.activeElement !== ps && ps.value !== myPolicy) ps.value = myPolicy;
   $('popTxt').textContent = fmtPop(alive.reduce((a, n) => a + n.pop, 0));
   $('natTxt').textContent = alive.length;
   $('warTxt').textContent = wars.length; $('warTxt').classList.toggle('hot', wars.length > 0);
 
   // 国の一覧
   const list = alive.slice().sort((a, b) => b.pop - a.pop);
-  const top = list.slice(0, 10);
-  const key = myNation + ':' + [...alliances].join('.') + ':' + top.map(n => n.id + n.spec + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx;
+  const top = showAllNat ? list : list.slice(0, 10);
+  const key = myNation + ':' + [...alliances].join('.') + ':' + top.map(n => n.id + n.spec + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx + '|' + showAllNat;
   if (key !== natKey || force){
     natKey = key;
     natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}">${flagSVG(n, 18, 12)}<span class="nm">${nm(n.id)}${n.id === myNation ? '<i class="me">あなた</i>' : ''}${allied(n.id, myNation) ? '<i class="al">同盟</i>' : ''}<i class="spb" style="color:${spec(n.id).color}">${spec(n.id).short}</i>${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
-      + (list.length > 10 ? `<div class="more">ほか${list.length - 10}か国</div>` : '')
+      + (list.length > 10 ? `<button class="linkish more" type="button" data-allnat="1">${showAllNat ? '上位10か国だけ表示する' : `ほか${list.length - 10}か国も表示する`}</button>` : '')
       : '<p class="hint">まだ国はありません。「人類」か「建国」で地球をタップしよう。</p>';
   }
   for (const n of top){ const el = natEl.querySelector(`[data-np="${n.id}"]`); if (el) el.textContent = fmtPop(n.pop); }
@@ -2547,10 +3073,12 @@ function updateUI(force){
       const ws = wars.filter(w => w.a === n.id || w.b === n.id), cap = sById.get(n.capital);
       const others = aliveNations().filter(o => o.id !== n.id && !warOf(n.id, o.id) && !allied(n.id, o.id));
       const allies = allyList(n.id), meOk = isMine(myNation) && n.id !== myNation;
-      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}|${myNation}|${allies.join('.')}|${meOk && allied(n.id, myNation)}|${renaming || (n.hist || []).length}|${n.base}`;
+      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}|${myNation}|${allies.join('.')}|${meOk && allied(n.id, myNation)}|${renaming || (n.hist || []).length}|${n.base}|${n.hue}|${myPolicy}`;
       if (k2 !== infoKey || force) html = `<div class="ihead">${flagSVG(n, 26, 17)}<b>${nm(n.id)}</b>${n.id === myNation ? '<span class="tag me">あなたの国</span>' : ''}${meOk && allied(n.id, myNation) ? '<span class="tag al">同盟国</span>' : ''}${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
-        <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd><dt>特化</dt><dd><b style="color:${spec(n.id).color}">${spec(n.id).name}</b><br><small class="sdesc">${spec(n.id).desc}</small></dd><dt>同盟国</dt><dd>${allies.length ? allies.map(a => `<button class="linkish" type="button" data-nation="${a}">${nm(a)}</button>`).join('、') : 'なし'}</dd></dl>
+        <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd><dt>特化</dt><dd><b style="color:${spec(n.id).color}">${spec(n.id).name}</b><br><small class="sdesc">${spec(n.id).desc}</small></dd><dt>性格</dt><dd>${personality(n.id)}</dd>${n.id === myNation ? `<dt>政策</dt><dd>${POLICIES[myPolicy].name}</dd>` : ''}<dt>同盟国</dt><dd>${allies.length ? allies.map(a => `<button class="linkish" type="button" data-nation="${a}">${nm(a)}</button>`).join('、') : 'なし'}</dd></dl>
         ${histSVG(n)}${renaming === 'n:' + n.id ? renBox(n.base) : ''}
+        ${(() => { const h = logs.filter(l => l.t.includes(n.base)).slice(0, 8); return h.length ? `<details class="nhist"><summary>この国の出来事（${h.length}）</summary><ol>${h.map(l => `<li>${fmtYear(l.y)} ${l.t}</li>`).join('')}</ol></details>` : ''; })()}
+        ${n.id === myNation ? `<div class="acts colors" role="group" aria-label="国の色">${HUES.map(h => `<button type="button" data-recolor="${h}" aria-pressed="${Math.round(n.hue) === h}" title="国の色を変える" style="background:rgb(${hsl(h, 70, 52)})"></button>`).join('')}</div>` : ''}
         <div class="acts specs" role="group" aria-label="国の特化">${SPEC_KEYS.map(k => `<button class="btn" type="button" data-spec="${n.id}-${k}" aria-pressed="${n.spec === k}">${SPECS[k].short}</button>`).join('')}</div>
         ${ws.length ? `<div class="picks" style="margin:0 0 10px;padding-top:0;border-top:0"><p>戦争の相手</p>${ws.map(w => { const o = w.a === n.id ? w.b : w.a; return `<div class="row" style="cursor:default"><span class="sw" style="background:${N[o].css}"></span><span class="nm">${nm(o)}</span><button class="btn peaceb" type="button" data-peace="${w.a}-${w.b}">講和</button></div>`; }).join('')}</div>` : ''}
         <div class="acts"><button class="btn" type="button" data-goto="${n.id}">首都を見る</button>${n.id === myNation && renaming !== 'n:' + n.id ? `<button class="btn" type="button" data-ren="n:${n.id}">国の名前を変える</button>` : ''}${meOk && warOf(n.id, myNation) ? `<button class="btn warb" type="button" data-surr="${n.id}">降伏を迫る</button>` : ''}${n.id === myNation ? '' : `<button class="btn next" type="button" data-mine="${n.id}">この国をあやつる</button>`}${meOk ? (allied(n.id, myNation) ? `<button class="btn warb" type="button" data-unally="${n.id}">同盟を解消する</button>` : warOf(n.id, myNation) ? '' : `<button class="btn peaceb" type="button" data-ally="${n.id}">同盟を申し込む</button>`) : ''}${others.length ? `<button class="btn warb" type="button" data-warpick="1">宣戦布告…</button>` : ''}</div>
@@ -2574,6 +3102,8 @@ document.getElementById('side').addEventListener('click', e => {
   else if (b.dataset.city){ const s = sById.get(+b.dataset.city); if (s){ sel = { type:'city', id:s.id }; focusOn(s.x, s.y); } updateUI(true); }
   else if (b.dataset.goto){ const c = sById.get(N[+b.dataset.goto].capital); if (c) focusOn(c.x, c.y); }
   else if (b.dataset.warpick){ warPick = !warPick; updateUI(true); }
+  else if (b.dataset.allnat){ showAllNat = !showAllNat; updateUI(true); }
+  else if (b.dataset.recolor){ const n = N[myNation]; if (n) recolor(n, +b.dataset.recolor); }
   else if (b.dataset.cap){ const c = sById.get(+b.dataset.cap); if (c && c.nation === myNation) moveCapital(c); updateUI(true); }
   else if (b.dataset.ren){ renaming = b.dataset.ren; updateUI(true); const el = $('renIn'); if (el){ el.focus(); el.select(); } }
   else if (b.dataset.rensave){ saveRename(); }
@@ -2584,12 +3114,12 @@ document.getElementById('side').addEventListener('click', e => {
   else if (b.dataset.war){ const [a, c] = b.dataset.war.split('-').map(Number); declareWar(a, c); warPick = false; updateUI(true); }
   else if (b.dataset.mine){ setMyNation(+b.dataset.mine); }
   else if (b.dataset.spec){ const [id, k] = b.dataset.spec.split('-'); const n = N[+id]; if (n && n.spec !== k){ n.spec = k; cityDirty = true; log(`${nm(n.id)}は${SPECS[k].name}の国になった`, 'era'); } updateUI(true); }
-  else if (b.dataset.peace){ const [a, c] = b.dataset.peace.split('-').map(Number); const w = warOf(a, c); if (w) makePeace(w); updateUI(true); }
+  else if (b.dataset.peace){ const [a, c] = b.dataset.peace.split('-').map(Number); const w = warOf(a, c); if (w){ makePeace(w); if (a === myNation || c === myNation) stat.peace++; } updateUI(true); }
 });
 function focusOn(x, y, alt = 40){ const [la, lo] = llOfTile(x + .5, y + .5); camG.lat = clamp(la - Math.min(6, alt*.05), -70, 78); camG.lon = lo; camG.alt = Math.min(camG.alt, alt); }
 // ===== 保存と復元（ページ更新時に世界を引き継ぐ） =====
 function serialize(){
-  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, myNation, autoArmy, fortifyUntil, fortifyCd, alliances:[...alliances], achDone, myCaptures, disCount, unified, camS:{ ...camS }, camG:{ ...camG } };
+  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, myNation, autoArmy, fortifyUntil, fortifyCd, alliances:[...alliances], achDone, myCaptures, disCount, unified, myPolicy, worldHist, stat, camS:{ ...camS }, camG:{ ...camG } };
 }
 function restore(d){
   if (!d || d.v !== 2 || !d.terr || d.terr.length !== W*H) return;
@@ -2601,6 +3131,7 @@ function restore(d){
   nextInv = d.nextInv || 0; wonderBuilt = d.wonderBuilt || []; firstLaunch = !!d.firstLaunch;
   alliances = new Set(d.alliances || []);
   achDone = d.achDone || {}; myCaptures = d.myCaptures || 0; disCount = d.disCount || 0; unified = !!d.unified;
+  myPolicy = d.myPolicy || 'none'; worldHist = d.worldHist || []; stat = Object.assign({ dis:{}, peace:0, surr:0, cap:0, ren:0 }, d.stat || {});
   myNation = d.myNation ?? -1; autoArmy = d.autoArmy ?? true; fortifyUntil = d.fortifyUntil || 0; fortifyCd = d.fortifyCd || 0;
   Object.assign(camS, d.camS || {}); Object.assign(camG, d.camG || {});
   setSpeed(d.speed ?? 1);
