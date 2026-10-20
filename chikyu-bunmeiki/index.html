@@ -93,7 +93,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 .log div{background:var(--panel);border-radius:6px;padding:5px 10px;font-size:12.5px;line-height:1.45;display:flex;gap:8px;animation:in .35s ease-out}
 .log div:nth-child(1){opacity:1}.log div:nth-child(n+4){opacity:.75}.log div:nth-child(n+6){display:none}
 .log .y{font-family:var(--f-pixel);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
-.log .k-war .y{color:var(--war)}.log .k-peace .y{color:var(--peace)}.log .k-era .y{color:var(--brass)}
+.log .k-war .y{color:var(--war)}.log .k-peace .y{color:var(--peace)}.log .k-era .y{color:var(--brass)}.log .k-tech .y{color:#8fd3ff}
 @keyframes in{from{transform:translateY(6px);opacity:0}to{transform:none}}
 
 .banner{position:absolute;z-index:6;left:50%;top:30%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;padding-inline:16px}
@@ -458,7 +458,7 @@ function createNation(){
   N.push(n); return n;
 }
 const aliveNations = () => N.filter(n => n.alive);
-function capOf(s){ return 70 * s.fert * ERAS[eraIdx].mult * (s.capital ? 1.6 : 1); }
+function capOf(s){ return 70 * s.fert * ERAS[eraIdx].mult * (s.capital ? 1.6 : 1) * (s.wonders ? 1 + .2*s.wonders.length : 1); }
 function stageOf(s){ let st = 0; for (let k = 1; k < POP_ST.length; k++) if (s.pop >= POP_ST[k]) st = k; return Math.min(st, ERAS[eraIdx].maxStage); }
 function addSettlement(x, y, nid, pop){
   const s = { id:nextId++, x, y, nation:nid, pop, name:genName(), capital:false, seed:(rnd()*1e9)|0, fert:fertAround(x, y), stage:0, cd:0, alive:true, born:Math.floor(year) };
@@ -490,6 +490,7 @@ function setCapital(nid){
 }
 function killSettlement(s, why){
   s.alive = false; sById.delete(s.id); terrDirty = true;
+  if (s.wonders && s.wonders.length) log(`${s.name}の${wonderNames(s)}も失われた`, 'war');
   const nid = s.nation;
   if (s.capital){
     s.capital = false;
@@ -628,6 +629,7 @@ function capture(t, nid){
   if (w){ if (w.a === nid) w.capA++; else w.capB++; }
   t.nation = nid; t.capital = false; terrDirty = true;
   log(`${nm(nid)}が${nm(old)}の${t.name}を占領した`, 'war');
+  if (t.wonders && t.wonders.length) log(`${nm(nid)}は${wonderNames(t)}も手に入れた`, 'war');
   if (!S.some(o => o.alive && o.nation === old)) nationDies(old, `${nm(nid)}に滅ぼされた`);
   else if (wasCap){ const c = setCapital(old); if (c) log(`${nm(old)}は首都を${c.name}へ移した`); }
 }
@@ -664,6 +666,82 @@ function updateArmies(){
   }
   armies = armies.filter(a => !a.dead);
 }
+// ===== 発明・世界の驚異・交易・出来事 =====
+const INVENTIONS = [
+  [-9000, '農業が始まり、麦が育てられるようになった'], [-6000, '土器がつくられるようになった'], [-3500, '車輪が発明された'],
+  [-3200, '文字が発明された'], [-1200, '鉄の道具が広まった'], [-600, 'お金（貨幣）が使われはじめた'], [105, '紙がつくられるようになった'],
+  [1050, '羅針盤が航海に使われはじめた'], [1450, '活版印刷が広まり、本が増えた'], [1608, '望遠鏡が発明された'], [1769, '蒸気機関が改良された'],
+  [1879, '電球が実用化された'], [1903, '飛行機が初めて空を飛んだ'], [1969, '人類が月に降り立った'], [1990, 'インターネットが世界に広まった'],
+  [2045, '核融合発電が実用化された'], [2150, '火星に最初の街が築かれた'], [2250, '恒星間の旅が始まった'],
+];
+const WONDERS = [
+  { era:1, name:'ピラミッド' }, { era:2, name:'大聖堂' }, { era:3, name:'大天守閣' },
+  { era:4, name:'鉄の塔' }, { era:5, name:'宇宙センター' }, { era:6, name:'宇宙エレベーター' },
+];
+let nextInv = 0, wonderBuilt = [], traders = [], firstLaunch = false;
+function checkInventions(){
+  while (nextInv < INVENTIONS.length && year >= INVENTIONS[nextInv][0]){ log(INVENTIONS[nextInv][1], 'tech'); nextInv++; }
+}
+const wonderNames = s => (s.wonders || []).map(w => WONDERS[w].name).join('・');
+function considerWonders(){
+  for (let wi = 0; wi < WONDERS.length; wi++){
+    if (wonderBuilt[wi] || eraIdx < WONDERS[wi].era || rnd() > .06) continue;
+    const cand = S.filter(c => c.alive && c.stage >= 1); if (!cand.length) return;
+    const wt = c => c.pop * (c.capital ? 2 : 1) / (1 + 4*(c.wonders ? c.wonders.length : 0));
+    let r = rnd() * cand.reduce((a, c) => a + wt(c), 0), c = cand[0];
+    for (const x of cand){ r -= wt(x); if (r <= 0){ c = x; break; } }
+    (c.wonders = c.wonders || []).push(wi); wonderBuilt[wi] = true; cityDirty = true;
+    log(`${nm(c.nation)}が${c.name}に${WONDERS[wi].name}を完成させた`, 'era');
+    boom(c.x + .5, c.y + .5, 30, ['#ffe08a','#fff2c8','#ffffff']);
+    return;
+  }
+}
+function spawnTrader(){
+  if (traders.length >= 36 || eraIdx < 1 || !S.length) return;
+  const s = pick(S); if (!s.alive || s.stage < 1) return;
+  for (let k = 0; k < 8; k++){
+    const o = pick(S); if (o === s || !o.alive || o.nation !== s.nation || o.stage < 1) continue;
+    const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < 6 || d > (eraIdx >= 3 ? 70 : 22)) continue;
+    if (eraIdx < 3 && !landPath(s.x, s.y, o.x, o.y, 1)) continue;
+    traders.push({ x:s.x + .5, y:s.y + .5, to:o.id, nation:s.nation, sp:.06 + eraIdx*.03, phase:rnd()*6, hx:1, hy:0 });
+    return;
+  }
+}
+function updateTraders(){
+  for (const t of traders){
+    const o = sById.get(t.to); if (!o || !o.alive || o.nation !== t.nation){ t.dead = true; continue; }
+    const dx = o.x + .5 - t.x, dy = o.y + .5 - t.y, d = Math.hypot(dx, dy);
+    if (d < .5){ o.pop *= 1.01; t.dead = true; continue; }
+    t.x += dx / d * t.sp; t.y += dy / d * t.sp; t.hx = dx / d; t.hy = dy / d;
+  }
+  traders = traders.filter(t => !t.dead);
+}
+const SICK = ['#a8c47a','#7d9a5a','#c9d6a0'], FLOOD = ['#9fd4ff','#5aa8e0','#e8f6ff'];
+function runEvent(){
+  const alive = aliveNations(); if (!alive.length) return;
+  const n = pick(alive), cities = S.filter(s => s.alive && s.nation === n.id); if (!cities.length) return;
+  const r = rnd();
+  if (eraIdx >= 2 && eraIdx <= 3 && r < .3){
+    for (const c of cities){ c.pop *= .72; boom(c.x + .5, c.y + .5, 4, SICK, .6); }
+    log(`黒死病が${nm(n.id)}で流行し、人口が大きく減った`, 'war');
+  } else if (r < .5){
+    for (const c of cities) c.pop *= 1.12;
+    log(eraIdx >= 4 ? `${nm(n.id)}が好景気にわいている` : `${nm(n.id)}が大豊作にめぐまれた`, 'peace');
+  } else if (r < .7){
+    const c = pick(cities);
+    for (const o of S) if (o.alive && Math.hypot(o.x - c.x, o.y - c.y) < 5) o.pop *= .65;
+    boom(c.x + .5, c.y + .5, 40, DUST, 1.6); shake = Math.max(shake, .35);
+    log(`大地震が${c.name}を襲った`, 'war');
+  } else if (r < .85){
+    const cc = cities.filter(c => coastal(c.x, c.y)); if (!cc.length) return;
+    const c = pick(cc); c.pop *= .7; boom(c.x + .5, c.y + .5, 30, FLOOD, 1.2);
+    log(`大きな嵐と洪水が${c.name}を襲った`, 'war');
+  } else if (eraIdx >= 4){
+    for (const c of S) if (c.alive) c.pop *= .93;
+    log(eraIdx >= 6 ? '巨大な太陽フレアで世界中の機械が止まった' : '世界的な流行病が広がった', 'war');
+  }
+}
+
 // ===== 時代 =====
 function advanceEra(){
   if (eraIdx >= ERAS.length - 1) return;
@@ -693,6 +771,11 @@ function step(){
   }
   if (terrDirty || tick % 15 === 0) recomputeTerritory();
   if (tick % 10 === 0) considerWars();
+  checkInventions();
+  if (tick % 20 === 0) considerWonders();
+  if (tick % 8 === 0) spawnTrader();
+  updateTraders();
+  if (tick % 250 === 0 && rnd() < .55) runEvent();
   for (const w of wars.slice()){
     if (!N[w.a].alive || !N[w.b].alive){ wars.splice(wars.indexOf(w), 1); continue; }
     if (tick % 6 === 0) dispatch(w);
@@ -899,7 +982,7 @@ const glowMat = () => new THREE.MeshBasicMaterial({ color:0xffffff });
 const CITY = { box:pool(GEO.box, 20000), pyr:pool(GEO.pyr, 9000), cone:pool(GEO.cone, 4000), cyl:pool(GEO.cyl, 9000),
   dome:pool(GEO.dome, 8000, new THREE.MeshPhongMaterial({ color:0xffffff, shininess:80, specular:0x99bbcc })), ring:pool(GEO.ring, 1200, glowMat()), glow:pool(GEO.cyl, 14000, glowMat()),
   sky:pool(GEO.box, 9000, new THREE.MeshLambertMaterial({ color:0xffffff, map:winTex, emissive:0x3a3426, emissiveMap:winTex })) };
-const MOB = { box:pool(GEO.box, 1600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 400), dome:pool(GEO.dome, 400), glow:pool(GEO.box, 900, glowMat()) };
+const MOB = { box:pool(GEO.box, 2600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 500), dome:pool(GEO.dome, 400), glow:pool(GEO.box, 1000, glowMat()), pyr:pool(GEO.pyr, 300) };
 // 未来の時代：地球をめぐる軌道リングと人工衛星
 const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(R*1.32, .45, 8, 180), new THREE.MeshBasicMaterial({ color:0x7fdcff, transparent:true, opacity:.5 }));
 orbitRing.rotation.x = Math.PI/2 + .38; orbitRing.visible = false; scene.add(orbitRing);
@@ -916,7 +999,7 @@ const partCache = new Map(), baseCache = new Map();
 function partsFor(s){
   const st = s.stage, n = N[s.nation];
   const bucket = st === 0 ? Math.min(2, Math.floor(s.pop / 18)) : st === 1 ? Math.min(2, Math.floor(s.pop / 140)) : st === 5 ? Math.min(7, Math.floor(s.pop / 400000)) : st === 6 ? Math.min(6, Math.floor(s.pop / 3e6)) : 0;
-  const key = `${st}|${s.nation}|${bucket}`;
+  const key = `${st}|${s.nation}|${bucket}|${(s.wonders || []).join('.')}`;
   const c = partCache.get(s.id); if (c && c.key === key) return c;
   const Rn = mulberry(s.seed), P = []; let top = .4;
   const add = (g, x, z, y, w, h, d, col, rot = 0, smoke = false) => { P.push({ g, x, z, y, w, h, d, c:col, rot, smoke }); if (y + h > top) top = y + h; };
@@ -968,6 +1051,7 @@ function partsFor(s){
     const th = 2.1*sc*1.05;
     add('sky', 0, 0, 0, .28, th, .28, '#a3b9ca'); add('cyl', 0, 0, th, .04, .5, .04, '#cfd6dc'); add('box', 0, 0, th + .5, .07, .07, .07, '#ff4a3a');
   }
+  (s.wonders || []).forEach((wi, slot) => wonderParts(P, s, wi, slot));
   const out = { key, P, top }; partCache.set(s.id, out); return out;
 }
 function baseOf(s){
@@ -977,17 +1061,41 @@ function baseOf(s){
 }
 const _L = new THREE.Matrix4(), _W = new THREE.Matrix4(), _W2 = new THREE.Matrix4(), _q = new THREE.Quaternion(), IDQ = new THREE.Quaternion();
 const _p = new THREE.Vector3(), _sc = new THREE.Vector3(), YAX = new THREE.Vector3(0, 1, 0);
+const ELEV_H = (R*1.32 - R) / U;
+function wonderParts(P, s, wi, slot){
+  const a = slot*1.15 + .5, r = SZ[s.stage] + .6, ox = Math.cos(a)*r, oz = Math.sin(a)*r;
+  const A = (g, x, z, y, w, h, d, c, smoke = false) => P.push({ g, x:ox + x, z:oz + z, y, w, h, d, c, rot:0, smoke });
+  if (wi === 0){ A('pyr', 0, 0, 0, 1.3, .95, 1.3, '#dcc58e'); A('pyr', .78, .55, 0, .6, .45, .6, '#d2bb84'); A('pyr', -.62, .62, 0, .45, .32, .45, '#d2bb84'); }
+  else if (wi === 1){
+    A('box', 0, 0, 0, .45, .5, 1, '#d9d3c5'); A('pyr', 0, 0, .5, .55, .3, 1.15, '#5e6b7c');
+    for (const x of [-.14, .14]){ A('cyl', x, -.56, 0, .2, 1, .2, '#d9d3c5'); A('cone', x, -.56, 1, .22, .45, .22, '#5e6b7c'); }
+  } else if (wi === 2){
+    A('box', 0, 0, 0, 1, .28, 1, '#8b8477');
+    A('box', 0, 0, .28, .75, .26, .65, '#f3f1ea'); A('pyr', 0, 0, .54, 1, .18, .9, '#3b4552');
+    A('box', 0, 0, .72, .55, .24, .48, '#f3f1ea'); A('pyr', 0, 0, .96, .78, .16, .7, '#3b4552');
+    A('box', 0, 0, 1.12, .36, .22, .32, '#f3f1ea'); A('pyr', 0, 0, 1.34, .56, .22, .5, '#3b4552'); A('box', 0, 0, 1.56, .07, .07, .07, '#e8c050');
+  } else if (wi === 3){
+    A('cone', 0, 0, 0, 1, 1.1, 1, '#6e5a46'); A('cyl', 0, 0, .55, .62, .05, .62, '#6e5a46'); A('cone', 0, 0, 1, .36, 1.3, .36, '#6e5a46'); A('cyl', 0, 0, 2.25, .03, .35, .03, '#6e5a46');
+  } else if (wi === 4){
+    A('cyl', 0, 0, 0, 1.3, .06, 1.3, '#9aa1a8', 'pad'); A('cyl', 0, 0, .06, .2, 1.2, .2, '#f2f4f6'); A('cone', 0, 0, 1.26, .2, .32, .2, '#f2f4f6');
+    A('box', -.3, 0, .06, .12, 1.5, .12, '#c0503c'); A('box', -.18, 0, 1, .24, .04, .04, '#c0503c');
+  } else {
+    A('dome', 0, 0, 0, 1.2, .7, 1.2, '#bfeaff', 'pad'); A('glow', 0, 0, 0, .09, ELEV_H, .09, '#7fe8ff');
+    A('glow', 0, 0, ELEV_H*.3, .3, .08, .3, '#ff7ae0'); A('glow', 0, 0, ELEV_H*.65, .3, .08, .3, '#ff7ae0'); A('box', 0, 0, ELEV_H - .2, .7, .4, .7, '#e8eef2');
+  }
+}
 let chimneys = [], capitals = [];
 function rebuildCities(){
   for (const k in CITY) CITY[k].n = 0;
-  chimneys = []; capitals = [];
+  chimneys = []; capitals = []; pads = [];
   for (const s of S){
     if (!s.alive) continue;
     const b = baseOf(s), pc = partsFor(s);
     for (const p of pc.P){
       _q.setFromAxisAngle(YAX, p.rot); _p.set(p.x*U, p.y*U, p.z*U); _sc.set(p.w*U, p.h*U, p.d*U);
       _L.compose(_p, _q, _sc); _W.multiplyMatrices(b, _L); put(CITY[p.g], _W, p.c);
-      if (p.smoke) chimneys.push(new THREE.Vector3(p.x*U, (p.y + p.h)*U, p.z*U).applyMatrix4(b));
+      if (p.smoke === 'pad') pads.push(new THREE.Vector3(p.x*U, (p.y + p.h)*U, p.z*U).applyMatrix4(b));
+      else if (p.smoke) chimneys.push(new THREE.Vector3(p.x*U, (p.y + p.h)*U, p.z*U).applyMatrix4(b));
     }
     if (s.capital) capitals.push([b, pc.top]);
   }
@@ -1045,6 +1153,37 @@ function rebuildMobiles(time){
     const t = time*st.sp + st.ph;
     _W2.makeRotationY(-t).premultiply(st.m); _pa.set(st.r, 0, 0).applyMatrix4(_W2); _W2.setPosition(_pa);
     part('box', _W2, 1, 0, -.3, 0, .5, .6, .5, '#d7dde3'); part('box', _W2, 1, 0, -.04, 0, .3, .08, 2.4, '#3d6fd6'); part('glow', _W2, 1, 0, .3, 0, .08, .08, .08, '#ff7ae0');
+  }
+  for (const t of traders){
+    const water = !isLand(terr[(t.y|0)*W + (t.x|0)]);
+    frameAt(t.x, t.y, 0, Math.atan2(-t.hy, t.hx), _W2);
+    const k = 1.25;
+    if (eraIdx >= 6){
+      const hov = .22 + Math.sin(time*4 + t.phase)*.03;
+      part('box', _W2, k, 0, hov, 0, .6, .16, .3, '#e8eef2'); part('glow', _W2, k, 0, hov - .04, 0, .5, .03, .26, '#5fe3ff');
+    } else if (water){
+      if (eraIdx >= 4){
+        part('box', _W2, k, 0, 0, 0, .95, .12, .26, '#2f3a4a'); part('box', _W2, k, -.36, .12, 0, .14, .16, .2, '#eef0f2');
+        part('box', _W2, k, -.1, .12, 0, .2, .1, .2, '#d0533c'); part('box', _W2, k, .12, .12, 0, .2, .1, .2, '#3a78c2'); part('box', _W2, k, .32, .12, 0, .16, .1, .2, '#e0a83a');
+      } else {
+        const bob = Math.sin(time*3 + t.phase)*.03;
+        part('box', _W2, k, 0, bob, 0, .74, .13, .24, '#7a5634');
+        part('cyl', _W2, k, -.14, .13 + bob, 0, .035, .6, .035, '#5a4330'); part('cyl', _W2, k, .16, .13 + bob, 0, .035, .5, .035, '#5a4330');
+        part('box', _W2, k, -.14, .26 + bob, 0, .03, .36, .32, '#f3eee2'); part('box', _W2, k, .16, .24 + bob, 0, .03, .28, .26, '#f3eee2');
+      }
+    } else if (eraIdx >= 4){
+      part('box', _W2, k, .2, 0, 0, .18, .17, .2, N[t.nation].hex); part('box', _W2, k, -.1, 0, 0, .4, .19, .22, '#e8e2d6');
+    } else {
+      const bob = Math.abs(Math.sin(time*7 + t.phase))*.03;
+      part('box', _W2, k, -.06, .03, 0, .34, .12, .22, '#8a6440'); part('pyr', _W2, k, -.06, .15, 0, .38, .14, .26, '#eadfc6');
+      part('box', _W2, k, .28, bob, 0, .18, .13, .08, '#7a5a3a'); part('box', _W2, k, .38, .1 + bob, 0, .08, .08, .06, '#7a5a3a');
+    }
+  }
+  for (const r of rockets){
+    const h = U*(.3 + r.t*r.t*2.2); _pa.copy(r.p).addScaledVector(r.n, h);
+    _e.set(0, 1, 0).cross(r.n); if (_e.lengthSq() < 1e-6) _e.set(1, 0, 0); _e.normalize(); _s.crossVectors(_e, r.n);
+    _W2.makeBasis(_e, r.n, _s).setPosition(_pa);
+    part('cyl', _W2, 1, 0, 0, 0, .2, 1.1, .2, '#f2f4f6'); part('cone', _W2, 1, 0, 1.1, 0, .2, .32, .2, '#e05a4a'); part('glow', _W2, 1, 0, -.18, 0, .16, .18, .16, '#ffcf6a');
   }
   for (const k in MOB) flush(MOB[k]);
   MARK.n = 0;
@@ -1119,6 +1258,50 @@ const SMOKE = hexRGB('#9a9690');
 function puffChimneys(){
   const k = .035 * Math.min(3, speed);
   for (const c of chimneys) if (rnd() < k){ _up.copy(c).normalize(); _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.15).addScaledVector(_up, U*.35); addSpark(c, _f, _up, -U*.04, 2.2, U*.16, SMOKE, true); }
+}
+// 雲・月・火星・ロケット
+const cloudTex = (() => {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d'), im = g.createImageData(512, 256);
+  for (let y = 0; y < 256; y++) for (let x = 0; x < 512; x++){
+    const t = x / 512, n = fbm(x*.035, y*.05, 91, 5)*(1 - t) + fbm(x*.035 - 512*.035, y*.05, 91, 5)*t;
+    const a = clamp((n - .53) * 5, 0, 1), k = (y*512 + x)*4;
+    im.data[k] = im.data[k+1] = im.data[k+2] = 255; im.data[k+3] = a*235;
+  }
+  g.putImageData(im, 0, 0); return new THREE.CanvasTexture(c);
+})();
+const clouds = new THREE.Mesh(new THREE.SphereGeometry(R + 3.6, 96, 48), new THREE.MeshLambertMaterial({ map:cloudTex, transparent:true, depthWrite:false, opacity:.7 }));
+scene.add(clouds);
+const rockTex = (seed, base, spots) => {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, 256, 128);
+  for (let i = 0; i < 90; i++){ g.fillStyle = spots[i % spots.length]; g.globalAlpha = .35; g.beginPath(); g.arc(hash2(i, 1, seed)*256, hash2(i, 2, seed)*128, 2 + hash2(i, 3, seed)*12, 0, TAU); g.fill(); }
+  g.globalAlpha = 1; return new THREE.CanvasTexture(c);
+};
+const moon = new THREE.Mesh(new THREE.SphereGeometry(R*.27, 48, 24), new THREE.MeshLambertMaterial({ map:rockTex(7, '#b9b7b2', ['#8e8c88','#d4d2cc','#7a7874']) }));
+const mars = new THREE.Mesh(new THREE.SphereGeometry(R*.18, 40, 20), new THREE.MeshLambertMaterial({ map:rockTex(9, '#b5532f', ['#8a3a20','#d27a4a','#e8d0c0']), emissive:0x000000 }));
+scene.add(moon); scene.add(mars); mars.visible = false;
+let moonAng = 1.2, rockets = [], pads = [];
+function launchRocket(){
+  const p = pick(pads); if (!p) return;
+  rockets.push({ p:p.clone(), n:p.clone().normalize(), t:0 });
+  if (!firstLaunch){ firstLaunch = true; log('初めてのロケットが宇宙へ打ち上げられた', 'tech'); }
+}
+function updateSky(dt){
+  const vis = clamp((camS.alt - 45) / 90, 0, 1) * .7;
+  clouds.material.opacity = vis; clouds.visible = vis > .01;
+  if (speed > 0) clouds.rotation.y += dt * .012;
+  moonAng += dt * .015;
+  moon.position.set(Math.cos(moonAng)*R*6.5, Math.sin(moonAng*.7)*R*1.4, Math.sin(moonAng)*R*6.5);
+  mars.visible = year >= 2150; mars.position.set(-R*11, R*3.5, -R*7);
+  mars.material.emissive.setHex(year >= 2150 ? 0x2a1206 : 0);
+  if (speed > 0 && eraIdx >= 5 && pads.length && rockets.length < 3 && rnd() < .004 * Math.min(speed, 3)) launchRocket();
+  for (const r of rockets){
+    r.t += dt;
+    const h = U*(.3 + r.t*r.t*2.2);
+    _pa.copy(r.p).addScaledVector(r.n, h);
+    for (let k = 0; k < 2; k++) addSpark(_pa, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.3), r.n, 0, 1.6, U*(.2 + rnd()*.2), k ? [1, .75, .4] : [.85, .85, .85], true);
+  }
+  rockets = rockets.filter(r => r.t < 7);
 }
 // 隕石
 const meteorGeo = new THREE.SphereGeometry(1, 16, 12), meteorMat = new THREE.MeshBasicMaterial({ color:0xfff0c8 });
@@ -1227,6 +1410,7 @@ function drawOverlay(){
       const p = project(v); if (!p || p[0] < -60 || p[0] > vw + 60 || p[1] < -20 || p[1] > vh + 20) continue;
       octx.lineWidth = 3; octx.strokeStyle = 'rgba(8,12,18,.85)'; octx.strokeText(s.name, p[0], p[1] + 8);
       octx.fillStyle = '#f4efe2'; octx.fillText(s.name, p[0], p[1] + 8);
+      if (s.wonders && s.wonders.length){ const wn = '★ ' + wonderNames(s); octx.strokeText(wn, p[0], p[1] + 25); octx.fillStyle = '#ffd36b'; octx.fillText(wn, p[0], p[1] + 25); }
     }
   }
   if (sel && sel.type === 'city'){ const s = sById.get(sel.id); if (s) strokeRing(ringPts(s.x + .5, s.y + .5, SZ[s.stage] + .35, .15), '#ffd36b', false); }
@@ -1251,6 +1435,7 @@ function frame(now){
   shake = Math.max(0, shake - dt*1.6);
   updateMeteors(dt);
   orbitRing.visible = eraIdx >= 6;
+  updateSky(dt);
   if (speed > 0){
     for (const p of planes) p.t += dt * Math.min(speed, 3);
     planes = planes.filter(p => p.t < p.dur);
@@ -1460,9 +1645,9 @@ function updateUI(force){
     const s = sById.get(sel.id);
     if (!s || !s.alive) sel = null;
     else {
-      k2 = `c${s.id}|${s.nation}|${s.capital}|${s.stage}|${eraIdx}`;
+      k2 = `c${s.id}|${s.nation}|${s.capital}|${s.stage}|${eraIdx}|${(s.wonders || []).length}`;
       if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${N[s.nation].css}"></span><b>${s.name}</b>${s.capital ? '<span class="tag">首都</span>' : ''}</div>
-        <dl><dt>すがた</dt><dd>${STAGE_NAME[s.stage]}</dd><dt>人口</dt><dd data-f="cpop"></dd><dt>国</dt><dd><button class="linkish" type="button" data-nation="${s.nation}">${nm(s.nation)}</button></dd><dt>地形</dt><dd>${TNAME[terr[s.y*W + s.x]]}</dd><dt>創設</dt><dd>${fmtYear(s.born)}</dd></dl>`;
+        <dl><dt>すがた</dt><dd>${STAGE_NAME[s.stage]}</dd><dt>人口</dt><dd data-f="cpop"></dd><dt>国</dt><dd><button class="linkish" type="button" data-nation="${s.nation}">${nm(s.nation)}</button></dd><dt>地形</dt><dd>${TNAME[terr[s.y*W + s.x]]}</dd><dt>創設</dt><dd>${fmtYear(s.born)}</dd>${s.wonders && s.wonders.length ? `<dt>驚異</dt><dd>${wonderNames(s)}</dd>` : ''}</dl>`;
     }
   }
   if (sel && sel.type === 'nation'){
@@ -1502,7 +1687,7 @@ document.getElementById('side').addEventListener('click', e => {
 function focusOn(x, y, alt = 40){ const [la, lo] = llOfTile(x + .5, y + .5); camG.lat = clamp(la - Math.min(6, alt*.05), -70, 78); camG.lon = lo; camG.alt = Math.min(camG.alt, alt); }
 // ===== 保存と復元（ページ更新時に世界を引き継ぐ） =====
 function serialize(){
-  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, camS:{ ...camS }, camG:{ ...camG } };
+  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, camS:{ ...camS }, camG:{ ...camG } };
 }
 function restore(d){
   if (!d || d.v !== 2 || !d.terr || d.terr.length !== W*H) return;
@@ -1511,6 +1696,7 @@ function restore(d){
   S = d.S; sById = new Map(S.map(s => [s.id, s]));
   wars = d.wars; truce = new Map(d.truce); tick = d.tick; year = d.year; eraIdx = d.eraIdx; nextId = d.nextId;
   logs = d.logs || []; firstStage = d.firstStage || firstStage; started = d.started;
+  nextInv = d.nextInv || 0; wonderBuilt = d.wonderBuilt || []; firstLaunch = !!d.firstLaunch;
   Object.assign(camS, d.camS || {}); Object.assign(camG, d.camG || {});
   setSpeed(d.speed ?? 1);
   if (started) $('intro').hidden = true;
