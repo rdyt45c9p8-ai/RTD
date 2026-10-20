@@ -513,14 +513,8 @@ function tryExpand(s){
     if (!canSettle(x, y, s.nation)) continue;
     if (!overseas && !landPath(s.x, s.y, x, y, 1.5)) continue;
     const moved = Math.max(6, s.pop * .2); s.pop -= moved;
-    let nid = s.nation, newNation = null;
-    const cap = sById.get(N[nid].capital);
-    if (!overseas && cap && Math.hypot(x - cap.x, y - cap.y) > 28 && rnd() < .3 && aliveNations().length < MAXN){
-      newNation = createNation(); nid = newNation.id;
-    }
-    const ns = addSettlement(x, y, nid, moved);
-    if (newNation){ ns.capital = true; newNation.capital = ns.id; log(`${nm(s.nation)}から旅立った人々が${nm(nid)}をつくった`); }
-    else if (overseas && tick - lastColonyLog > 400){ lastColonyLog = tick; log(`${nm(nid)}が海を越えて${ns.name}を開いた`); }
+    const nid = s.nation, ns = addSettlement(x, y, nid, moved);
+    if (overseas && tick - lastColonyLog > 400){ lastColonyLog = tick; log(`${nm(nid)}が海を越えて${ns.name}を開いた`); }
     return;
   }
 }
@@ -669,22 +663,6 @@ function updateArmies(){
   }
   armies = armies.filter(a => !a.dead);
 }
-function considerRebellion(){
-  if (eraIdx < 1 || aliveNations().length >= MAXN) return;
-  for (const n of N){
-    if (!n.alive) continue;
-    const mine = S.filter(s => s.alive && s.nation === n.id); if (mine.length < 12 || rnd() > .12) continue;
-    const cap = sById.get(n.capital); if (!cap) continue;
-    const far = mine.filter(s => !s.capital && s.stage >= 1 && Math.hypot(s.x - cap.x, s.y - cap.y) > 16); if (!far.length) continue;
-    const r = pick(far), nn = createNation();
-    for (const s of mine) if (!s.capital && Math.hypot(s.x - r.x, s.y - r.y) < 7) s.nation = nn.id;
-    r.capital = true; nn.capital = r.id; terrDirty = true;
-    log(`${r.name}が${nm(n.id)}から独立し、${nm(nn.id)}が生まれた`, 'war');
-    if (rnd() < .5) declareWar(n.id, nn.id);
-    return;
-  }
-}
-
 // ===== 時代 =====
 function advanceEra(){
   if (eraIdx >= ERAS.length - 1) return;
@@ -720,7 +698,6 @@ function step(){
     if (tick > w.end) makePeace(w);
   }
   updateArmies();
-  if (tick % 60 === 0) considerRebellion();
   if (tick % 30 === 0 && S.some(s => !s.alive)) S = S.filter(s => s.alive);
 }
 
