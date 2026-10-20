@@ -1,0 +1,1354 @@
+<title>地球文明記</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap">
+<style>
+/* Layout: 地図キャンバスを全面に。上に年表示の計器、左に神の道具、右に国の一覧、左下に年代記。スマホでは道具を下へ。 */
+:root{
+  --sea:#0c2638;
+  --panel:rgba(14,22,32,.9);
+  --line:#2a3a4d;
+  --fg:#eee7d5;
+  --muted:#9aa6b6;
+  --brass:#e4b45e;
+  --war:#ec6048;
+  --peace:#78c897;
+  --f-display:'Dela Gothic One','Hiragino Sans','Noto Sans JP',sans-serif;
+  --f-body:'Zen Kaku Gothic New','Hiragino Sans','Noto Sans JP','Yu Gothic',sans-serif;
+  --f-pixel:'DotGothic16','Osaka-Mono',ui-monospace,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--sea);color:var(--fg);font-family:var(--f-body);overflow:hidden;-webkit-user-select:none;user-select:none}
+#app{position:fixed;inset:0;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+#cv.look{cursor:grab}
+
+.plate{background:var(--panel);border:1px solid var(--line);border-radius:10px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+
+.hud{position:absolute;z-index:5;top:calc(env(safe-area-inset-top,0px) + 12px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  left:0;right:0;display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;pointer-events:none}
+.hud>*{pointer-events:auto}
+.brand{padding:7px 14px;display:flex;flex-direction:column;justify-content:center;gap:1px}
+.brand b{font-family:var(--f-display);font-weight:400;font-size:19px;letter-spacing:.06em;line-height:1.1}
+.brand small{color:var(--muted);font-size:11px;letter-spacing:.04em}
+.clock{padding:6px 14px;display:flex;flex-direction:column;justify-content:center;min-width:148px}
+.era{font-family:var(--f-display);font-weight:400;color:var(--brass);font-size:14px;letter-spacing:.08em}
+.year{font-family:var(--f-pixel);font-size:21px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stats{display:flex;gap:18px;padding:7px 16px;align-items:center}
+.stat span{display:block;font-size:11px;color:var(--muted);letter-spacing:.08em}
+.stat b{font-family:var(--f-pixel);font-weight:400;font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.stat b.hot{color:var(--war)}
+.speed{display:flex;gap:4px;padding:6px;align-items:center;margin-left:auto;flex-wrap:wrap}
+.btn{appearance:none;border:1px solid var(--line);background:transparent;color:var(--fg);font:inherit;font-size:13px;padding:6px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;line-height:1.2}
+.btn:hover{border-color:var(--muted)}
+.btn[aria-pressed="true"]{background:var(--brass);border-color:var(--brass);color:#1d1508;font-weight:700}
+.btn.next{color:var(--brass);border-color:rgba(228,180,94,.5)}
+.btn.warb{color:var(--war);border-color:rgba(236,96,72,.55)}
+.btn.peaceb{color:var(--peace);border-color:rgba(120,200,151,.5)}
+.btn:focus-visible,.tool:focus-visible,.row:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.only-m{display:none}
+
+.tools{position:absolute;z-index:5;left:max(16px,env(safe-area-inset-left,0px));top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:2px;padding:6px}
+.tool{appearance:none;display:flex;flex-direction:column;align-items:center;gap:3px;width:60px;padding:7px 2px 6px;border-radius:8px;
+  border:1px solid transparent;background:transparent;color:var(--fg);font:inherit;font-size:11.5px;cursor:pointer;line-height:1.1}
+.tool svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tool:hover{background:rgba(255,255,255,.05)}
+.tool[aria-pressed="true"]{background:rgba(228,180,94,.15);border-color:var(--brass);color:var(--brass)}
+.tools hr{border:0;border-top:1px solid var(--line);margin:3px 6px}
+
+.side{position:absolute;z-index:5;right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 82px);
+  width:292px;max-height:calc(100% - 190px);display:flex;flex-direction:column;gap:8px}
+.side section{padding:12px 14px;overflow:auto;min-height:0}
+.side h2{font-family:var(--f-display);font-weight:400;font-size:13px;letter-spacing:.1em;color:var(--muted);margin:0 0 8px}
+.rows{display:flex;flex-direction:column;gap:2px}
+.row{appearance:none;display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;
+  background:transparent;border:0;border-radius:6px;color:var(--fg);font:inherit;font-size:13px;padding:5px 6px;cursor:pointer}
+.row:hover{background:rgba(255,255,255,.06)}
+.row.sel{background:rgba(228,180,94,.13)}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35)}
+.row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm em{font-style:normal;color:var(--war);font-size:11px;margin-left:5px}
+.row .pp{font-family:var(--f-pixel);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.more{font-size:12px;color:var(--muted);padding:4px 6px}
+.hint{color:var(--muted);font-size:13px;line-height:1.7;margin:0}
+.ihead{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ihead b{font-size:17px}
+.tag{font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--brass);color:var(--brass)}
+.tag.w{border-color:var(--war);color:var(--war)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:0 0 10px;font-size:13px}
+dt{color:var(--muted)}
+dd{margin:0;font-variant-numeric:tabular-nums}
+.acts{display:flex;flex-wrap:wrap;gap:6px}
+.picks{display:flex;flex-direction:column;gap:2px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.picks p{margin:0 0 4px;font-size:12px;color:var(--muted)}
+.linkish{appearance:none;background:none;border:0;padding:0;color:var(--fg);font:inherit;text-decoration:underline;text-decoration-color:var(--muted);cursor:pointer}
+
+.log{position:absolute;z-index:4;left:calc(max(16px,env(safe-area-inset-left,0px)) + 86px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
+  width:min(460px,calc(100% - 420px));display:flex;flex-direction:column;gap:3px;pointer-events:none}
+.log div{background:var(--panel);border-radius:6px;padding:5px 10px;font-size:12.5px;line-height:1.45;display:flex;gap:8px;animation:in .35s ease-out}
+.log div:nth-child(1){opacity:1}.log div:nth-child(n+4){opacity:.75}.log div:nth-child(n+6){display:none}
+.log .y{font-family:var(--f-pixel);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.log .k-war .y{color:var(--war)}.log .k-peace .y{color:var(--peace)}.log .k-era .y{color:var(--brass)}
+@keyframes in{from{transform:translateY(6px);opacity:0}to{transform:none}}
+
+.banner{position:absolute;z-index:6;left:50%;top:30%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;padding-inline:16px}
+.banner.show{animation:ban 3.2s ease-out forwards}
+.banner small{display:block;font-family:var(--f-pixel);font-size:18px;color:var(--fg);letter-spacing:.2em;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+.banner b{display:block;font-family:var(--f-display);font-weight:400;font-size:clamp(42px,9vw,86px);color:var(--brass);letter-spacing:.12em;text-shadow:0 4px 22px rgba(0,0,0,.75),0 0 2px #000;line-height:1.15}
+.banner span{display:block;font-size:15px;text-shadow:0 2px 8px rgba(0,0,0,.9);margin-top:4px}
+@keyframes ban{0%{opacity:0;transform:translate(-50%,-40%)}12%{opacity:1;transform:translate(-50%,-50%)}78%{opacity:1}100%{opacity:0}}
+
+.toast{position:absolute;z-index:7;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 110px);transform:translateX(-50%);
+  background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:8px 18px;font-size:13px;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap}
+.toast.show{opacity:1}
+
+.intro{position:absolute;z-index:8;inset:0;display:grid;place-items:center;background:rgba(6,14,22,.42);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.intro .card{max-width:440px;width:100%;padding:24px 24px 20px}
+.intro h1{font-family:var(--f-display);font-weight:400;font-size:30px;margin:0 0 4px;letter-spacing:.06em;text-wrap:balance}
+.intro .sub{color:var(--muted);margin:0 0 16px;font-size:13.5px;line-height:1.7}
+.intro ol{margin:0 0 18px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.55}
+.intro li{display:grid;grid-template-columns:26px 1fr;gap:6px}
+.intro li span{font-family:var(--f-pixel);color:var(--brass);font-size:16px}
+.intro .acts .btn{padding:9px 14px;font-size:14px}
+.intro .btn.go{background:var(--brass);border-color:var(--brass);color:#1d1508;font-weight:700}
+
+@media (max-width:760px){
+  .brand{display:none}
+  .clock{min-width:0;padding:5px 11px}
+  .year{font-size:17px}
+  .stats{gap:12px;padding:5px 11px}
+  .stat b{font-size:15px}
+  .speed{margin-left:0;width:100%;padding:5px}
+  .speed .btn{padding:5px 8px;font-size:12px}
+  .only-m{display:inline-block}
+  .tools{top:auto;transform:none;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
+    flex-direction:row;overflow-x:auto;padding:4px}
+  .tools hr{border-top:0;border-left:1px solid var(--line);margin:6px 2px}
+  .tool{width:54px;flex:0 0 auto;font-size:11px}
+  .side{display:none;top:auto;left:max(16px,env(safe-area-inset-left,0px));width:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);max-height:48%}
+  .side.open{display:flex}
+  .log{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 88px)}
+  .log div:nth-child(n+3){display:none}
+  .side.open ~ .log{display:none}
+  .toast{bottom:calc(env(safe-area-inset-bottom,0px) + 150px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .banner.show{animation-duration:.01s;opacity:1}
+  .log div{animation:none}
+}
+</style>
+
+<div id="app">
+  <canvas id="cv" aria-label="地球の地図"></canvas>
+
+  <header class="hud">
+    <div class="plate brand"><b>地球文明記</b><small>テントから大都市へ</small></div>
+    <div class="plate clock"><div class="era" id="eraName">原始時代</div><div class="year" id="yearTxt">紀元前10000年</div></div>
+    <div class="plate stats">
+      <div class="stat"><span>総人口</span><b id="popTxt">0人</b></div>
+      <div class="stat"><span>国の数</span><b id="natTxt">0</b></div>
+      <div class="stat"><span>戦争</span><b id="warTxt">0</b></div>
+      <button class="btn only-m" id="sideToggle" type="button" aria-expanded="false">国一覧</button>
+    </div>
+    <div class="plate speed" role="group" aria-label="時間の速さ">
+      <button class="btn" type="button" data-speed="0">停止</button>
+      <button class="btn" type="button" data-speed="1" aria-pressed="true">1倍</button>
+      <button class="btn" type="button" data-speed="3">3倍</button>
+      <button class="btn" type="button" data-speed="10">10倍</button>
+      <button class="btn next" type="button" id="nextEra">次の時代へ</button>
+    </div>
+  </header>
+
+  <nav class="plate tools" aria-label="道具">
+    <button class="tool" type="button" data-tool="look" title="国や街を調べる・地図を動かす"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>見る</button>
+    <button class="tool" type="button" data-tool="human" aria-pressed="true" title="人類を生み出す"><svg viewBox="0 0 24 24"><path d="M3 20L12 5l9 15z"/><path d="M10 20l2-5 2 5"/></svg>人類</button>
+    <button class="tool" type="button" data-tool="nation" title="新しい国を建てる"><svg viewBox="0 0 24 24"><path d="M6 21V3"/><path d="M6 4h12l-3 4 3 4H6"/></svg>建国</button>
+    <hr>
+    <button class="tool" type="button" data-tool="land" title="海を陸地に変える"><svg viewBox="0 0 24 24"><path d="M2 18c4-7 7-9 10-9s6 2 10 9z"/></svg>陸地</button>
+    <button class="tool" type="button" data-tool="sea" title="陸地を海に沈める"><svg viewBox="0 0 24 24"><path d="M2 9c3-3 5 3 8 0s5 3 8 0 3 0 4 0"/><path d="M2 15c3-3 5 3 8 0s5 3 8 0 3 0 4 0"/></svg>海</button>
+    <button class="tool" type="button" data-tool="forest" title="森を育てる"><svg viewBox="0 0 24 24"><path d="M12 3l6 9h-3l4 6H5l4-6H6z"/><path d="M12 18v3"/></svg>森</button>
+    <button class="tool" type="button" data-tool="mount" title="山を作る"><svg viewBox="0 0 24 24"><path d="M2 20l7-12 4 6 3-4 6 10z"/><path d="M7.5 11l1.5 1.5 1.5-1.5"/></svg>山</button>
+    <hr>
+    <button class="tool" type="button" data-tool="meteor" title="隕石を落とす"><svg viewBox="0 0 24 24"><circle cx="8" cy="16" r="4"/><path d="M11 13l9-9M13 17l7-5M7 11l5-8"/></svg>隕石</button>
+  </nav>
+
+  <aside class="side" id="side">
+    <section class="plate" id="infoBox"><h2>しらべる</h2><div id="info"></div></section>
+    <section class="plate"><h2>世界の国々</h2><div class="rows" id="nations"></div></section>
+  </aside>
+
+  <div class="log" id="log" aria-live="polite"></div>
+  <div class="banner" id="banner"></div>
+  <div class="toast" id="toast"></div>
+
+  <div class="intro" id="intro">
+    <div class="plate card">
+      <h1>地球文明記</h1>
+      <p class="sub">あなたは地球を見守る神さま。ひとつのテントから始まった人類が、街をつくり、国を興し、争い、やがて大都市を築くまでを見届けよう。</p>
+      <ol>
+        <li><span>1</span><div>「人類」で地図をタップすると、最初のテントがひとつ建ちます。</div></li>
+        <li><span>2</span><div>人が増えると村、町、城壁のある中世の街へと育ちます。</div></li>
+        <li><span>3</span><div>「建国」で別の国を生み出すと、国境で戦争が起きます。勝った国が街と土地を手に入れます。</div></li>
+        <li><span>4</span><div>近代には工場が、現代には高層ビルの大都市が並びます。</div></li>
+      </ol>
+      <div class="acts">
+        <button class="btn go" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
+        <button class="btn" type="button" id="startFree">好きな場所に置く</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ===== 定数 =====
+const W = 240, H = 120, TS = 8, TAU = Math.PI * 2;
+const LAT0 = 84, LAT1 = -78;
+const T = { DEEP:0, SHALLOW:1, PLAIN:2, FOREST:3, DESERT:4, MOUNT:5, TUNDRA:6, ICE:7, WASTE:8 };
+const TNAME = ['外洋','浅瀬','平原','森林','砂漠','山地','ツンドラ','氷原','荒地'];
+const FERT  = [0, 0, 1, .62, .12, .24, .2, 0, .05];
+const TCOL  = [[24,64,100],[44,102,142],[141,176,90],[76,124,60],[214,192,124],[138,127,112],[164,174,148],[232,238,242],[98,84,72]];
+const ERAS = [
+  { name:'原始時代', start:-10000, rate:6,    mult:1,    maxStage:1, war:.15, msg:'人類の歴史が始まった' },
+  { name:'古代',     start:-3000,  rate:2.5,  mult:6,    maxStage:2, war:.8,  msg:'文字と王が生まれ、町が築かれはじめた' },
+  { name:'中世',     start:500,    rate:.75,  mult:30,   maxStage:3, war:1,   msg:'城壁に囲まれた中世の街が現れはじめた' },
+  { name:'近世',     start:1500,   rate:.25,  mult:100,  maxStage:3, war:1,   msg:'大航海の時代。人々は海を越えはじめた' },
+  { name:'近代',     start:1800,   rate:.14,  mult:1500,  maxStage:4, war:1.1, msg:'産業革命が起こり、工場の煙が上がりはじめた' },
+  { name:'現代',     start:1950,   rate:.08,  mult:20000, maxStage:5, war:.9,  msg:'高層ビルが立ち並ぶ大都市の時代へ' },
+];
+const STAGE_NAME = ['テント','村','町','中世の街','工業都市','大都市'];
+const STAGE_FIRST = ['', '最初の村が生まれた', '最初の町が生まれた', '最初の中世の街が生まれた', '最初の工業都市が生まれた', '最初の大都市が生まれた'];
+const POP_ST = [0, 50, 300, 1000, 12000, 300000];
+const SZ   = [.7, .95, 1.2, 1.5, 1.7, 2.0];
+const MINU = [7, 6.2, 5.4, 4.8, 4.4, 4];
+const GOV = [['族','族','族'],['王国','都市国家','王国'],['王国','帝国','公国'],['王国','帝国','共和国'],['帝国','共和国','連邦'],['共和国','連邦','合衆国']];
+const MAXS = 500, MAXN = 28;
+const KM2_PER_TILE = 22000;
+
+// ===== 乱数・ノイズ =====
+function hash2(x, y, s){ let h = (Math.imul(x|0, 374761393) + Math.imul(y|0, 668265263) + Math.imul(s|0, 982451653))|0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
+function vnoise(x, y, s){ const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi; const u = xf*xf*(3-2*xf), v = yf*yf*(3-2*yf);
+  const a = hash2(xi,yi,s), b = hash2(xi+1,yi,s), c = hash2(xi,yi+1,s), d = hash2(xi+1,yi+1,s); return a + (b-a)*u + (c-a)*v + (a-b-c+d)*u*v; }
+function fbm(x, y, s, o = 4){ let t = 0, a = .5, f = 1, n = 0; for (let i = 0; i < o; i++){ t += a*vnoise(x*f, y*f, s + i*17); n += a; a *= .5; f *= 2; } return t/n; }
+function mulberry(a){ return function(){ a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const rnd = Math.random;
+const pick = a => a[rnd()*a.length|0];
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+function hsl(h, s, l){ s /= 100; l /= 100; const k = n => (n + h/30) % 12, a = s*Math.min(l, 1-l);
+  const f = n => l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n), 1))); return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)]; }
+
+// ===== 地球の形（経度・緯度） =====
+const LANDS = [
+  // 北アメリカ
+  [[-168,66],[-163,70],[-150,71],[-140,70],[-128,70],[-115,68],[-100,68],[-95,72],[-85,70],[-82,66],[-88,64],[-94,60],[-92,57],[-85,55],[-80,52],[-78,57],[-77,62],[-70,61],[-65,60],[-61,56],[-56,52],[-60,48],[-66,44],[-70,42],[-74,40],[-76,37],[-76,35],[-81,31],[-80,26],[-81,25],[-83,28],[-85,30],[-90,29],[-94,29.5],[-97,27],[-97,22],[-95,19],[-91,19],[-90,21],[-87,21],[-88,16],[-84,15],[-83,10],[-80,8],[-78,9],[-77,7.5],[-80,7],[-85,10],[-88,13],[-92,14.5],[-96,16],[-105,20],[-109,24],[-114,30],[-117,33],[-121,35],[-124,40],[-124,47],[-127,51],[-133,56],[-140,60],[-148,61],[-154,59],[-158,57],[-162,55],[-160,58],[-164,60],[-166,62]],
+  [[-80,63],[-73,62],[-64,63],[-62,66],[-68,70],[-78,72],[-90,73],[-85,70]],
+  [[-120,72],[-100,74],[-90,76],[-80,80],[-65,82],[-90,82],[-110,78],[-122,75]],
+  [[-73,78],[-60,82],[-35,83.5],[-20,82],[-18,77],[-22,70],[-32,68],[-40,65],[-43,60],[-48,61],[-52,65],[-54,70],[-58,75],[-68,77]],
+  [[-24,65.5],[-22,64],[-14,64.3],[-13.5,65.5],[-16,66.5],[-22,66.5]],
+  [[-85,21.8],[-82,23],[-77,22],[-74,20],[-77,19.8],[-81,21.5]],
+  [[-74.4,19.8],[-70,19.8],[-68.4,18.5],[-71,18],[-74.5,18.3]],
+  // 南アメリカ
+  [[-77,8],[-75,11],[-71,12],[-64,10.5],[-60,8.5],[-55,6],[-51,4],[-50,0],[-44,-2],[-38,-4],[-35,-7],[-37,-12],[-39,-17],[-41,-22],[-45,-24],[-48,-27],[-51,-31],[-54,-34.5],[-58,-34.5],[-57,-38],[-62,-39],[-65,-42],[-65,-45],[-68,-47],[-69,-51],[-68.5,-53],[-71,-54],[-74,-52],[-75,-47],[-74,-42],[-73,-37],[-71.5,-30],[-70.5,-23],[-70.5,-18],[-75,-15],[-77,-12],[-79,-8],[-81,-5],[-80,-1],[-79,1],[-78,4],[-77,7]],
+  // アフリカ
+  [[-17,21],[-16,24],[-13,28],[-10,30],[-9.5,33],[-6,35.8],[-2,35.2],[3,36.8],[10,37.2],[11,35],[10,33.5],[15,32],[20,30.5],[20,32.5],[25,32],[29,31],[32.5,31.2],[33.5,28.5],[35,24],[37,21],[38.5,17],[41,14],[43.3,12],[44,11],[51,12],[51,10],[48,5],[45,1.5],[41,-2],[39.5,-5],[39,-8],[40.5,-11],[40.5,-15],[37,-18],[35,-21],[35.5,-24],[33,-26],[32.5,-29],[30,-31],[27,-33.5],[22,-34],[18.5,-34.2],[18,-31],[16.5,-28.5],[15,-26],[14.5,-22],[13,-19],[11.8,-16],[12.3,-12],[13.5,-10],[12.3,-6],[11.5,-3],[9,-1],[9.5,3],[8.5,4.5],[5.5,4.3],[3,6.3],[-1,5],[-4,5.2],[-7.5,4.4],[-11,6.8],[-13.2,8.5],[-15,11],[-16.8,12.5],[-17.2,14.7],[-16.5,16.5],[-16,19]],
+  [[44,-25],[47,-25.3],[50.5,-15.5],[49.5,-12],[47,-14],[44,-17],[43.3,-22]],
+  // ユーラシア
+  [[-9.5,37],[-9,39],[-9.3,43],[-8,43.7],[-2,43.4],[-1.3,46],[-2.5,47.3],[-4.7,48],[-1.5,48.7],[1.5,50.2],[4,51.5],[5,53],[8.5,53.6],[8.5,55.5],[8.2,57],[10.5,57.7],[10.5,56],[12.5,55.5],[11,54],[14,54],[19.5,54.4],[21,56],[21.5,57.5],[24,57.5],[24,59],[28,59.5],[23,60],[21.5,61],[21.3,63],[25.5,65],[22,65.8],[17.5,62.5],[17,60.5],[18.5,59.5],[16.5,56.5],[14.5,55.6],[12.8,56],[11,58.8],[8,58],[5.5,58.8],[5,61],[6,62.8],[10,64],[14,67.5],[17,69],[21,70],[25,71],[31,70],[33,69],[41,67],[38,64.5],[44,66],[44,68.5],[53,68.5],[60,69.5],[68,69],[73,72.5],[80,72.5],[87,74.5],[101,77.5],[107,76.5],[113,73.5],[127,73.3],[140,72.5],[150,71.5],[160,70],[170,70],[180,69],[180,65],[178,64.5],[174,61.8],[170,60],[164,59.9],[163,57],[161.8,54.5],[156.7,51],[155.6,55.5],[156.8,57.5],[161,60.5],[154,59.3],[143,59.3],[138,56],[137,54],[140.3,52],[140.4,48],[138,46],[135,43.5],[132,43],[130,42.5],[129.4,40.8],[129.4,37],[129.3,35.2],[126.4,34.4],[126.5,37.5],[125,39.5],[122,40.5],[121.5,39],[118,39],[117.7,38],[119,37],[122.5,37.4],[120.5,36],[119.2,35],[121,32.3],[122,30],[120,26.5],[117,23.5],[113.5,22.3],[110.5,21],[108,21.5],[106.5,20],[106,18],[108.5,15.5],[109.3,12],[107,10.5],[105,8.6],[104.8,10],[103,10.5],[100.5,13.5],[100,12],[99.2,10],[100.3,7],[101.3,6.8],[103.4,4],[104.2,1.4],[103.4,1.3],[101.3,2.8],[100.4,4.8],[98.4,8],[98.3,10.8],[98.7,13],[97.7,16.5],[96,16.8],[94.3,16],[94.3,18.8],[92.4,20.7],[91.7,22.6],[90.4,22],[89,21.8],[86.9,21.3],[86.9,20],[84.9,19.3],[82.4,17],[80.3,15.6],[80.1,13],[79.8,10.3],[78,8.2],[77,8.2],[76.2,10],[75,12.6],[73.5,16],[72.8,19.3],[72.6,21.4],[70.4,20.9],[68.8,22.3],[66.8,24.9],[61.6,25.2],[57.3,25.7],[56.4,27.1],[54,26.7],[51.5,27.9],[50.1,30.1],[48,30],[48.5,28.4],[50,26.6],[51.3,26.1],[51.6,24.3],[54,24.1],[56,24.9],[56.3,26.3],[57.2,23.8],[59.8,22.4],[57.8,19],[55,17],[52.2,15.6],[48.7,14],[45,12.8],[43.5,12.7],[42.7,15.5],[41.2,18.6],[39.2,21.5],[38.4,24.1],[35.2,28],[34.5,29.5],[33.6,28],[32.6,29.9],[32.3,31.2],[34.2,31.3],[35,33],[36,34.6],[36,36.5],[34,36.3],[32,36.1],[30,36.2],[28,36.7],[27.3,37.9],[26.5,39.5],[26.2,40.6],[26,40.8],[24,40.8],[23,40.3],[22.6,40],[22.9,38.2],[23.2,37.5],[22.5,36.4],[21.6,37],[21.1,38.3],[20.2,39.7],[19.4,41.8],[18.5,42.5],[16,43.5],[15,44.5],[13.6,45.8],[12.3,45.3],[12.5,44],[13.6,43.5],[14.2,42.2],[16,41.4],[18.5,40.2],[17,39.4],[17,38.9],[16,38],[15.7,40],[14.4,40.6],[12.5,41.9],[11,42.5],[10.2,43.9],[8.8,44.4],[7.4,43.7],[6,43.1],[4.6,43.4],[3.1,43.1],[3.2,41.9],[0.9,41],[-0.3,39.5],[0.2,38.7],[-0.7,37.6],[-2.1,36.7],[-4.4,36.7],[-5.6,36]],
+  [[-5.7,50],[1.4,51.2],[1.7,52.7],[0,53.5],[-1.6,55.5],[-2,57],[-3,58.6],[-5,58.6],[-6.2,57.5],[-5.6,56.3],[-4.9,55],[-3,54.3],[-4.5,53.3],[-4.2,52.5],[-5.2,51.8],[-3,51.4],[-4.2,51.2]],
+  [[-10,51.6],[-6.2,52.2],[-6,54],[-5.7,55.2],[-8,55.2],[-10,54.2]],
+  // 日本・東アジアの島々
+  [[129.8,33],[130.8,31.2],[131.5,31.5],[132,33.8],[133.5,33.3],[135,33.5],[136,34],[137,34.6],[139,34.7],[140.9,35.7],[141,37.5],[142,39.5],[141.5,41.4],[140,41],[139.9,40],[139.5,38.5],[138.5,37.8],[137.2,37],[136.5,36.5],[135.5,35.6],[133,35.5],[131,34.5]],
+  [[140,41.5],[141.2,41.8],[143.2,42],[145.5,43.2],[145.2,44.3],[141.7,45.4],[141.4,43.4],[140,43]],
+  [[142,46],[143.5,46.5],[143,49],[144,53],[142.7,54.3],[142.2,51]],
+  [[120.2,22.6],[121,21.9],[121.9,24.9],[121.5,25.3],[120.1,23.6]],
+  [[120,16],[120.6,18.5],[122.2,18.5],[122.5,17],[121.6,15],[124,13],[120.7,13.8]],
+  [[122,7],[123.5,8.5],[126,9.3],[126.6,7],[125.5,5.6],[124,6.5]],
+  // 東南アジア・オセアニア
+  [[95.2,5.6],[97.5,5.2],[100.4,2.3],[104,-1],[106,-3],[106,-5.9],[104.5,-5.9],[102.3,-4],[100.3,-1],[98.8,1.7],[96,4]],
+  [[105.2,-6.8],[106,-5.9],[108.5,-6.3],[111,-6.4],[114.5,-7.6],[114.4,-8.7],[111,-8.2],[108,-7.8],[106.4,-7.4]],
+  [[109,1.5],[109.6,-1],[110.2,-3],[114.5,-3.8],[116.2,-4],[116.5,-1.5],[118,1],[118.8,5],[117,7],[115.3,5],[113,3],[111,1.8]],
+  [[119.5,-5.5],[120.4,-5.6],[120.9,-2.5],[123.3,-0.9],[121,-0.9],[121.1,1.1],[124.8,1.5],[120.5,0.5],[119.8,-0.5],[118.9,-2.8]],
+  [[131,-1.3],[134,-0.9],[138,-1.6],[141,-2.6],[145.7,-4.8],[147.5,-6],[147.8,-8],[150.7,-10.5],[147,-10.1],[143.4,-9],[141,-9.1],[138,-8.3],[137.6,-5.2],[134,-4],[132,-2.8]],
+  [[79.8,6],[81.8,6.5],[81.2,8.6],[80,9.8],[79.8,8]],
+  [[113.5,-22],[114,-26],[115,-30],[115,-33.5],[117.5,-35],[123.5,-34],[126,-32.3],[131.3,-31.5],[135,-34.5],[137.5,-33],[138,-35.5],[140,-37.8],[143.5,-38.8],[146.5,-39],[150,-37.5],[151.2,-33.8],[153.6,-28.5],[153,-25],[150.8,-22.5],[149,-20.5],[146.3,-19],[145.4,-16],[143.6,-14],[142.5,-10.7],[141.6,-12.6],[141.5,-15.5],[140.5,-17.5],[139.2,-17.3],[137.5,-16],[135.6,-14.8],[136.9,-12.3],[135,-12],[132.6,-11.5],[131,-12.2],[129.5,-14.9],[128,-15.2],[126,-14],[124.4,-16.3],[122.2,-17.4],[121.3,-19.5],[118.8,-20.3],[116.7,-20.6]],
+  [[144.6,-40.7],[148.3,-40.9],[148,-43.2],[146,-43.6]],
+  [[172.7,-34.4],[174.8,-36.8],[178.5,-37.7],[177,-39.2],[176,-41.3],[174.6,-41.3],[175,-39.8],[173.8,-39.2],[174.5,-37]],
+  [[172.7,-40.5],[174.3,-41.7],[173.2,-43.4],[171.2,-44.5],[170.6,-45.9],[168.4,-46.6],[166.5,-46],[168.3,-44],[170.8,-42.5]],
+  // 南極
+  [[-180,-90],[180,-90],[180,-70],[150,-67],[100,-66],[60,-67],[20,-69],[-20,-72],[-57,-63],[-62,-65],[-70,-69],[-100,-73],[-140,-75],[-180,-72]],
+];
+const WATERS = [
+  [[28,41.3],[28.5,43.5],[29.6,45.3],[31,46.6],[33.5,46],[35.2,45.3],[36.6,45.4],[38,47],[39.3,47.2],[38.2,46.1],[37.7,44.8],[39.7,43.5],[41.6,41.5],[38.3,40.9],[35.1,42],[33.3,42],[31.3,41.1],[29,41.2]],
+  [[46.7,44.5],[47.5,45.6],[49.2,46.5],[51.5,47],[53.2,46.7],[53,45.3],[51.3,44.5],[50.3,44.4],[51.4,43.1],[52.7,41.7],[53,40],[54,38],[53.9,37.3],[51,36.7],[49,37.6],[49,38.6],[49.5,40.2],[48.6,41.8],[47,43.2]],
+];
+// 山脈（経度・緯度の折れ線と、タイル単位の太さ）
+const RANGES = [
+  [[[-135,60],[-120,52],[-112,42],[-106,33]], 2],
+  [[[-78,8],[-77,-5],[-70,-18],[-70,-33],[-72,-48]], 1.5],
+  [[[68,37],[75,35],[82,31],[92,28],[98,27]], 2.2],
+  [[[100,40],[90,42],[80,42],[75,40]], 1.3],
+  [[[5,45],[10,46.5],[15,47]], 1.1],
+  [[[59,67],[59,58],[58,51]], 1],
+  [[[44,42],[48,41]], 1],
+  [[[45,36],[55,28]], 1.2],
+  [[[-6,31],[5,35]], 1],
+  [[[8,60],[15,66],[20,69]], 1],
+  [[[38,8],[40,12]], 1],
+  [[[146,-16],[149,-30],[147,-37]], .9],
+  [[[-84,34],[-76,41],[-70,45]], .9],
+];
+const DESERTS = [[10,23,24,7],[47,22,9,7],[58,31,6,4],[71,27,3,2],[103,42,13,4],[83,39,6,2.5],[132,-25,13,6],[21,-23,5,4],[-113,33,5,4],[-70,-23,2,6],[-68,-45,3,4]];
+
+const lonX = lon => (lon + 180) / 360 * W;
+const latY = lat => (LAT0 - lat) / (LAT0 - LAT1) * H;
+const latOf = y => LAT0 - (y + .5) / H * (LAT0 - LAT1);
+const lonOf = x => -180 + (x + .5) / W * 360;
+
+// ===== 世界の状態 =====
+const terr = new Uint8Array(W*H), depth = new Uint8Array(W*H), fert = new Float32Array(W*H);
+const owner = new Int16Array(W*H).fill(-1), score = new Float32Array(W*H);
+const isLand = t => t >= 2;
+const habitable = t => t >= 2 && t !== T.ICE;
+let S = [], N = [], sById = new Map(), armies = [], parts = [], planes = [], meteors = [], wars = [];
+let truce = new Map(), contacts = new Map(), logs = [], firstStage = [true,false,false,false,false,false];
+let tick = 0, year = -10000, eraIdx = 0, started = false, nextId = 1, speed = 1;
+let terrDirty = true, lastColonyLog = -999;
+let borderPaths = new Map(), roadPath = null;
+const usedNames = new Set();
+
+function computeDepth(){
+  depth.fill(255); const q = [];
+  for (let i = 0; i < W*H; i++) if (isLand(terr[i])) { depth[i] = 0; q.push(i); }
+  for (let h = 0; h < q.length; h++){
+    const i = q[h], x = i % W, y = (i / W) | 0, d = depth[i];
+    if (d >= 12) continue;
+    if (x > 0 && depth[i-1] > d+1){ depth[i-1] = d+1; q.push(i-1); }
+    if (x < W-1 && depth[i+1] > d+1){ depth[i+1] = d+1; q.push(i+1); }
+    if (y > 0 && depth[i-W] > d+1){ depth[i-W] = d+1; q.push(i-W); }
+    if (y < H-1 && depth[i+W] > d+1){ depth[i+W] = d+1; q.push(i+W); }
+  }
+}
+function coastal(x, y){
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){
+    const xx = x+dx, yy = y+dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+    if (!isLand(terr[yy*W+xx])) return true;
+  }
+  return false;
+}
+function computeFert(x0 = 0, y0 = 0, x1 = W-1, y1 = H-1){
+  for (let y = Math.max(0,y0); y <= Math.min(H-1,y1); y++) for (let x = Math.max(0,x0); x <= Math.min(W-1,x1); x++){
+    const i = y*W+x, t = terr[i];
+    fert[i] = isLand(t) ? FERT[t] + (t !== T.ICE && coastal(x,y) ? .15 : 0) : 0;
+  }
+}
+function fertAround(x, y){
+  let s = 0;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){
+    const xx = x+dx, yy = y+dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
+    s += fert[yy*W+xx];
+  }
+  return clamp(s / 25 * 1.35 + .05, .06, 1.35);
+}
+
+function segDist(px, py, ax, ay, bx, by){
+  const vx = bx-ax, vy = by-ay, l2 = vx*vx + vy*vy; let t = l2 ? ((px-ax)*vx + (py-ay)*vy) / l2 : 0; t = clamp(t, 0, 1);
+  const dx = px - (ax + vx*t), dy = py - (ay + vy*t); return Math.sqrt(dx*dx + dy*dy);
+}
+
+function genWorld(){
+  const MS = 4, mc = document.createElement('canvas'); mc.width = W*MS; mc.height = H*MS;
+  const m = mc.getContext('2d', { willReadFrequently:true });
+  const poly = pts => { m.beginPath(); pts.forEach((p, i) => { const x = lonX(p[0])*MS, y = latY(p[1])*MS; i ? m.lineTo(x,y) : m.moveTo(x,y); }); m.closePath(); m.fill(); };
+  m.fillStyle = '#000'; m.fillRect(0, 0, mc.width, mc.height);
+  m.fillStyle = '#fff'; LANDS.forEach(poly);
+  m.fillStyle = '#000'; WATERS.forEach(poly);
+  const md = m.getImageData(0, 0, mc.width, mc.height).data;
+  const maskAt = (x, y) => { const px = clamp(Math.round(x*MS), 0, mc.width-1), py = clamp(Math.round(y*MS), 0, mc.height-1); return md[(py*mc.width + px)*4]; };
+  const segs = [];
+  for (const [pts, w] of RANGES) for (let k = 0; k < pts.length-1; k++)
+    segs.push([lonX(pts[k][0]), latY(pts[k][1]), lonX(pts[k+1][0]), latY(pts[k+1][1]), w]);
+
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+    const i = y*W+x, lon = lonOf(x), lat = latOf(y), alat = Math.abs(lat);
+    const jx = (fbm(x*.17, y*.17, 3) - .5) * 2.4, jy = (fbm(x*.17 + 40, y*.17, 5) - .5) * 2.4;
+    if (maskAt(x + .5 + jx, y + .5 + jy) < 128){ terr[i] = T.DEEP; continue; }
+    const n1 = fbm(x*.11, y*.11, 31), moist = fbm(x*.09, y*.09, 11);
+    let t;
+    if (alat < 12) t = moist > .37 ? T.FOREST : T.PLAIN;
+    else if (alat < 45) t = moist > .57 ? T.FOREST : T.PLAIN;
+    else if (alat < 62 + (n1 - .5) * 6) t = moist > .42 ? T.FOREST : T.PLAIN;
+    else t = T.TUNDRA;
+    for (const d of DESERTS){ const dx = (lon - d[0]) / d[2], dy = (lat - d[1]) / d[3]; if (dx*dx + dy*dy + (n1 - .5) * .9 < 1) t = T.DESERT; }
+    let md2 = 99, mw = 1;
+    for (const s of segs){ const d = segDist(x+.5, y+.5, s[0], s[1], s[2], s[3]); if (d < md2){ md2 = d; mw = s[4]; } }
+    if (md2 < mw * (.65 + n1 * .7)) t = T.MOUNT;
+    const ridge = 1 - Math.abs(fbm(x*.13, y*.13, 21) * 2 - 1);
+    if (ridge > .94 && t !== T.DESERT) t = T.MOUNT;
+    if (lat < -62 || alat > 75 + (n1 - .5) * 4 || (lon > -52 && lon < -24 && lat > 64 && moist > .3)) t = T.ICE;
+    terr[i] = t;
+  }
+  computeDepth();
+  for (let i = 0; i < W*H; i++) if (!isLand(terr[i])) terr[i] = depth[i] <= 2 ? T.SHALLOW : T.DEEP;
+  computeFert();
+}
+
+// ===== 地形の絵 =====
+const tcv = document.createElement('canvas'); tcv.width = W*TS; tcv.height = H*TS;
+const tctx = tcv.getContext('2d');
+const terCv = document.createElement('canvas'); terCv.width = W; terCv.height = H;
+const terCtx = terCv.getContext('2d');
+const terImg = terCtx.createImageData(W, H);
+const rgbF = (c, f) => `rgb(${clamp(c[0]*f,0,255)|0},${clamp(c[1]*f,0,255)|0},${clamp(c[2]*f,0,255)|0})`;
+
+function paintTile(x, y){
+  const i = y*W+x, t = terr[i], X = x*TS, Y = y*TS;
+  let f = 1 + (fbm(x*.25, y*.25, 9) - .5) * .22 + (hash2(x, y, 7) - .5) * .06;
+  if (t <= 1) f = 1.16 - Math.min(depth[i], 10) * .045 + (hash2(x, y, 3) - .5) * .03;
+  tctx.fillStyle = rgbF(TCOL[t], f); tctx.fillRect(X, Y, TS, TS);
+  if (t === T.FOREST){
+    for (let k = 0; k < 2; k++){
+      const px = X + 1.8 + hash2(x, y, 11+k) * 4.4, py = Y + 2 + hash2(x, y, 21+k) * 4;
+      tctx.fillStyle = rgbF([44,86,40], f); tctx.beginPath(); tctx.arc(px, py, 1.7, 0, TAU); tctx.fill();
+    }
+  } else if (t === T.MOUNT){
+    const h = hash2(x, y, 5), cx = X + TS/2 + (h - .5) * 2;
+    tctx.fillStyle = rgbF([102,93,82], f); tctx.beginPath(); tctx.moveTo(X+.5, Y+TS-.8); tctx.lineTo(cx, Y+1.2); tctx.lineTo(X+TS-.5, Y+TS-.8); tctx.fill();
+    if (Math.abs(latOf(y)) > 34 || h > .55){ tctx.fillStyle = 'rgba(245,247,250,.92)'; tctx.beginPath(); tctx.moveTo(cx-1.6, Y+3.4); tctx.lineTo(cx, Y+1.2); tctx.lineTo(cx+1.6, Y+3.4); tctx.fill(); }
+  } else if (t === T.DESERT){
+    if (hash2(x, y, 4) > .55){ tctx.fillStyle = 'rgba(255,240,200,.45)'; tctx.fillRect(X+1, Y+3 + hash2(x,y,8)*3, 5, 1); }
+  } else if (t === T.TUNDRA){
+    if (hash2(x, y, 4) > .6){ tctx.fillStyle = 'rgba(240,244,240,.5)'; tctx.fillRect(X+2 + hash2(x,y,9)*3, Y+3, 1.5, 1.5); }
+  } else if (t === T.WASTE){
+    tctx.fillStyle = 'rgba(40,30,24,.5)'; tctx.beginPath(); tctx.arc(X+TS/2, Y+TS/2, 2 + hash2(x,y,2)*1.5, 0, TAU); tctx.fill();
+  }
+  if (isLand(t)){
+    tctx.fillStyle = t === T.ICE ? 'rgba(255,255,255,.5)' : 'rgba(238,224,176,.6)';
+    if (x > 0 && !isLand(terr[i-1])) tctx.fillRect(X, Y, 1, TS);
+    if (x < W-1 && !isLand(terr[i+1])) tctx.fillRect(X+TS-1, Y, 1, TS);
+    if (y > 0 && !isLand(terr[i-W])) tctx.fillRect(X, Y, TS, 1);
+    if (y < H-1 && !isLand(terr[i+W])) tctx.fillRect(X, Y+TS-1, TS, 1);
+  }
+}
+function paintAll(){ for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) paintTile(x, y); }
+
+// ===== 名前 =====
+const SYL = ['ア','イ','ウ','エ','オ','カ','キ','ク','コ','サ','シ','ス','セ','タ','チ','テ','ト','ナ','ニ','ノ','ハ','ヒ','フ','ホ','マ','ミ','ム','メ','モ','ヤ','ユ','ラ','リ','ル','レ','ロ','ヴァ','ガ','ギ','グ','ゴ','ザ','ゼ','ダ','ド','バ','ベ','ボ','パ','ポ','ジュ','シャ'];
+const END = ['ア','ン','ス','ル','ラ','ド','ニア','リア','ール','ノ','ム','ト','ダ','ナ','オン'];
+function genName(){ let s = ''; const len = 1 + (rnd() < .6 ? 1 : 0) + (rnd() < .2 ? 1 : 0); for (let i = 0; i < len; i++) s += pick(SYL); return s + pick(END); }
+function uniqueName(){ for (let k = 0; k < 40; k++){ const n = genName(); if (!usedNames.has(n)){ usedNames.add(n); return n; } } return genName() + 'ア'; }
+const nm = id => N[id] ? N[id].base + GOV[eraIdx][N[id].gov] : '？';
+
+// ===== 国と街 =====
+function createNation(){
+  const id = N.length, hue = (id * 137.508 + 14) % 360, l = 48 + (id % 3) * 7, rgb = hsl(hue, 70, l);
+  const n = { id, base:uniqueName(), gov:rnd()*3|0, hue, rgb, css:`rgb(${rgb})`, cssA:`rgba(${rgb},.38)`, line:`rgb(${hsl(hue, 85, Math.min(78, l + 16))})`,
+    alive:true, capital:-1, aggr:.6 + rnd()*.9, born:Math.floor(year), pop:0, count:0, tiles:0, cx:0, cy:0 };
+  N.push(n); return n;
+}
+const aliveNations = () => N.filter(n => n.alive);
+function capOf(s){ return 70 * s.fert * ERAS[eraIdx].mult * (s.capital ? 1.6 : 1); }
+function stageOf(s){ let st = 0; for (let k = 1; k < POP_ST.length; k++) if (s.pop >= POP_ST[k]) st = k; return Math.min(st, ERAS[eraIdx].maxStage); }
+function addSettlement(x, y, nid, pop){
+  const s = { id:nextId++, x, y, nation:nid, pop, name:genName(), capital:false, seed:(rnd()*1e9)|0, fert:fertAround(x, y), stage:0, cd:0, alive:true, born:Math.floor(year) };
+  s.stage = stageOf(s); S.push(s); sById.set(s.id, s); terrDirty = true; return s;
+}
+function nearSettlement(x, y, r){ for (const s of S) if (s.alive && Math.hypot(s.x - x, s.y - y) < r) return s; return null; }
+function canSettle(x, y, nid){
+  if (x < 1 || y < 1 || x >= W-1 || y >= H-1) return false;
+  const i = y*W+x; if (!habitable(terr[i]) || fert[i] < .1) return false;
+  if (owner[i] !== -1 && owner[i] !== nid) return false;
+  if (fertAround(x, y) < .2) return false;
+  return !nearSettlement(x, y, 2.8);
+}
+function landPath(x0, y0, x1, y1, maxWater){
+  const d = Math.hypot(x1-x0, y1-y0), n = Math.ceil(d * 2); let w = 0;
+  for (let k = 1; k < n; k++){ const x = Math.round(x0 + (x1-x0)*k/n), y = Math.round(y0 + (y1-y0)*k/n); if (!isLand(terr[y*W+x]) && ++w > maxWater*2) return false; }
+  return true;
+}
+function startPop(){ return eraIdx === 0 ? 10 : Math.max(10, 70 * .8 * ERAS[eraIdx].mult * .45); }
+function foundNation(x, y, pop){
+  const n = createNation();
+  const s = addSettlement(x, y, n.id, pop ?? startPop()); s.capital = true; n.capital = s.id; s.stage = stageOf(s);
+  return n;
+}
+function setCapital(nid){
+  let best = null; for (const s of S) if (s.alive && s.nation === nid && (!best || s.pop > best.pop)) best = s;
+  if (best){ best.capital = true; N[nid].capital = best.id; }
+  return best;
+}
+function killSettlement(s, why){
+  s.alive = false; sById.delete(s.id); terrDirty = true;
+  const nid = s.nation;
+  if (s.capital){
+    s.capital = false;
+    if (!S.some(o => o.alive && o.nation === nid)) nationDies(nid, why);
+    else { const c = setCapital(nid); if (c) log(`${nm(nid)}は首都を${c.name}へ移した`); }
+  }
+  else if (!S.some(o => o.alive && o.nation === nid)) nationDies(nid, why);
+}
+function nationDies(nid, why){
+  if (!N[nid].alive) return;
+  N[nid].alive = false;
+  for (let k = wars.length-1; k >= 0; k--) if (wars[k].a === nid || wars[k].b === nid) wars.splice(k, 1);
+  log(`${nm(nid)}は${why || '滅亡した'}`, 'war');
+  if (sel && sel.type === 'nation' && sel.id === nid) sel = null;
+}
+
+function tryExpand(s){
+  const overseas = eraIdx >= 3 && rnd() < .12;
+  for (let k = 0; k < 14; k++){
+    const a = rnd()*TAU, d = overseas ? 10 + rnd()*60 : 3 + rnd()*(3 + eraIdx*.8);
+    const x = Math.round(s.x + Math.cos(a)*d), y = Math.round(s.y + Math.sin(a)*d*.8);
+    if (!canSettle(x, y, s.nation)) continue;
+    if (!overseas && !landPath(s.x, s.y, x, y, 1.5)) continue;
+    const moved = Math.max(6, s.pop * .2); s.pop -= moved;
+    let nid = s.nation, newNation = null;
+    const cap = sById.get(N[nid].capital);
+    if (!overseas && cap && Math.hypot(x - cap.x, y - cap.y) > 28 && rnd() < .3 && aliveNations().length < MAXN){
+      newNation = createNation(); nid = newNation.id;
+    }
+    const ns = addSettlement(x, y, nid, moved);
+    if (newNation){ ns.capital = true; newNation.capital = ns.id; log(`${nm(s.nation)}から旅立った人々が${nm(nid)}をつくった`); }
+    else if (overseas && tick - lastColonyLog > 400){ lastColonyLog = tick; log(`${nm(nid)}が海を越えて${ns.name}を開いた`); }
+    return;
+  }
+}
+
+// ===== 領土 =====
+function recomputeTerritory(){
+  owner.fill(-1); score.fill(-1e9);
+  for (const s of S){
+    if (!s.alive) continue;
+    const R = 2.6 + s.stage*1.15 + (s.capital ? 1 : 0) + Math.min(1.5, Math.log10(s.pop + 1) * .3), r = Math.ceil(R);
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++){
+      const x = s.x + dx, y = s.y + dy; if (x < 0 || y < 0 || x >= W || y >= H) continue;
+      const i = y*W+x; if (!isLand(terr[i])) continue;
+      const d = Math.sqrt(dx*dx + dy*dy); if (d > R) continue;
+      const v = R - d + (d === 0 ? 100 : 0);
+      if (v > score[i]){ score[i] = v; owner[i] = s.nation; }
+    }
+  }
+  for (const n of N){ n.tiles = 0; n.cx = 0; n.cy = 0; }
+  contacts = new Map();
+  const px = terImg.data; px.fill(0);
+  const paths = new Map();
+  const P = id => { let p = paths.get(id); if (!p){ p = new Path2D(); paths.set(id, p); } return p; };
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+    const i = y*W+x, o = owner[i]; if (o < 0) continue;
+    const n = N[o]; n.tiles++; n.cx += x; n.cy += y;
+    const k = i*4; px[k] = n.rgb[0]; px[k+1] = n.rgb[1]; px[k+2] = n.rgb[2]; px[k+3] = 92;
+    const r = x < W-1 ? owner[i+1] : -1, d = y < H-1 ? owner[i+W] : -1;
+    const l = x > 0 ? owner[i-1] : -1, u = y > 0 ? owner[i-W] : -1;
+    if (r >= 0 && r !== o){ const key = Math.min(o,r)*1000 + Math.max(o,r); contacts.set(key, (contacts.get(key) || 0) + 1); }
+    if (d >= 0 && d !== o){ const key = Math.min(o,d)*1000 + Math.max(o,d); contacts.set(key, (contacts.get(key) || 0) + 1); }
+    const p = P(o), X = x*TS, Y = y*TS;
+    if (r !== o){ p.moveTo(X+TS, Y); p.lineTo(X+TS, Y+TS); }
+    if (l !== o){ p.moveTo(X, Y); p.lineTo(X, Y+TS); }
+    if (d !== o){ p.moveTo(X, Y+TS); p.lineTo(X+TS, Y+TS); }
+    if (u !== o){ p.moveTo(X, Y); p.lineTo(X+TS, Y); }
+  }
+  terCtx.putImageData(terImg, 0, 0);
+  borderPaths = paths;
+  // 道
+  roadPath = null;
+  if (eraIdx >= 1){
+    roadPath = new Path2D();
+    const lim = eraIdx >= 4 ? 11 : 8;
+    for (const s of S){
+      if (!s.alive || s.stage < 1) continue;
+      const near = [];
+      for (const o of S){ if (o === s || !o.alive || o.nation !== s.nation || o.id < s.id) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < lim) near.push([d, o]); }
+      near.sort((a, b) => a[0] - b[0]);
+      for (const [, o] of near.slice(0, 2)){
+        if (!landPath(s.x, s.y, o.x, o.y, 0)) continue;
+        roadPath.moveTo((s.x + .5)*TS, (s.y + .5)*TS); roadPath.lineTo((o.x + .5)*TS, (o.y + .5)*TS);
+      }
+    }
+  }
+  terrDirty = false;
+}
+
+// ===== 戦争 =====
+const pairKey = (a, b) => Math.min(a,b)*1000 + Math.max(a,b);
+const warOf = (a, b) => wars.find(w => (w.a === a && w.b === b) || (w.a === b && w.b === a));
+const warCount = id => wars.reduce((c, w) => c + (w.a === id || w.b === id ? 1 : 0), 0);
+function declareWar(a, b){
+  if (a === b || !N[a].alive || !N[b].alive || warOf(a, b)) return;
+  wars.push({ a, b, start:tick, end:tick + 500 + rnd()*700, capA:0, capB:0 });
+  log(`${nm(a)}が${nm(b)}に宣戦布告！`, 'war');
+}
+function makePeace(w){
+  const k = wars.indexOf(w); if (k < 0) return;
+  wars.splice(k, 1); truce.set(pairKey(w.a, w.b), tick + 900);
+  let res = '';
+  if (w.capA > w.capB) res = `。${nm(w.a)}の勝利（${w.capA}の街を獲得）`;
+  else if (w.capB > w.capA) res = `。${nm(w.b)}の勝利（${w.capB}の街を獲得）`;
+  else res = '。引き分けに終わった';
+  log(`${nm(w.a)}と${nm(w.b)}が講和${res}`, 'peace');
+}
+function considerWars(){
+  const ef = ERAS[eraIdx].war;
+  for (const [key, cnt] of contacts){
+    const a = (key / 1000) | 0, b = key % 1000;
+    if (!N[a] || !N[b] || !N[a].alive || !N[b].alive || warOf(a, b)) continue;
+    if ((truce.get(key) || 0) > tick) continue;
+    const busy = 1 / (1 + warCount(a) + warCount(b));
+    const p = .006 * ef * (N[a].aggr + N[b].aggr) / 2 * Math.min(2, .5 + cnt/20) * busy;
+    if (rnd() < p){ const [x, y] = N[a].pop >= N[b].pop ? [a, b] : [b, a]; declareWar(x, y); }
+  }
+}
+function reach(s, t){
+  const d = Math.hypot(t.x - s.x, t.y - s.y);
+  if (eraIdx >= 3) return d < 60;
+  return d < 16 + eraIdx*4 && landPath(s.x, s.y, t.x, t.y, 2);
+}
+function dispatch(w){
+  for (const [me, foe] of [[w.a, w.b], [w.b, w.a]]){
+    const theirs = S.filter(s => s.alive && s.nation === foe); if (!theirs.length) continue;
+    const cand = [];
+    for (const s of S){
+      if (!s.alive || s.nation !== me || s.cd > tick || s.pop < 15) continue;
+      let bd = 1e9, bt = null;
+      for (const t of theirs){ const d = Math.hypot(t.x - s.x, t.y - s.y); if (d < bd){ bd = d; bt = t; } }
+      if (bt) cand.push([bd, s, bt]);
+    }
+    cand.sort((p, q) => p[0] - q[0]);
+    let sent = 0;
+    for (const [, s, t] of cand.slice(0, 4)){
+      if (sent >= 2 || armies.length > 140) break;
+      if (rnd() < .55 && reach(s, t)){ sendArmy(s, t); sent++; }
+    }
+  }
+}
+function sendArmy(s, t){
+  const str = s.pop * .15; s.pop -= str; s.cd = tick + 40 + rnd()*40;
+  armies.push({ x:s.x + .5, y:s.y + .5, from:s.id, target:t.id, nation:s.nation, str, sp:.11 + eraIdx*.035, phase:rnd()*6, dir:t.x >= s.x ? 1 : -1, dead:false });
+}
+function capture(t, nid){
+  const old = t.nation, wasCap = t.capital, w = warOf(nid, old);
+  if (w){ if (w.a === nid) w.capA++; else w.capB++; }
+  t.nation = nid; t.capital = false; terrDirty = true;
+  log(`${nm(nid)}が${nm(old)}の${t.name}を占領した`, 'war');
+  if (!S.some(o => o.alive && o.nation === old)) nationDies(old, `${nm(nid)}に滅ぼされた`);
+  else if (wasCap){ const c = setCapital(old); if (c) log(`${nm(old)}は首都を${c.name}へ移した`); }
+}
+function assault(a, t){
+  const def = t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5;
+  const atk = a.str * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
+  boom(t.x + .5, t.y + .5, 18, eraIdx >= 4 ? FIRE : DUST);
+  if (atk > dr){ capture(t, a.nation); t.pop = Math.max(5, t.pop * .65 + a.str * .3); }
+  else t.pop = Math.max(3, t.pop - a.str * .4);
+  a.dead = true;
+}
+function updateArmies(){
+  for (const a of armies){
+    if (a.dead) continue;
+    const t = sById.get(a.target);
+    if (!N[a.nation].alive || !t || t.nation === a.nation || !warOf(a.nation, t.nation)){
+      a.dead = true; const h = sById.get(a.from); if (h && h.nation === a.nation) h.pop += a.str * .8; continue;
+    }
+    const dx = t.x + .5 - a.x, dy = t.y + .5 - a.y, d = Math.hypot(dx, dy);
+    if (d < .6){ assault(a, t); continue; }
+    const ti = (a.y | 0) * W + (a.x | 0), tt = terr[ti];
+    const m = !isLand(tt) ? 1.3 : tt === T.MOUNT ? .55 : tt === T.FOREST ? .8 : 1;
+    a.x += dx / d * a.sp * m; a.y += dy / d * a.sp * m; a.dir = dx >= 0 ? 1 : -1;
+  }
+  for (let i = 0; i < armies.length; i++){
+    const a = armies[i]; if (a.dead) continue;
+    for (let j = i + 1; j < armies.length; j++){
+      const b = armies[j]; if (b.dead || b.nation === a.nation) continue;
+      if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1 || !warOf(a.nation, b.nation)) continue;
+      const ra = a.str * (.7 + rnd()*.6), rb = b.str * (.7 + rnd()*.6);
+      boom((a.x + b.x)/2, (a.y + b.y)/2, 12, eraIdx >= 4 ? FIRE : DUST);
+      if (ra >= rb){ b.dead = true; a.str = Math.max(1, a.str - b.str*.6); } else { a.dead = true; b.str = Math.max(1, b.str - a.str*.6); break; }
+    }
+  }
+  armies = armies.filter(a => !a.dead);
+}
+function considerRebellion(){
+  if (eraIdx < 1 || aliveNations().length >= MAXN) return;
+  for (const n of N){
+    if (!n.alive) continue;
+    const mine = S.filter(s => s.alive && s.nation === n.id); if (mine.length < 12 || rnd() > .12) continue;
+    const cap = sById.get(n.capital); if (!cap) continue;
+    const far = mine.filter(s => !s.capital && s.stage >= 1 && Math.hypot(s.x - cap.x, s.y - cap.y) > 16); if (!far.length) continue;
+    const r = pick(far), nn = createNation();
+    for (const s of mine) if (!s.capital && Math.hypot(s.x - r.x, s.y - r.y) < 7) s.nation = nn.id;
+    r.capital = true; nn.capital = r.id; terrDirty = true;
+    log(`${r.name}が${nm(n.id)}から独立し、${nm(nn.id)}が生まれた`, 'war');
+    if (rnd() < .5) declareWar(n.id, nn.id);
+    return;
+  }
+}
+
+// ===== 時代 =====
+function advanceEra(){
+  if (eraIdx >= ERAS.length - 1) return;
+  eraIdx++;
+  const e = ERAS[eraIdx];
+  if (year < e.start) year = e.start;
+  log(`${e.name}が始まった。${e.msg}`, 'era');
+  showBanner(e.name, fmtYear(year), e.msg);
+  terrDirty = true;
+}
+
+// ===== 1歩すすめる =====
+function step(){
+  tick++;
+  if (!S.length) return;
+  year += ERAS[eraIdx].rate;
+  if (eraIdx < ERAS.length - 1 && year >= ERAS[eraIdx + 1].start) advanceEra();
+  const n0 = S.length;
+  for (let k = 0; k < n0; k++){
+    const s = S[k]; if (!s.alive) continue;
+    const cap = capOf(s);
+    s.pop += .015 * s.pop * (1 - s.pop / cap) + .02;
+    if (s.pop < 1) s.pop = 1;
+    const st = stageOf(s);
+    if (st !== s.stage){ if (st > s.stage) terrDirty = true; s.stage = st; if (!firstStage[st]){ firstStage[st] = true; log(`${STAGE_FIRST[st]}（${nm(s.nation)}の${s.name}）`, 'era'); } }
+    if (s.pop > cap * .55 && s.pop >= 16 && S.length < MAXS && rnd() < .012) tryExpand(s);
+  }
+  if (terrDirty || tick % 15 === 0) recomputeTerritory();
+  if (tick % 10 === 0) considerWars();
+  for (const w of wars.slice()){
+    if (!N[w.a].alive || !N[w.b].alive){ wars.splice(wars.indexOf(w), 1); continue; }
+    if (tick % 6 === 0) dispatch(w);
+    if (tick > w.end) makePeace(w);
+  }
+  updateArmies();
+  if (tick % 60 === 0) considerRebellion();
+  if (tick % 30 === 0 && S.some(s => !s.alive)) S = S.filter(s => s.alive);
+}
+
+// ===== 演出：粒子 =====
+const FIRE = ['#ffd27a','#ff9a3d','#e5532f','#7a6a60'], DUST = ['#e8d8b0','#c9b28a','#9d8a6e','#ffe6a8'];
+function boom(x, y, n, pal, power = 1){
+  for (let k = 0; k < n; k++){
+    const a = rnd()*TAU, v = (.3 + rnd()*1.4) * power;
+    parts.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v*.7 - .3*power, g:1.2, life:.5 + rnd()*.6, max:1.1, r:.12 + rnd()*.18*power, c:pick(pal) });
+  }
+}
+function smoke(x, y){ parts.push({ x, y, vx:.15 + rnd()*.1, vy:-.35 - rnd()*.2, g:0, life:1.6, max:1.6, r:.12, c:'#9a9690', grow:true }); }
+
+function impact(x, y){
+  shake = 1;
+  boom(x + .5, y + .5, 90, FIRE, 3);
+  const hit = [];
+  for (const s of S){
+    if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y);
+    if (d < 3.2) hit.push(s); else if (d < 6.5) s.pop *= .45;
+  }
+  for (const s of hit){ log(`隕石が${s.name}を直撃し、街が消えた`, 'war'); killSettlement(s, '隕石によって滅んだ'); }
+  for (const a of armies) if (Math.hypot(a.x - x - .5, a.y - y - .5) < 3) a.dead = true;
+  paintTerrain(x, y, 2.3, T.WASTE);
+}
+function paintTerrain(cx, cy, r, type){
+  let changed = false;
+  const R = Math.ceil(r);
+  for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++){
+    if (dx*dx + dy*dy > r*r) continue;
+    const x = cx + dx, y = cy + dy; if (x < 0 || y < 0 || x >= W || y >= H) continue;
+    const i = y*W+x, t = terr[i];
+    let nt = t;
+    if (type === 'land'){ if (!isLand(t)) nt = T.PLAIN; }
+    else if (type === 'sea'){ if (isLand(t)) nt = T.SHALLOW; }
+    else if (isLand(t)) nt = type;
+    if (nt !== t){ terr[i] = nt; changed = true;
+      if (!isLand(nt)){ const s = S.find(o => o.alive && o.x === x && o.y === y); if (s){ log(`${s.name}は海に沈んだ`, 'war'); killSettlement(s, '海に沈んで滅んだ'); } }
+    }
+  }
+  if (!changed) return;
+  computeDepth();
+  for (let i = 0; i < W*H; i++) if (!isLand(terr[i]) && terr[i] === T.DEEP && depth[i] <= 1) terr[i] = T.SHALLOW;
+  computeFert(cx - R - 3, cy - R - 3, cx + R + 3, cy + R + 3);
+  for (let y = Math.max(0, cy - R - 8); y <= Math.min(H-1, cy + R + 8); y++) for (let x = Math.max(0, cx - R - 8); x <= Math.min(W-1, cx + R + 8); x++) paintTile(x, y);
+  for (const s of S) if (s.alive && Math.abs(s.x - cx) < R + 4 && Math.abs(s.y - cy) < R + 4) s.fert = fertAround(s.x, s.y);
+  terrDirty = true;
+}
+
+// ===== 年代記 =====
+function fmtYear(y){ y = Math.floor(y); return y < 0 ? `紀元前${-y}年` : `${y}年`; }
+function fmtPop(p){
+  p = Math.round(p);
+  if (p >= 1e8) return (p / 1e8).toFixed(2) + '億人';
+  if (p >= 1e4) return (p / 1e4).toFixed(p >= 1e6 ? 0 : 1) + '万人';
+  return p.toLocaleString('ja-JP') + '人';
+}
+function fmtArea(t){ const a = t * KM2_PER_TILE; return a >= 1e4 ? `約${Math.round(a / 1e4).toLocaleString('ja-JP')}万km²` : `約${a.toLocaleString('ja-JP')}km²`; }
+const logEl = document.getElementById('log');
+function log(text, kind = ''){
+  logs.unshift({ y:Math.floor(year), t:text, k:kind }); if (logs.length > 60) logs.length = 60;
+  renderLog();
+}
+function renderLog(){
+  logEl.innerHTML = logs.slice(0, 6).map(l => `<div class="k-${l.k}"><span class="y">${fmtYear(l.y)}</span><span>${l.t}</span></div>`).join('');
+}
+let bannerT = 0;
+function showBanner(name, sub, msg){
+  const b = document.getElementById('banner');
+  b.innerHTML = `<small>${sub}</small><b>${name}</b><span>${msg}</span>`;
+  b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+}
+let toastT = 0;
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
+
+// ===== カメラと描画 =====
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+let vw = 0, vh = 0, dpr = 1, shake = 0;
+const cam = { x:lonX(20)*TS, y:latY(12)*TS, z:1 };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const minZoom = () => Math.min(vw / (W*TS), vh / (H*TS));
+function clampCam(){
+  const hw = vw / 2 / cam.z, hh = vh / 2 / cam.z, mw = W*TS, mh = H*TS;
+  cam.x = mw <= hw*2 ? mw/2 : clamp(cam.x, hw, mw - hw);
+  cam.y = mh <= hh*2 ? mh/2 : clamp(cam.y, hh, mh - hh);
+}
+function resize(){
+  dpr = Math.min(2, window.devicePixelRatio || 1); vw = window.innerWidth; vh = window.innerHeight;
+  cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr);
+  cam.z = clamp(cam.z, minZoom(), 6); clampCam();
+}
+function zoomAt(sx, sy, f){
+  const wx = (sx - vw/2) / cam.z + cam.x, wy = (sy - vh/2) / cam.z + cam.y;
+  cam.z = clamp(cam.z * f, minZoom(), 6);
+  cam.x = wx - (sx - vw/2) / cam.z; cam.y = wy - (sy - vh/2) / cam.z; clampCam();
+}
+const toScreen = (tx, ty) => [(tx*TS - cam.x) * cam.z + vw/2, (ty*TS - cam.y) * cam.z + vh/2];
+const toTile = (sx, sy) => [((sx - vw/2) / cam.z + cam.x) / TS, ((sy - vh/2) / cam.z + cam.y) / TS];
+
+function ell(x, y, rx, ry, a0 = 0, a1 = TAU){ ctx.beginPath(); ctx.ellipse(x, y, Math.max(.1, rx), Math.max(.1, ry), 0, a0, a1); }
+function fs(fill){ ctx.fillStyle = fill; ctx.fill(); ctx.stroke(); }
+function house(x, y, w, h, wall, roof, u){
+  const X = x*u, Y = y*u, Wd = w*u, Hd = h*u;
+  ctx.beginPath(); ctx.rect(X - Wd/2, Y - Hd, Wd, Hd); fs(wall);
+  ctx.beginPath(); ctx.moveTo(X - Wd*.62, Y - Hd + .5); ctx.lineTo(X, Y - Hd - Wd*.55); ctx.lineTo(X + Wd*.62, Y - Hd + .5); ctx.closePath(); fs(roof);
+}
+function tent(x, y, sz, u){
+  const X = x*u, Y = y*u, a = sz*u;
+  ctx.beginPath(); ctx.moveTo(X - a*.36, Y); ctx.lineTo(X, Y - a*.55); ctx.lineTo(X + a*.36, Y); ctx.closePath(); fs('#ecdcb2');
+  ctx.beginPath(); ctx.moveTo(X - a*.09, Y); ctx.lineTo(X, Y - a*.24); ctx.lineTo(X + a*.09, Y); ctx.closePath(); ctx.fillStyle = '#5e432b'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(X - a*.06, Y - a*.66); ctx.lineTo(X, Y - a*.53); ctx.lineTo(X + a*.07, Y - a*.68); ctx.stroke();
+}
+function flag(x, y, h, col, u, time){
+  const X = x*u, Y = y*u, top = Y - h*u, fw = Math.max(4, u*.28), fh = Math.max(3, u*.17), wv = Math.sin(time*4 + x*7) * fh*.25;
+  ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X, top); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X, top); ctx.quadraticCurveTo(X + fw*.5, top - wv, X + fw, top + wv*.4); ctx.lineTo(X + fw, top + fh + wv*.4); ctx.quadraticCurveTo(X + fw*.5, top + fh - wv, X, top + fh); ctx.closePath(); fs(col);
+}
+function star(x, y, r){
+  ctx.beginPath();
+  for (let k = 0; k < 10; k++){ const a = -Math.PI/2 + k*Math.PI/5, rr = k % 2 ? r*.45 : r; ctx.lineTo(x + Math.cos(a)*rr, y + Math.sin(a)*rr); }
+  ctx.closePath(); ctx.fillStyle = '#ffd36b'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(60,40,0,.9)'; ctx.stroke();
+}
+const WALLS = ['#efe5d0','#e6d8bd','#f3ecdc'], ROOFS = ['#b4553d','#a4472f','#8f5c3a','#7b5d4d'];
+const BRICK = ['#9c4f3a','#b8664a','#7d6a5c','#8a5a48'], GLASS = ['#7f9cb4','#a7bccc','#5f7d96','#c4cfd6','#8aa3a8'];
+
+function drawSettlement(s, sx, sy, px, time){
+  const st = s.stage, n = N[s.nation], u = Math.max(px, MINU[st]), R = mulberry(s.seed);
+  ctx.save(); ctx.translate(sx, sy);
+  ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(.7, u*.045); ctx.strokeStyle = 'rgba(28,20,14,.85)';
+  ell(0, u*.14, u*SZ[st], u*SZ[st]*.52); ctx.fillStyle = n.cssA; ctx.fill();
+  if (st === 0){
+    const k = 1 + Math.min(2, Math.floor(s.pop / 18)), pos = [[0,.2,1],[-.44,.32,.82],[.44,.34,.82]];
+    pos.slice(0, k).sort((a, b) => a[1] - b[1]).forEach(p => tent(p[0], p[1], p[2], u));
+    ell(.05*u, .5*u, u*.07*(1 + Math.sin(time*13 + s.id)*.25), u*.06); ctx.fillStyle = '#ffb347'; ctx.fill();
+  } else if (st === 1){
+    const k = 3 + Math.min(2, Math.floor(s.pop / 140)), hs = [[0, .12, 1.15]];
+    for (let i = 0; i < k; i++){ const a = i / k * TAU + R()*.6, r = .5 + R()*.12; hs.push([Math.cos(a)*r, Math.sin(a)*r*.5 + .18, .85]); }
+    hs.sort((a, b) => a[1] - b[1]).forEach(h => house(h[0], h[1], .3*h[2], .17*h[2], '#8d6b45', '#cfa553', u));
+  } else if (st === 2){
+    const hs = [];
+    for (let i = 0; i < 7; i++){ const a = i / 7 * TAU + R()*.5, r = .62 + R()*.2; hs.push([Math.cos(a)*r, Math.sin(a)*r*.5 + .2, WALLS[R()*3|0], ROOFS[R()*4|0]]); }
+    hs.push([0, .12, 'T']);
+    hs.sort((a, b) => a[1] - b[1]).forEach(h => {
+      if (h[2] === 'T'){
+        const X = h[0]*u, Y = h[1]*u;
+        ctx.beginPath(); ctx.rect(X - .27*u, Y - .28*u, .54*u, .28*u); fs('#ece2cd');
+        ctx.beginPath(); ctx.moveTo(X - .33*u, Y - .27*u); ctx.lineTo(X, Y - .46*u); ctx.lineTo(X + .33*u, Y - .27*u); ctx.closePath(); fs('#c8b088');
+        if (u > 9){ ctx.beginPath(); for (let c = -2; c <= 2; c++){ ctx.moveTo(X + c*.1*u, Y - .25*u); ctx.lineTo(X + c*.1*u, Y - .02*u); } ctx.stroke(); }
+      } else house(h[0], h[1], .26, .17, h[2], h[3], u);
+    });
+  } else if (st === 3){
+    const rx = 1.25*u, ry = .62*u, cy = .18*u, wl = Math.max(1.4, u*.11);
+    ell(0, cy, rx, ry); ctx.fillStyle = 'rgba(178,160,126,.6)'; ctx.fill();
+    ctx.save(); ctx.lineWidth = wl; ctx.strokeStyle = '#8b8477'; ell(0, cy, rx, ry, Math.PI, TAU); ctx.stroke(); ctx.restore();
+    const hs = [];
+    for (let i = 0; i < 9; i++){ const a = R()*TAU, r = .45 + Math.sqrt(R())*.5; hs.push([Math.cos(a)*r*1.05, Math.sin(a)*r*.42 + .2, WALLS[R()*3|0], ROOFS[R()*4|0]]); }
+    hs.sort((a, b) => a[1] - b[1]);
+    hs.filter(h => h[1] < .1).forEach(h => house(h[0], h[1], .21, .14, h[2], h[3], u));
+    // 天守
+    const X = 0, Y = .08*u, kw = .36*u, kh = .66*u;
+    ctx.beginPath(); ctx.rect(X - kw/2, Y - kh, kw, kh); fs('#b9b2a3');
+    for (let c = 0; c < 3; c++){ ctx.beginPath(); ctx.rect(X - kw/2 + c*kw*.4, Y - kh - .08*u, kw*.2, .08*u); fs('#b9b2a3'); }
+    if (u > 8){ ctx.fillStyle = '#3a3027'; ctx.fillRect(X - .04*u, Y - kh*.6, .08*u, .14*u); }
+    flag(0, (.08 - .66 - .08), .32, n.css, u, time);
+    hs.filter(h => h[1] >= .1).forEach(h => house(h[0], h[1], .21, .14, h[2], h[3], u));
+    ctx.save(); ctx.lineWidth = wl; ctx.strokeStyle = '#8b8477'; ell(0, cy, rx, ry, 0, Math.PI); ctx.stroke(); ctx.restore();
+    for (const a of [0, Math.PI*.5, Math.PI]){
+      const tx = Math.cos(a)*rx, ty = cy + Math.sin(a)*ry;
+      ctx.beginPath(); ctx.rect(tx - .09*u, ty - .26*u, .18*u, .26*u); fs('#a7a092');
+    }
+  } else if (st === 4){
+    ell(0, .14*u, 1.6*u, .7*u); ctx.fillStyle = 'rgba(80,72,66,.4)'; ctx.fill();
+    const bs = [];
+    for (let i = 0; i < 10; i++) bs.push({ x:(R() - .5)*2, y:(R() - .5)*.75 + .22, w:.2 + R()*.18, h:.22 + R()*.45, c:BRICK[R()*4|0] });
+    bs.push({ x:.55, y:.05, w:.09, h:1.05, c:'#4e423d', ch:true });
+    bs.sort((a, b) => a.y - b.y);
+    for (const b of bs){
+      const X = b.x*u, Y = b.y*u, w = b.w*u, h = b.h*u;
+      ctx.beginPath(); ctx.rect(X - w/2, Y - h, w, h); fs(b.c);
+      if (b.ch){ if (rnd() < .05 * Math.min(3, speed || 0)) smoke(s.x + .5 + b.x*u/px, s.y + .5 + (b.y*u - h)/px); continue; }
+      if (u > 9){ ctx.fillStyle = 'rgba(255,222,150,.55)'; for (let yy = Y - h + .07*u; yy < Y - .07*u; yy += .12*u) ctx.fillRect(X - w/2 + .04*u, yy, w - .08*u, .04*u); }
+    }
+    flag(-.05, -.55, .4, n.css, u, time);
+  } else {
+    ell(0, .14*u, 2.2*u, .9*u); ctx.fillStyle = 'rgba(255,214,140,.13)'; ctx.fill();
+    ell(0, .14*u, 1.7*u, .72*u); ctx.fillStyle = 'rgba(70,74,82,.5)'; ctx.fill();
+    const sc = .75 + Math.min(1, s.pop / 2e6) * .75, k = 9 + Math.min(7, Math.floor(s.pop / 400000)), bs = [];
+    for (let i = 0; i < k; i++){ const a = R()*TAU, r = Math.pow(R(), .8); bs.push({ x:Math.cos(a)*r*1.35, y:Math.sin(a)*r*.5 + .2, w:.17 + R()*.15, h:(.45 + R()*1.0)*(1.25 - r*.7)*sc, c:GLASS[R()*5|0], seed:R() }); }
+    bs.push({ x:0, y:.14, w:.24, h:2.05*sc, c:'#a3b9ca', tall:true, seed:.5 });
+    bs.sort((a, b) => a.y - b.y);
+    for (const b of bs){
+      const X = b.x*u, Y = b.y*u, w = b.w*u, h = b.h*u;
+      ctx.beginPath(); ctx.rect(X - w/2, Y - h, w, h); fs(b.c);
+      ctx.fillStyle = 'rgba(10,20,30,.22)'; ctx.fillRect(X + w*.15, Y - h, w*.35, h);
+      if (u > 8){
+        ctx.fillStyle = 'rgba(255,238,180,.6)';
+        let j = 0; for (let yy = Y - h + .08*u; yy < Y - .06*u; yy += .1*u){ if (hash2(s.id, j++, b.seed*1e6|0) > .35) ctx.fillRect(X - w/2 + .03*u, yy, w*.6, Math.max(1, .035*u)); }
+      }
+      if (b.tall){
+        ctx.beginPath(); ctx.moveTo(X, Y - h); ctx.lineTo(X, Y - h - .35*u); ctx.stroke();
+        if (Math.sin(time*4) > 0){ ctx.beginPath(); ctx.arc(X, Y - h - .35*u, Math.max(1.5, u*.05), 0, TAU); ctx.fillStyle = '#ff4a3a'; ctx.fill(); }
+      }
+    }
+  }
+  if (s.capital) star(u*SZ[st]*.85, -u*(st >= 5 ? 1.3 : st >= 3 ? .7 : .45), Math.max(4, u*.17));
+  ctx.restore();
+}
+
+function drawArmy(a, sx, sy, px, time){
+  const n = N[a.nation], u = Math.max(px*.85, 9) * (.85 + Math.min(.5, Math.log10(a.str + 1) * .1));
+  const ti = (a.y | 0) * W + (a.x | 0), water = !isLand(terr[ti]);
+  ctx.save(); ctx.translate(sx, sy); if (a.dir < 0) ctx.scale(-1, 1);
+  ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(.8, u*.06); ctx.strokeStyle = 'rgba(18,12,8,.92)';
+  if (water){
+    const bob = Math.sin(time*3 + a.phase) * u*.03;
+    ctx.translate(0, bob);
+    ctx.beginPath(); ctx.moveTo(-.48*u, -.05*u); ctx.lineTo(.5*u, -.05*u); ctx.lineTo(.32*u, .2*u); ctx.lineTo(-.32*u, .2*u); ctx.closePath(); fs(eraIdx >= 4 ? '#59606a' : '#6b4a2e');
+    if (eraIdx >= 4){ ctx.beginPath(); ctx.rect(-.15*u, -.28*u, .32*u, .23*u); fs('#8a929c'); ctx.beginPath(); ctx.rect(-.05*u, -.45*u, .1*u, .17*u); fs(n.css); }
+    else { ctx.beginPath(); ctx.moveTo(0, -.05*u); ctx.lineTo(0, -.75*u); ctx.stroke(); ctx.beginPath(); ctx.moveTo(.02*u, -.72*u); ctx.quadraticCurveTo(.4*u, -.4*u, .02*u, -.12*u); ctx.closePath(); fs(n.css); }
+  } else if (eraIdx >= 5){
+    ctx.beginPath(); ctx.rect(-.5*u, -.02*u, u, .16*u); fs('#2d2f30');
+    ctx.beginPath(); ctx.rect(-.45*u, -.24*u, .9*u, .23*u); fs(n.css);
+    ctx.beginPath(); ctx.rect(-.18*u, -.42*u, .36*u, .19*u); fs(n.css);
+    ctx.beginPath(); ctx.moveTo(.18*u, -.33*u); ctx.lineTo(.62*u, -.36*u); ctx.lineWidth = Math.max(1.4, u*.08); ctx.stroke();
+  } else {
+    const bob = Math.abs(Math.sin(time*9 + a.phase)) * u*.06;
+    ctx.translate(0, -bob);
+    ctx.beginPath(); ctx.moveTo(-.08*u, -.1*u); ctx.lineTo(-.12*u, .12*u); ctx.moveTo(.08*u, -.1*u); ctx.lineTo(.12*u, .12*u); ctx.stroke();
+    ctx.beginPath(); ctx.rect(-.14*u, -.45*u, .28*u, .36*u); fs(n.css);
+    ctx.beginPath(); ctx.arc(0, -.57*u, .12*u, 0, TAU); fs(eraIdx >= 2 && eraIdx < 4 ? '#a9aeb4' : '#efcfa2');
+    if (eraIdx >= 4){ ctx.beginPath(); ctx.moveTo(-.1*u, -.3*u); ctx.lineTo(.42*u, -.48*u); ctx.lineWidth = Math.max(1.2, u*.07); ctx.stroke(); }
+    else {
+      ctx.beginPath(); ctx.moveTo(.24*u, .1*u); ctx.lineTo(.24*u, -.95*u); ctx.stroke();
+      ctx.beginPath(); ctx.rect(.24*u, -.95*u, .34*u, .22*u); fs(n.css);
+      if (eraIdx >= 2){ ell(-.2*u, -.28*u, .11*u, .15*u); fs('#7d6a52'); }
+    }
+  }
+  ctx.restore();
+}
+
+function render(time){
+  const px = TS * cam.z;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#0a2133'; ctx.fillRect(0, 0, vw, vh);
+  let sxk = 0, syk = 0;
+  if (shake > 0 && !reduceMotion){ sxk = (rnd() - .5) * 14 * shake; syk = (rnd() - .5) * 14 * shake; }
+  const ox = vw/2 - cam.x*cam.z + sxk, oy = vh/2 - cam.y*cam.z + syk;
+  ctx.save(); ctx.translate(ox, oy); ctx.scale(cam.z, cam.z);
+  ctx.imageSmoothingEnabled = cam.z < 1;
+  ctx.drawImage(tcv, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(terCv, 0, 0, W*TS, H*TS);
+  if (roadPath){
+    ctx.lineCap = 'round';
+    ctx.lineWidth = (eraIdx >= 5 ? 2.4 : eraIdx >= 4 ? 1.8 : 1.3) / cam.z;
+    ctx.strokeStyle = eraIdx >= 4 ? 'rgba(62,62,66,.85)' : 'rgba(128,96,58,.7)';
+    ctx.stroke(roadPath);
+    if (eraIdx >= 5){ ctx.lineWidth = .7 / cam.z; ctx.strokeStyle = 'rgba(255,226,140,.6)'; ctx.stroke(roadPath); }
+  }
+  for (const [id, p] of borderPaths){
+    if (!N[id] || !N[id].alive) continue;
+    ctx.lineWidth = 3.2 / cam.z; ctx.strokeStyle = 'rgba(8,12,18,.42)'; ctx.stroke(p);
+    ctx.lineWidth = 1.5 / cam.z; ctx.strokeStyle = N[id].line; ctx.stroke(p);
+  }
+  ctx.restore();
+  ctx.translate(sxk, syk);
+
+  // 街
+  const vis = [];
+  for (const s of S){
+    if (!s.alive) continue;
+    const [x, y] = toScreen(s.x + .5, s.y + .5);
+    const m = Math.max(px, 8) * 2.6;
+    if (x < -m || y < -m*1.4 || x > vw + m || y > vh + m) continue;
+    vis.push([y, s, x]);
+  }
+  vis.sort((a, b) => a[0] - b[0]);
+  for (const [y, s, x] of vis) drawSettlement(s, x, y, px, time);
+
+  // 国名
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  for (const n of N){
+    if (!n.alive || n.tiles < 6) continue;
+    const [x, y] = toScreen(n.cx / n.tiles + .5, n.cy / n.tiles + .5);
+    if (x < -100 || y < -40 || x > vw + 100 || y > vh + 40) continue;
+    const fsz = clamp(Math.sqrt(n.tiles) * px * .2, 11, 26);
+    ctx.font = `400 ${fsz}px 'Dela Gothic One', 'Hiragino Sans', sans-serif`;
+    ctx.lineWidth = Math.max(3, fsz * .28); ctx.strokeStyle = 'rgba(8,12,18,.8)'; ctx.strokeText(nm(n.id), x, y - px*1.6);
+    ctx.fillStyle = n.line; ctx.fillText(nm(n.id), x, y - px*1.6);
+  }
+  // 街の名前
+  if (px >= 13){
+    ctx.font = `700 ${clamp(px*.42, 11, 14)}px 'Zen Kaku Gothic New', sans-serif`;
+    for (const [y, s, x] of vis){
+      if (s.stage < 1 && px < 22) continue;
+      const u = Math.max(px, MINU[s.stage]);
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(8,12,18,.85)'; ctx.strokeText(s.name, x, y + u*(SZ[s.stage]*.5 + .35));
+      ctx.fillStyle = '#f4efe2'; ctx.fillText(s.name, x, y + u*(SZ[s.stage]*.5 + .35));
+    }
+  }
+  // 軍隊
+  for (const a of armies){
+    const [x, y] = toScreen(a.x, a.y);
+    if (x < -30 || y < -30 || x > vw + 30 || y > vh + 30) continue;
+    drawArmy(a, x, y, px, time);
+  }
+  // 飛行機
+  for (const p of planes){
+    const t = p.t / p.dur, wx = p.x0 + (p.x1 - p.x0)*t, wy = p.y0 + (p.y1 - p.y0)*t - Math.sin(t*Math.PI)*3;
+    const [x, y] = toScreen(wx, wy), [x0, y0] = toScreen(p.x0 + (p.x1 - p.x0)*Math.max(0, t - .12), p.y0 + (p.y1 - p.y0)*Math.max(0, t - .12) - Math.sin(Math.max(0, t - .12)*Math.PI)*3);
+    const g = ctx.createLinearGradient(x0, y0, x, y); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,.55)');
+    ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x, y); ctx.stroke();
+    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(y - y0, x - x0)); const k = Math.max(5, px*.5);
+    ctx.fillStyle = '#f2f4f6'; ctx.strokeStyle = 'rgba(20,20,30,.8)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(k, 0); ctx.lineTo(-k*.8, -k*.15); ctx.lineTo(-k*.8, k*.15); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(.1*k, 0); ctx.lineTo(-.3*k, -k*.75); ctx.lineTo(-.45*k, -k*.75); ctx.lineTo(-.3*k, 0); ctx.lineTo(-.45*k, k*.75); ctx.lineTo(-.3*k, k*.75); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  // 粒子
+  for (const p of parts){
+    const [x, y] = toScreen(p.x, p.y), a = clamp(p.life / p.max, 0, 1);
+    ctx.globalAlpha = p.grow ? a * .55 : a;
+    ctx.fillStyle = p.c; ctx.beginPath();
+    ctx.arc(x, y, Math.max(1.2, p.r * px * (p.grow ? 1 + (1 - a)*2.5 : 1)), 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // 隕石
+  for (const m of meteors){
+    const t = Math.min(1, m.t / .9), sx0 = m.x + 22, sy0 = m.y - 26;
+    const [x, y] = toScreen(sx0 + (m.x + .5 - sx0)*t, sy0 + (m.y + .5 - sy0)*t), [tx, ty] = toScreen(sx0 + (m.x + .5 - sx0)*Math.max(0, t - .25), sy0 + (m.y + .5 - sy0)*Math.max(0, t - .25));
+    const g = ctx.createLinearGradient(tx, ty, x, y); g.addColorStop(0, 'rgba(255,140,40,0)'); g.addColorStop(1, 'rgba(255,220,140,.95)');
+    ctx.strokeStyle = g; ctx.lineWidth = Math.max(5, px*.9); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
+    ctx.fillStyle = '#fff3d0'; ctx.beginPath(); ctx.arc(x, y, Math.max(4, px*.6), 0, TAU); ctx.fill();
+  }
+  // 道具のカーソル
+  if (hover && tool !== 'look' && !pinch){
+    const [x, y] = toScreen(Math.floor(hover[0]) + .5, Math.floor(hover[1]) + .5);
+    const r = (TERRAIN_TOOLS[tool] ? BRUSH : tool === 'meteor' ? 3.2 : .7) * px;
+    ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.strokeStyle = tool === 'meteor' ? 'rgba(255,140,90,.9)' : 'rgba(255,240,200,.85)';
+    ctx.beginPath(); ctx.arc(x, y, Math.max(6, r), 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // 選択
+  if (sel && sel.type === 'city'){
+    const s = sById.get(sel.id);
+    if (s){ const [x, y] = toScreen(s.x + .5, s.y + .5), u = Math.max(px, MINU[s.stage]); ctx.lineWidth = 2; ctx.strokeStyle = '#ffd36b'; ell(x, y + u*.14, u*SZ[s.stage] + 4, u*SZ[s.stage]*.52 + 3); ctx.stroke(); }
+  }
+}
+
+// ===== ループ =====
+let lastT = performance.now(), acc = 0;
+function frame(now){
+  const dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
+  if (started && speed > 0){
+    acc += dt * 10 * speed; let n = 0;
+    while (acc >= 1 && n < 40){ step(); acc -= 1; n++; }
+    if (acc > 40) acc = 0;
+  }
+  for (const p of parts){ p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.g * dt; }
+  if (parts.length) parts = parts.filter(p => p.life > 0);
+  if (parts.length > 900) parts.splice(0, parts.length - 900);
+  for (const m of meteors){ m.t += dt; if (m.t >= .9 && !m.done){ m.done = true; impact(m.x, m.y); } }
+  meteors = meteors.filter(m => !m.done);
+  shake = Math.max(0, shake - dt * 2);
+  if (speed > 0){
+    for (const p of planes) p.t += dt * Math.min(speed, 3);
+    planes = planes.filter(p => p.t < p.dur);
+    if (eraIdx >= 5 && planes.length < 7 && rnd() < .02 * Math.min(speed, 3)){
+      const big = S.filter(s => s.alive && s.stage >= 4);
+      if (big.length >= 2){ const a = pick(big), b = pick(big); const d = Math.hypot(a.x - b.x, a.y - b.y); if (d > 12) planes.push({ x0:a.x + .5, y0:a.y + .5, x1:b.x + .5, y1:b.y + .5, t:0, dur:clamp(d / 9, 2, 9) }); }
+    }
+  }
+  render(now / 1000);
+  if (now - uiT > 300){ uiT = now; updateUI(); }
+  requestAnimationFrame(frame);
+}
+let uiT = 0;
+
+// ===== UI =====
+let tool = 'human', sel = null, warPick = false, hover = null;
+const BRUSH = 1.6;
+const TERRAIN_TOOLS = { land:'land', sea:'sea', forest:T.FOREST, mount:T.MOUNT };
+const $ = id => document.getElementById(id);
+
+function setTool(t){
+  tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
+  cv.classList.toggle('look', t === 'look');
+}
+document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+function setSpeed(v){ speed = v; document.querySelectorAll('[data-speed]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.speed === v ? 'true' : 'false')); }
+document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.speed)));
+$('nextEra').addEventListener('click', () => {
+  if (!started){ toast('まず「人類」で地球に人を生み出してください'); return; }
+  if (eraIdx >= ERAS.length - 1){ toast('もう現代です'); return; }
+  year = ERAS[eraIdx + 1].start; advanceEra();
+});
+$('sideToggle').addEventListener('click', () => { const o = $('side').classList.toggle('open'); $('sideToggle').setAttribute('aria-expanded', o ? 'true' : 'false'); });
+
+function findHabitableNear(x, y){
+  for (let r = 0; r < 12; r++) for (let k = 0; k < 40; k++){
+    const a = rnd()*TAU, xx = Math.round(x + Math.cos(a)*r), yy = Math.round(y + Math.sin(a)*r);
+    if (xx > 0 && yy > 0 && xx < W-1 && yy < H-1 && habitable(terr[yy*W+xx]) && fertAround(xx, yy) > .3) return [xx, yy];
+  }
+  return null;
+}
+function beginWorld(){
+  if (started) return;
+  started = true; $('intro').hidden = true;
+  showBanner(ERAS[0].name, fmtYear(year), ERAS[0].msg);
+}
+function spawnHumans(x, y, forceNation){
+  const i = y*W+x;
+  if (!habitable(terr[i])){ toast(isLand(terr[i]) ? '氷の上では暮らせません' : '陸地をタップしてください'); return false; }
+  const near = nearSettlement(x, y, 2.6);
+  if (near && !forceNation){ near.pop += Math.max(8, near.pop * .2); boom(near.x + .5, near.y + .5, 8, ['#fff2c8','#ffe08a']); toast(`${near.name}に人々が加わった`); return true; }
+  if (near){ toast('近くに街があります。少し離れた場所を選んでください'); return false; }
+  const first = !started;
+  beginWorld();
+  const o = owner[i];
+  if (!forceNation && o >= 0 && N[o].alive){
+    const s = addSettlement(x, y, o, startPop() * .5);
+    boom(x + .5, y + .5, 10, ['#fff2c8','#ffe08a']);
+    toast(`${nm(o)}に新しい${STAGE_NAME[s.stage]}ができた`);
+    return true;
+  }
+  const n = foundNation(x, y);
+  if (eraIdx >= 2){
+    for (let k = 0; k < 3; k++){
+      for (let t = 0; t < 20; t++){
+        const a = rnd()*TAU, d = 3 + rnd()*3, xx = Math.round(x + Math.cos(a)*d), yy = Math.round(y + Math.sin(a)*d);
+        if (xx > 0 && yy > 0 && xx < W-1 && yy < H-1 && habitable(terr[yy*W+xx]) && !nearSettlement(xx, yy, 2.8)){ addSettlement(xx, yy, n.id, startPop() * .4); break; }
+      }
+    }
+  }
+  boom(x + .5, y + .5, 14, ['#fff2c8','#ffe08a','#ffffff']);
+  if (first) log(`人類が誕生した。${nm(n.id)}の最初のテントが建った`, 'era');
+  else log(`${nm(n.id)}が誕生した`, forceNation ? 'war' : '');
+  sel = { type:'nation', id:n.id }; warPick = false;
+  recomputeTerritory();
+  return true;
+}
+$('startAfrica').addEventListener('click', () => {
+  const p = findHabitableNear(Math.round(lonX(36)), Math.round(latY(-2)));
+  if (p){ spawnHumans(p[0], p[1], false); const [tx, ty] = p; cam.z = Math.max(cam.z, minZoom() * 2.2); cam.x = (tx + .5) * TS; cam.y = (ty + .5) * TS; clampCam(); }
+});
+$('startFree').addEventListener('click', () => { $('intro').hidden = true; setTool('human'); toast('地図の陸地をタップして人類を生み出そう'); });
+
+function applyTool(sx, sy){
+  const [fx, fy] = toTile(sx, sy), x = Math.floor(fx), y = Math.floor(fy);
+  if (x < 0 || y < 0 || x >= W || y >= H) return;
+  if (tool === 'human') spawnHumans(x, y, false);
+  else if (tool === 'nation'){
+    if (!started && !habitable(terr[y*W+x])){ toast('陸地をタップしてください'); return; }
+    spawnHumans(x, y, true);
+  }
+  else if (tool === 'meteor'){ meteors.push({ x, y, t:0 }); }
+  else if (TERRAIN_TOOLS[tool] !== undefined) paintTerrain(x, y, BRUSH, TERRAIN_TOOLS[tool]);
+  else if (tool === 'look') selectAt(sx, sy);
+}
+function selectAt(sx, sy){
+  const px = TS * cam.z; let best = null, bd = 1e9;
+  for (const s of S){
+    if (!s.alive) continue;
+    const [x, y] = toScreen(s.x + .5, s.y + .5), u = Math.max(px, MINU[s.stage]), d = Math.hypot(x - sx, y - sy + u*.2);
+    if (d < Math.max(12, u*SZ[s.stage]) && d < bd){ bd = d; best = s; }
+  }
+  warPick = false;
+  if (best){ sel = { type:'city', id:best.id }; openSide(); return; }
+  const [fx, fy] = toTile(sx, sy), x = Math.floor(fx), y = Math.floor(fy);
+  const o = x >= 0 && y >= 0 && x < W && y < H ? owner[y*W+x] : -1;
+  sel = o >= 0 ? { type:'nation', id:o } : null;
+  if (sel) openSide();
+}
+function openSide(){ if (innerWidth <= 760){ $('side').classList.add('open'); $('sideToggle').setAttribute('aria-expanded', 'true'); } updateUI(true); }
+
+// ポインター操作
+const pointers = new Map(); let drag = null, pinch = null;
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pointers.size === 2){
+    const [a, b] = [...pointers.values()];
+    pinch = { d:Math.hypot(a.x - b.x, a.y - b.y), z:cam.z, mx:(a.x + b.x)/2, my:(a.y + b.y)/2 }; drag = null; return;
+  }
+  const pan = e.button === 1 || e.button === 2;
+  drag = { sx:e.clientX, sy:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, pan, paint:false };
+  if (!pan && e.button === 0 && TERRAIN_TOOLS[tool] !== undefined){ drag.paint = true; applyTool(e.clientX, e.clientY); }
+});
+cv.addEventListener('pointermove', e => {
+  hover = toTile(e.clientX, e.clientY);
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if (pinch && pointers.size >= 2){
+    const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x)/2, my = (a.y + b.y)/2;
+    cam.x -= (mx - pinch.mx) / cam.z; cam.y -= (my - pinch.my) / cam.z;
+    zoomAt(mx, my, pinch.z * d / pinch.d / cam.z);
+    pinch.mx = mx; pinch.my = my; return;
+  }
+  if (!drag) return;
+  if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 5) drag.moved = true;
+  if (drag.paint){
+    const steps = Math.ceil(Math.hypot(e.clientX - drag.lx, e.clientY - drag.ly) / 6);
+    for (let k = 1; k <= steps; k++) applyTool(drag.lx + (e.clientX - drag.lx)*k/steps, drag.ly + (e.clientY - drag.ly)*k/steps);
+  } else if (drag.moved){
+    cam.x -= (e.clientX - drag.lx) / cam.z; cam.y -= (e.clientY - drag.ly) / cam.z; clampCam();
+  }
+  drag.lx = e.clientX; drag.ly = e.clientY;
+});
+function endPointer(e){
+  if (drag && !drag.moved && !drag.paint && !drag.pan && !pinch && pointers.size === 1) applyTool(e.clientX, e.clientY);
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinch = null;
+  if (pointers.size === 0) drag = null;
+  if (e.pointerType !== 'mouse') hover = null;
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', e => { pointers.delete(e.pointerId); pinch = null; drag = null; });
+cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hover = null; });
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * .0015)); }, { passive:false });
+window.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
+  if (e.key === ' '){ e.preventDefault(); setSpeed(speed ? 0 : 1); }
+  else if (e.key === '+' || e.key === '=') zoomAt(vw/2, vh/2, 1.25);
+  else if (e.key === '-') zoomAt(vw/2, vh/2, .8);
+});
+window.addEventListener('resize', resize);
+
+// 右パネル
+const infoEl = $('info'), natEl = $('nations');
+let infoKey = '', natKey = '';
+function nationStats(){
+  for (const n of N){ n.pop = 0; n.count = 0; }
+  for (const s of S) if (s.alive){ N[s.nation].pop += s.pop; N[s.nation].count++; }
+}
+function updateUI(force){
+  nationStats();
+  const alive = aliveNations();
+  $('eraName').textContent = ERAS[eraIdx].name;
+  $('yearTxt').textContent = fmtYear(year);
+  $('popTxt').textContent = fmtPop(alive.reduce((a, n) => a + n.pop, 0));
+  $('natTxt').textContent = alive.length;
+  $('warTxt').textContent = wars.length; $('warTxt').classList.toggle('hot', wars.length > 0);
+
+  // 国の一覧
+  const list = alive.slice().sort((a, b) => b.pop - a.pop);
+  const top = list.slice(0, 10);
+  const key = top.map(n => n.id + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx;
+  if (key !== natKey || force){
+    natKey = key;
+    natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}"><span class="sw" style="background:${n.css}"></span><span class="nm">${nm(n.id)}${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
+      + (list.length > 10 ? `<div class="more">ほか${list.length - 10}か国</div>` : '')
+      : '<p class="hint">まだ国はありません。「人類」か「建国」で地図をタップしよう。</p>';
+  }
+  for (const n of top){ const el = natEl.querySelector(`[data-np="${n.id}"]`); if (el) el.textContent = fmtPop(n.pop); }
+
+  // しらべる
+  let k2 = 'none', html = '';
+  if (sel && sel.type === 'city'){
+    const s = sById.get(sel.id);
+    if (!s || !s.alive) sel = null;
+    else {
+      k2 = `c${s.id}|${s.nation}|${s.capital}|${s.stage}|${eraIdx}`;
+      if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${N[s.nation].css}"></span><b>${s.name}</b>${s.capital ? '<span class="tag">首都</span>' : ''}</div>
+        <dl><dt>すがた</dt><dd>${STAGE_NAME[s.stage]}</dd><dt>人口</dt><dd data-f="cpop"></dd><dt>国</dt><dd><button class="linkish" type="button" data-nation="${s.nation}">${nm(s.nation)}</button></dd><dt>地形</dt><dd>${TNAME[terr[s.y*W + s.x]]}</dd><dt>創設</dt><dd>${fmtYear(s.born)}</dd></dl>`;
+    }
+  }
+  if (sel && sel.type === 'nation'){
+    const n = N[sel.id];
+    if (!n || !n.alive) sel = null;
+    else {
+      const ws = wars.filter(w => w.a === n.id || w.b === n.id), cap = sById.get(n.capital);
+      const others = aliveNations().filter(o => o.id !== n.id && !warOf(n.id, o.id));
+      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}`;
+      if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${n.css}"></span><b>${nm(n.id)}</b>${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
+        <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd></dl>
+        ${ws.length ? `<div class="picks" style="margin:0 0 10px;padding-top:0;border-top:0"><p>戦争の相手</p>${ws.map(w => { const o = w.a === n.id ? w.b : w.a; return `<div class="row" style="cursor:default"><span class="sw" style="background:${N[o].css}"></span><span class="nm">${nm(o)}</span><button class="btn peaceb" type="button" data-peace="${w.a}-${w.b}">講和</button></div>`; }).join('')}</div>` : ''}
+        <div class="acts"><button class="btn" type="button" data-goto="${n.id}">首都を見る</button>${others.length ? `<button class="btn warb" type="button" data-warpick="1">宣戦布告…</button>` : ''}</div>
+        ${warPick && others.length ? `<div class="picks"><p>どの国に宣戦布告しますか？</p>${others.map(o => `<button class="row" type="button" data-war="${n.id}-${o.id}"><span class="sw" style="background:${o.css}"></span><span class="nm">${nm(o.id)}</span><span class="pp">${fmtPop(o.pop)}</span></button>`).join('')}</div>` : ''}`;
+    }
+  }
+  if (!sel){ k2 = 'none'; if (k2 !== infoKey || force) html = '<p class="hint">「見る」を選んで地図の国や街をタップすると、ここに詳しく出ます。国を選ぶと宣戦布告や講和もできます。</p>'; }
+  if (html){ infoEl.innerHTML = html; }
+  infoKey = k2;
+  if (sel && sel.type === 'city'){ const s = sById.get(sel.id), f = infoEl.querySelector('[data-f="cpop"]'); if (s && f) f.textContent = fmtPop(s.pop); }
+  if (sel && sel.type === 'nation'){
+    const n = N[sel.id], q = f => infoEl.querySelector(`[data-f="${f}"]`);
+    if (q('npop')) q('npop').textContent = fmtPop(n.pop);
+    if (q('ncount')) q('ncount').textContent = n.count.toLocaleString('ja-JP');
+    if (q('narea')) q('narea').textContent = fmtArea(n.tiles);
+  }
+}
+document.getElementById('side').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.nation){ sel = { type:'nation', id:+b.dataset.nation }; warPick = false; updateUI(true); }
+  else if (b.dataset.city){ const s = sById.get(+b.dataset.city); if (s){ sel = { type:'city', id:s.id }; focusOn(s.x, s.y); } updateUI(true); }
+  else if (b.dataset.goto){ const c = sById.get(N[+b.dataset.goto].capital); if (c) focusOn(c.x, c.y); }
+  else if (b.dataset.warpick){ warPick = !warPick; updateUI(true); }
+  else if (b.dataset.war){ const [a, c] = b.dataset.war.split('-').map(Number); declareWar(a, c); warPick = false; updateUI(true); }
+  else if (b.dataset.peace){ const [a, c] = b.dataset.peace.split('-').map(Number); const w = warOf(a, c); if (w) makePeace(w); updateUI(true); }
+});
+function focusOn(x, y){ cam.z = Math.max(cam.z, minZoom() * 2.5); cam.x = (x + .5) * TS; cam.y = (y + .5) * TS; clampCam(); }
+
+// ===== 保存と復元（ページ更新時に世界を引き継ぐ） =====
+function serialize(){
+  return { v:1, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, cam:{ ...cam } };
+}
+function restore(d){
+  if (!d || d.v !== 1 || !d.terr || d.terr.length !== W*H) return;
+  terr.set(d.terr); computeDepth(); computeFert();
+  N = d.N; N.forEach(n => usedNames.add(n.base));
+  S = d.S; sById = new Map(S.map(s => [s.id, s]));
+  wars = d.wars; truce = new Map(d.truce); tick = d.tick; year = d.year; eraIdx = d.eraIdx; nextId = d.nextId;
+  logs = d.logs || []; firstStage = d.firstStage || firstStage; started = d.started; Object.assign(cam, d.cam || {});
+  setSpeed(d.speed ?? 1);
+  if (started) $('intro').hidden = true;
+}
+
+function start(data){
+  genWorld();
+  try { restore(data && data.game); } catch (err) { /* 古いデータは使わない */ }
+  paintAll(); resize();
+  if (!started) cam.z = Math.max(minZoom(), Math.min(vw / (W*TS) * 1.15, 6));
+  clampCam();
+  recomputeTerritory(); renderLog(); updateUI(true);
+  requestAnimationFrame(t => { lastT = t; frame(t); });
+}
+const hot = window.claude && window.claude.hot;
+if (hot && hot.snapshot) try { hot.snapshot(() => ({ game:serialize() })); } catch (err) {}
+if (hot && hot.ready) hot.ready(start); else start((hot && hot.data) || {});
+</script>
