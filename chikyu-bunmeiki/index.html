@@ -100,8 +100,23 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 .sp:hover{border-color:var(--muted)}
 .sp[aria-pressed="true"]{border-color:var(--brass);background:rgba(228,180,94,.14)}
 .sp:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.cmdbar{position:absolute;z-index:5;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 14px);width:430px;padding:10px 12px}
+.cb-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;min-width:0}
+.cb-head b{font-size:14px;white-space:nowrap;flex:0 0 auto;max-width:60%;overflow:hidden;text-overflow:ellipsis}
+.cb-stat{font-size:12px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media (min-width:761px){ body.has-cmd .side{max-height:calc(100% - 82px - 180px)} }
+.cb-go{margin-left:auto;padding:4px 9px;font-size:12px}
+.cb-row{display:flex;flex-wrap:wrap;gap:5px}
+.cmd{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--fg);font:inherit;font-size:12.5px;padding:6px 10px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.cmd:hover{border-color:var(--muted)}
+.cmd[aria-pressed="true"]{border-color:var(--brass);background:rgba(228,180,94,.16);color:var(--brass)}
+.cmd:disabled{opacity:.4;cursor:not-allowed}
+.cmd:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+.cb-hint{margin:7px 0 0;font-size:12px;color:var(--muted);line-height:1.5}
+.tag.me{border-color:var(--peace);color:var(--peace)}
+.row .nm .me{font-style:normal;font-size:11px;margin-left:6px;color:var(--peace)}
 .log{position:absolute;z-index:4;left:calc(max(16px,env(safe-area-inset-left,0px)) + 86px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
-  width:min(460px,calc(100% - 420px));display:flex;flex-direction:column;gap:3px;pointer-events:none}
+  width:min(460px,calc(100% - 580px));display:flex;flex-direction:column;gap:3px;pointer-events:none}
 .log div{background:var(--panel);border-radius:6px;padding:5px 10px;font-size:12.5px;line-height:1.45;display:flex;gap:8px;animation:in .35s ease-out}
 .log div:nth-child(1){opacity:1}.log div:nth-child(n+4){opacity:.75}.log div:nth-child(n+6){display:none}
 .log .y{font-family:var(--f-pixel);color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -153,6 +168,11 @@ dd{margin:0;font-variant-numeric:tabular-nums}
   .log{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 88px)}
   .log div:nth-child(n+3){display:none}
   .side.open ~ .log{display:none}
+  .cmdbar{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));width:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);padding:8px 10px}
+  .cb-row{flex-wrap:nowrap;overflow-x:auto}
+  .cb-hint{display:none}
+  .side.open ~ .cmdbar,.specpick:not([hidden]) ~ .cmdbar{display:none}
+  .cmdbar:not([hidden]) ~ .log{bottom:calc(env(safe-area-inset-bottom,0px) + 186px)}
   .toast{bottom:calc(env(safe-area-inset-bottom,0px) + 150px)}
 }
 @media (prefers-reduced-motion:reduce){
@@ -211,6 +231,20 @@ dd{margin:0;font-variant-numeric:tabular-nums}
     <section class="plate"><h2>世界の国々</h2><div class="rows" id="nations"></div></section>
   </aside>
 
+  <div class="plate cmdbar" id="cmdBar" hidden>
+    <div class="cb-head"><span class="sw" id="myColor"></span><b id="myName"></b><span class="cb-stat" id="myStat"></span><button class="btn cb-go" type="button" id="myGo">首都へ</button></div>
+    <div class="cb-row" role="group" aria-label="自分の国への命令">
+      <button class="cmd" type="button" data-cmd="cmdAttack" title="相手の街をタップすると、近くの街から軍を送ります">攻める</button>
+      <button class="cmd" type="button" data-cmd="cmdSettle" title="陸地をタップすると、近くの街から人を送って新しい街をつくります">開拓</button>
+      <button class="cmd" type="button" data-act="allout" title="戦争中の相手に、出せる軍をすべて送ります">総攻撃</button>
+      <button class="cmd" type="button" data-act="fortify" id="cFort" title="しばらくの間、すべての街の守りを強くします">守りを固める</button>
+      <button class="cmd" type="button" data-cmd="cmdJet" id="cJet" title="戦争特化の国が近代から使えます">戦闘機</button>
+      <button class="cmd" type="button" data-cmd="cmdNuke" id="cNuke" title="戦争特化の国が現代から使えます">核</button>
+      <button class="cmd" type="button" data-act="auto" id="cAuto" aria-pressed="true" title="オンのとき、戦争中は軍が自動で戦います">自動で戦う</button>
+    </div>
+    <p class="cb-hint" id="cmdHint">ボタンを選んでから地球をタップすると命令できます。</p>
+  </div>
+
   <div class="log" id="log" aria-live="polite"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast"></div>
@@ -224,6 +258,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
         <li><span>2</span><div>人が増えると村、町、城壁のある中世の街へと育ちます。</div></li>
         <li><span>3</span><div>「建国」で別の国を生み出すと、国境で戦争が起きます。勝った国が街と土地を手に入れます。国には貿易特化・防衛特化・戦争特化の3つの性格があります。</div></li>
         <li><span>4</span><div>近代には工場が、現代には高層ビルの大都市が並びます。その先の未来には、光る塔と空飛ぶ円盤の未来都市が生まれます。</div></li>
+        <li><span>5</span><div>最初に生み出した国があなたの国です。画面下の命令ボタンで攻めたり、開拓したりできます。</div></li>
       </ol>
       <div class="acts">
         <button class="btn go" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
@@ -533,6 +568,7 @@ function nationDies(nid, why){
   for (let k = wars.length-1; k >= 0; k--) if (wars[k].a === nid || wars[k].b === nid) wars.splice(k, 1);
   log(`${nm(nid)}は${why || '滅亡した'}`, 'war');
   if (sel && sel.type === 'nation' && sel.id === nid) sel = null;
+  if (nid === myNation){ myNation = -1; showBanner('滅亡', fmtYear(year), 'あなたの国は滅びた。「見る」でほかの国を選ぶと、続けてあやつれます'); if (tool.startsWith('cmd')) setTool('look'); }
 }
 
 function tryExpand(s){
@@ -622,7 +658,7 @@ function considerWars(){
     if ((truce.get(key) || 0) > tick) continue;
     const busy = 1 / (1 + warCount(a) + warCount(b));
     const p = .006 * ef * (N[a].aggr*spec(a).aggr + N[b].aggr*spec(b).aggr) / 2 * Math.min(2, .5 + cnt/20) * busy;
-    if (rnd() < p){ const [x, y] = N[a].pop >= N[b].pop ? [a, b] : [b, a]; declareWar(x, y); }
+    if (rnd() < p){ const [x, y] = N[a].pop >= N[b].pop ? [a, b] : [b, a]; if (x !== myNation) declareWar(x, y); }
   }
 }
 function reach(s, t){
@@ -632,6 +668,7 @@ function reach(s, t){
 }
 function dispatch(w){
   for (const [me, foe] of [[w.a, w.b], [w.b, w.a]]){
+    if (me === myNation && !autoArmy) continue;
     const theirs = S.filter(s => s.alive && s.nation === foe); if (!theirs.length) continue;
     const cand = [];
     for (const s of S){
@@ -663,7 +700,7 @@ function capture(t, nid){
   else if (wasCap){ const c = setCapital(old); if (c) log(`${nm(old)}は首都を${c.name}へ移した`); }
 }
 function assault(a, t){
-  const def = (t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5) * spec(t.nation).def * ((t.weak || 0) > tick ? .45 : 1);
+  const def = (t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5) * spec(t.nation).def * ((t.weak || 0) > tick ? .45 : 1) * (t.nation === myNation && fortifyUntil > tick ? 1.8 : 1);
   const atk = a.str * spec(a.nation).atk * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
   boom(t.x + .5, t.y + .5, 18, warPal());
   if (atk > dr){ capture(t, a.nation); t.pop = Math.max(5, t.pop * .65 + a.str * .3); }
@@ -831,6 +868,101 @@ function runEvent(){
     log(eraIdx >= 6 ? '巨大な太陽フレアで世界中の機械が止まった' : '世界的な流行病が広がった', 'war');
   }
 }
+
+// ===== 自分の国 =====
+let myNation = -1, autoArmy = true, fortifyUntil = 0, fortifyCd = 0;
+const isMine = id => id === myNation && myNation >= 0 && N[id] && N[id].alive;
+const secs = t => Math.max(1, Math.ceil(t / 10));
+function setMyNation(id){
+  myNation = id;
+  if (id >= 0){ log(`あなたは${nm(id)}をあやつることになった`, 'era'); const c = sById.get(N[id].capital); if (c) focusOn(c.x, c.y, 60); }
+  if (tool.startsWith('cmd')) setTool('look');
+  updateUI(true);
+}
+function cityAt(sx, sy){
+  let best = null, bd = 1e9;
+  for (const s of S){
+    if (!s.alive) continue;
+    const v = surfPos(s.x + .5, s.y + .5, .3*U, _pa); if (facing(v) < .05) continue;
+    const p = project(v); if (!p) continue;
+    const d = Math.hypot(p[0] - sx, p[1] - sy);
+    if (d < Math.max(14, pxPerTile(v) * SZ[s.stage]) && d < bd){ bd = d; best = s; }
+  }
+  return best;
+}
+function runCmd(sx, sy, x, y){
+  if (!isMine(myNation)) return;
+  if (tool === 'cmdSettle'){ cmdSettle(x, y); return; }
+  const t = cityAt(sx, sy);
+  if (!t || t.nation === myNation){ toast('相手の国の街をタップしてください'); return; }
+  if (tool === 'cmdAttack') cmdAttack(t);
+  else if (tool === 'cmdJet') cmdJet(t);
+  else if (tool === 'cmdNuke') cmdNuke(t);
+}
+function ensureWar(foe){ if (!warOf(myNation, foe)){ declareWar(myNation, foe); const w = warOf(myNation, foe); if (w) w.end = tick + 900 + rnd()*600; } }
+function cmdAttack(t){
+  const mine = S.filter(s => s.alive && s.nation === myNation && s.pop >= 15 && s.cd <= tick).map(s => [Math.hypot(s.x - t.x, s.y - t.y), s]).sort((a, b) => a[0] - b[0]);
+  const ok = mine.filter(([, s]) => reach(s, t)).slice(0, 3);
+  if (!ok.length){ toast(mine.length ? `${t.name}まで届く街がありません` : '軍を出せる街がありません（少し待つと出せます）'); return; }
+  ensureWar(t.nation);
+  for (const [, s] of ok) sendArmy(s, t);
+  toast(`${t.name}へ${ok.length}つの軍を送った`);
+}
+function cmdAllOut(){
+  const foes = wars.filter(w => w.a === myNation || w.b === myNation).map(w => w.a === myNation ? w.b : w.a);
+  if (!foes.length){ toast('戦争中の相手がいません。「攻める」で相手の街を選ぶと戦争が始まります'); return; }
+  const theirs = S.filter(s => s.alive && foes.includes(s.nation)); let n = 0;
+  for (const s of S){
+    if (!s.alive || s.nation !== myNation || s.pop < 15 || s.cd > tick || armies.length > 160) continue;
+    const [t] = nearestOf(theirs, s); if (t && reach(s, t)){ sendArmy(s, t); n++; }
+  }
+  toast(n ? `${n}の街から総攻撃をかけた` : '今は出せる軍がありません');
+  if (n) log(`${nm(myNation)}が総攻撃をかけた`, 'war');
+}
+function cmdFortify(){
+  if (fortifyCd > tick){ toast(`もう一度使えるまで あと${secs(fortifyCd - tick)}秒`); return; }
+  fortifyUntil = tick + 300; fortifyCd = tick + 900;
+  for (const s of S) if (s.alive && s.nation === myNation && rnd() < .5) boom(s.x + .5, s.y + .5, 5, ['#9fe8ff','#ffffff'], .7);
+  log(`${nm(myNation)}がすべての街の守りを固めた`, 'peace'); toast('しばらくの間、守りが強くなった');
+}
+function cmdSettle(x, y){
+  const i = y*W + x;
+  if (!habitable(terr[i])){ toast('住める陸地をタップしてください'); return; }
+  if (owner[i] !== -1 && owner[i] !== myNation){ toast('ほかの国の土地には開拓できません'); return; }
+  if (nearSettlement(x, y, 2.8)){ toast('近くに街があります。少し離れた場所を選んでください'); return; }
+  let best = null, bd = 1e9;
+  for (const s of S){
+    if (!s.alive || s.nation !== myNation || s.pop < 20) continue;
+    const d = Math.hypot(s.x - x, s.y - y);
+    if (d < bd && ((d <= 14 && landPath(s.x, s.y, x, y, 1.5)) || (eraIdx >= 3 && d <= 70))){ bd = d; best = s; }
+  }
+  if (!best){ toast(eraIdx >= 3 ? '人を送れる街が近くにありません' : '自分の街から陸続きで近い場所を選んでください（近世からは海も越えられます）'); return; }
+  const moved = Math.max(8, best.pop * .2); best.pop -= moved;
+  const ns = addSettlement(x, y, myNation, moved);
+  boom(x + .5, y + .5, 10, ['#fff2c8','#ffe08a']);
+  log(`${nm(myNation)}が${ns.name}を開拓した`); toast(`${best.name}の人々が${ns.name}を開いた`);
+}
+function cmdJet(t){
+  if (N[myNation].spec !== 'war' || eraIdx < 4){ toast('戦闘機は、近代からの戦争特化の国だけが使えます'); return; }
+  const mine = S.filter(s => s.alive && s.nation === myNation && s.stage >= 3);
+  if (!mine.length){ toast('戦闘機を飛ばせる大きな街がありません'); return; }
+  const [from, d] = nearestOf(mine, t); if (d > 90){ toast('遠すぎて戦闘機が届きません'); return; }
+  ensureWar(t.nation);
+  let n = 0; for (; n < 3 && jets.length < 40; n++) jets.push({ x:from.x + .5 + (rnd() - .5), y:from.y + .5 + (rnd() - .5), target:t.id, nation:myNation, sp:.9 + eraIdx*.1, hx:1, hy:0, phase:rnd()*6 });
+  toast(`${t.name}へ戦闘機を${n}機飛ばした`);
+}
+function cmdNuke(t){
+  const n = N[myNation];
+  if (n.spec !== 'war' || eraIdx < 5){ toast('核ミサイルは、現代からの戦争特化の国だけが使えます'); return; }
+  if ((n.nukeCd || 0) > tick){ toast(`次の核ミサイルまで あと${secs(n.nukeCd - tick)}秒`); return; }
+  const mine = S.filter(s => s.alive && s.nation === myNation && s.stage >= 3);
+  if (!mine.length){ toast('核ミサイルを撃てる大きな街がありません'); return; }
+  ensureWar(t.nation);
+  const [from, d] = nearestOf(mine, t); n.nukeCd = tick + 700;
+  missiles.push({ x0:from.x + .5, y0:from.y + .5, x1:t.x + .5, y1:t.y + .5, t:0, dur:25 + d*.4, target:t.id, nation:myNation });
+  log(`${nm(myNation)}が${t.name}へ核ミサイルを発射した！`, 'war');
+}
+const CMD_HINT = { cmdAttack:'攻めたい相手の街をタップしてください。近くの街から軍が出ます。', cmdSettle:'新しい街をつくりたい陸地をタップしてください。', cmdJet:'爆撃したい相手の街をタップしてください。', cmdNuke:'核ミサイルを落とす相手の街をタップしてください。' };
 
 // ===== 時代 =====
 function advanceEra(){
@@ -1566,8 +1698,9 @@ function drawOverlay(){
     const ppt = pxPerTile(v), fsz = clamp(Math.sqrt(n.tiles) * ppt * .2, 11, 26);
     octx.globalAlpha = clamp((f - .12) / .2, 0, 1);
     octx.font = `400 ${fsz}px 'Dela Gothic One', 'Hiragino Sans', sans-serif`;
-    octx.lineWidth = Math.max(3, fsz*.28); octx.strokeStyle = 'rgba(8,12,18,.8)'; octx.strokeText(nm(n.id), p[0], p[1]);
-    octx.fillStyle = n.line; octx.fillText(nm(n.id), p[0], p[1]);
+    const label = (n.id === myNation ? '★ ' : '') + nm(n.id);
+    octx.lineWidth = Math.max(3, fsz*.28); octx.strokeStyle = 'rgba(8,12,18,.8)'; octx.strokeText(label, p[0], p[1]);
+    octx.fillStyle = n.line; octx.fillText(label, p[0], p[1]);
   }
   octx.globalAlpha = 1;
   const center = _pb.copy(camera.position).normalize().multiplyScalar(R);
@@ -1585,8 +1718,9 @@ function drawOverlay(){
   }
   if (sel && sel.type === 'city'){ const s = sById.get(sel.id); if (s) strokeRing(ringPts(s.x + .5, s.y + .5, SZ[s.stage] + .35, .15), '#ffd36b', false); }
   if (hover && tool !== 'look' && !pinch){
-    const r = TERRAIN_TOOLS[tool] !== undefined ? BRUSH : tool === 'meteor' ? 3.2 : .7;
-    strokeRing(ringPts(Math.floor(hover[0]) + .5, Math.floor(hover[1]) + .5, r, .15), tool === 'meteor' ? 'rgba(255,140,90,.95)' : 'rgba(255,240,200,.9)', true);
+    const r = TERRAIN_TOOLS[tool] !== undefined ? BRUSH : tool === 'meteor' ? 3.2 : tool.startsWith('cmd') ? 1 : .7;
+    const col = tool === 'meteor' || tool === 'cmdAttack' || tool === 'cmdJet' || tool === 'cmdNuke' ? 'rgba(255,120,90,.95)' : tool === 'cmdSettle' ? 'rgba(130,220,160,.95)' : 'rgba(255,240,200,.9)';
+    strokeRing(ringPts(Math.floor(hover[0]) + .5, Math.floor(hover[1]) + .5, r, .15), col, true);
   }
 }
 
@@ -1641,7 +1775,9 @@ document.querySelectorAll('[data-newspec]').forEach(b => b.addEventListener('cli
   document.querySelectorAll('[data-newspec]').forEach(o => o.setAttribute('aria-pressed', o === b ? 'true' : 'false'));
 }));
 function setTool(t){
-  tool = t; $('specPick').hidden = t !== 'nation'; document.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
+  tool = t; $('specPick').hidden = t !== 'nation';
+  document.querySelectorAll('[data-cmd]').forEach(b => b.setAttribute('aria-pressed', b.dataset.cmd === t ? 'true' : 'false'));
+  $('cmdHint').textContent = CMD_HINT[t] || 'ボタンを選んでから地球をタップすると命令できます。'; document.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
   cv.classList.toggle('look', t === 'look');
 }
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
@@ -1691,7 +1827,7 @@ function spawnHumans(x, y, forceNation){
     }
   }
   boom(x + .5, y + .5, 14, ['#fff2c8','#ffe08a','#ffffff']);
-  if (first) log(`人類が誕生した。${nm(n.id)}の最初のテントが建った`, 'era');
+  if (first){ log(`人類が誕生した。${nm(n.id)}の最初のテントが建った`, 'era'); myNation = n.id; log(`${nm(n.id)}があなたの国です`, 'era'); }
   else log(`${nm(n.id)}が誕生した（${spec(n.id).name}）`, forceNation ? 'war' : '');
   sel = { type:'nation', id:n.id }; warPick = false;
   recomputeTerritory();
@@ -1714,17 +1850,11 @@ function applyTool(sx, sy){
   }
   else if (tool === 'meteor') launchMeteor(x, y);
   else if (TERRAIN_TOOLS[tool] !== undefined) paintTerrain(x, y, BRUSH, TERRAIN_TOOLS[tool]);
+  else if (tool.startsWith('cmd')) runCmd(sx, sy, x, y);
   else if (tool === 'look') selectAt(sx, sy);
 }
 function selectAt(sx, sy){
-  let best = null, bd = 1e9;
-  for (const s of S){
-    if (!s.alive) continue;
-    const v = surfPos(s.x + .5, s.y + .5, .3*U, _pa); if (facing(v) < .05) continue;
-    const p = project(v); if (!p) continue;
-    const d = Math.hypot(p[0] - sx, p[1] - sy);
-    if (d < Math.max(14, pxPerTile(v) * SZ[s.stage]) && d < bd){ bd = d; best = s; }
-  }
+  const best = cityAt(sx, sy);
   warPick = false;
   if (best){ sel = { type:'city', id:best.id }; openSide(); return; }
   const h = hitTile(sx, sy);
@@ -1794,8 +1924,32 @@ function nationStats(){
   for (const n of N){ n.pop = 0; n.count = 0; }
   for (const s of S) if (s.alive){ N[s.nation].pop += s.pop; N[s.nation].count++; }
 }
+function updateCmdBar(){
+  const bar = $('cmdBar'), on = isMine(myNation);
+  if (bar.hidden === on){ bar.hidden = !on; document.body.classList.toggle('has-cmd', on); }
+  if (!on){ if (tool.startsWith('cmd')) setTool('look'); return; }
+  const n = N[myNation];
+  $('myColor').style.background = n.css; $('myName').textContent = '★ ' + nm(myNation);
+  const wc = warCount(myNation);
+  $('myStat').textContent = `${fmtPop(n.pop)}・${n.count}の街${wc ? `・${wc}か国と交戦中` : ''}`;
+  const jetOk = n.spec === 'war' && eraIdx >= 4, nukeOk = n.spec === 'war' && eraIdx >= 5;
+  $('cJet').disabled = !jetOk; $('cNuke').disabled = !nukeOk;
+  $('cNuke').textContent = nukeOk && (n.nukeCd || 0) > tick ? `核（あと${secs(n.nukeCd - tick)}秒）` : '核';
+  $('cFort').textContent = fortifyUntil > tick ? `守り強化中（${secs(fortifyUntil - tick)}秒）` : fortifyCd > tick ? `守りを固める（あと${secs(fortifyCd - tick)}秒）` : '守りを固める';
+  $('cAuto').setAttribute('aria-pressed', autoArmy ? 'true' : 'false'); $('cAuto').textContent = autoArmy ? '自動で戦う：オン' : '自動で戦う：オフ';
+  if ((!jetOk && tool === 'cmdJet') || (!nukeOk && tool === 'cmdNuke')) setTool('look');
+}
+document.querySelectorAll('[data-cmd]').forEach(b => b.addEventListener('click', () => { if (!isMine(myNation)) return; setTool(tool === b.dataset.cmd ? 'look' : b.dataset.cmd); }));
+document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
+  if (!isMine(myNation)) return;
+  const a = b.dataset.act;
+  if (a === 'allout') cmdAllOut(); else if (a === 'fortify') cmdFortify(); else if (a === 'auto'){ autoArmy = !autoArmy; toast(autoArmy ? '戦争中は軍が自動で戦います' : '軍は命令したときだけ動きます'); }
+  updateCmdBar();
+}));
+$('myGo').addEventListener('click', () => { const c = isMine(myNation) && sById.get(N[myNation].capital); if (c) focusOn(c.x, c.y, 50); });
 function updateUI(force){
   nationStats();
+  updateCmdBar();
   const alive = aliveNations();
   $('eraName').textContent = ERAS[eraIdx].name;
   $('yearTxt').textContent = fmtYear(year);
@@ -1806,10 +1960,10 @@ function updateUI(force){
   // 国の一覧
   const list = alive.slice().sort((a, b) => b.pop - a.pop);
   const top = list.slice(0, 10);
-  const key = top.map(n => n.id + n.spec + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx;
+  const key = myNation + ':' + top.map(n => n.id + n.spec + (warCount(n.id) ? 'w' : '') + (sel && sel.type === 'nation' && sel.id === n.id ? 's' : '')).join(',') + '|' + list.length + '|' + eraIdx;
   if (key !== natKey || force){
     natKey = key;
-    natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}"><span class="sw" style="background:${n.css}"></span><span class="nm">${nm(n.id)}<i class="spb" style="color:${spec(n.id).color}">${spec(n.id).short}</i>${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
+    natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}"><span class="sw" style="background:${n.css}"></span><span class="nm">${nm(n.id)}${n.id === myNation ? '<i class="me">あなた</i>' : ''}<i class="spb" style="color:${spec(n.id).color}">${spec(n.id).short}</i>${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
       + (list.length > 10 ? `<div class="more">ほか${list.length - 10}か国</div>` : '')
       : '<p class="hint">まだ国はありません。「人類」か「建国」で地球をタップしよう。</p>';
   }
@@ -1832,12 +1986,12 @@ function updateUI(force){
     else {
       const ws = wars.filter(w => w.a === n.id || w.b === n.id), cap = sById.get(n.capital);
       const others = aliveNations().filter(o => o.id !== n.id && !warOf(n.id, o.id));
-      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}`;
-      if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${n.css}"></span><b>${nm(n.id)}</b>${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
+      k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}|${myNation}`;
+      if (k2 !== infoKey || force) html = `<div class="ihead"><span class="sw" style="background:${n.css}"></span><b>${nm(n.id)}</b>${n.id === myNation ? '<span class="tag me">あなたの国</span>' : ''}${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
         <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd><dt>特化</dt><dd><b style="color:${spec(n.id).color}">${spec(n.id).name}</b><br><small class="sdesc">${spec(n.id).desc}</small></dd></dl>
         <div class="acts specs" role="group" aria-label="国の特化">${SPEC_KEYS.map(k => `<button class="btn" type="button" data-spec="${n.id}-${k}" aria-pressed="${n.spec === k}">${SPECS[k].short}</button>`).join('')}</div>
         ${ws.length ? `<div class="picks" style="margin:0 0 10px;padding-top:0;border-top:0"><p>戦争の相手</p>${ws.map(w => { const o = w.a === n.id ? w.b : w.a; return `<div class="row" style="cursor:default"><span class="sw" style="background:${N[o].css}"></span><span class="nm">${nm(o)}</span><button class="btn peaceb" type="button" data-peace="${w.a}-${w.b}">講和</button></div>`; }).join('')}</div>` : ''}
-        <div class="acts"><button class="btn" type="button" data-goto="${n.id}">首都を見る</button>${others.length ? `<button class="btn warb" type="button" data-warpick="1">宣戦布告…</button>` : ''}</div>
+        <div class="acts"><button class="btn" type="button" data-goto="${n.id}">首都を見る</button>${n.id === myNation ? '' : `<button class="btn next" type="button" data-mine="${n.id}">この国をあやつる</button>`}${others.length ? `<button class="btn warb" type="button" data-warpick="1">宣戦布告…</button>` : ''}</div>
         ${warPick && others.length ? `<div class="picks"><p>どの国に宣戦布告しますか？</p>${others.map(o => `<button class="row" type="button" data-war="${n.id}-${o.id}"><span class="sw" style="background:${o.css}"></span><span class="nm">${nm(o.id)}</span><span class="pp">${fmtPop(o.pop)}</span></button>`).join('')}</div>` : ''}`;
     }
   }
@@ -1859,13 +2013,14 @@ document.getElementById('side').addEventListener('click', e => {
   else if (b.dataset.goto){ const c = sById.get(N[+b.dataset.goto].capital); if (c) focusOn(c.x, c.y); }
   else if (b.dataset.warpick){ warPick = !warPick; updateUI(true); }
   else if (b.dataset.war){ const [a, c] = b.dataset.war.split('-').map(Number); declareWar(a, c); warPick = false; updateUI(true); }
+  else if (b.dataset.mine){ setMyNation(+b.dataset.mine); }
   else if (b.dataset.spec){ const [id, k] = b.dataset.spec.split('-'); const n = N[+id]; if (n && n.spec !== k){ n.spec = k; cityDirty = true; log(`${nm(n.id)}は${SPECS[k].name}の国になった`, 'era'); } updateUI(true); }
   else if (b.dataset.peace){ const [a, c] = b.dataset.peace.split('-').map(Number); const w = warOf(a, c); if (w) makePeace(w); updateUI(true); }
 });
 function focusOn(x, y, alt = 40){ const [la, lo] = llOfTile(x + .5, y + .5); camG.lat = clamp(la - Math.min(6, alt*.05), -70, 78); camG.lon = lo; camG.alt = Math.min(camG.alt, alt); }
 // ===== 保存と復元（ページ更新時に世界を引き継ぐ） =====
 function serialize(){
-  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, camS:{ ...camS }, camG:{ ...camG } };
+  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, myNation, autoArmy, fortifyUntil, fortifyCd, camS:{ ...camS }, camG:{ ...camG } };
 }
 function restore(d){
   if (!d || d.v !== 2 || !d.terr || d.terr.length !== W*H) return;
@@ -1875,6 +2030,7 @@ function restore(d){
   wars = d.wars; truce = new Map(d.truce); tick = d.tick; year = d.year; eraIdx = d.eraIdx; nextId = d.nextId;
   logs = d.logs || []; firstStage = d.firstStage || firstStage; started = d.started;
   nextInv = d.nextInv || 0; wonderBuilt = d.wonderBuilt || []; firstLaunch = !!d.firstLaunch;
+  myNation = d.myNation ?? -1; autoArmy = d.autoArmy ?? true; fortifyUntil = d.fortifyUntil || 0; fortifyCd = d.fortifyCd || 0;
   Object.assign(camS, d.camS || {}); Object.assign(camG, d.camG || {});
   setSpeed(d.speed ?? 1);
   if (started) $('intro').hidden = true;
