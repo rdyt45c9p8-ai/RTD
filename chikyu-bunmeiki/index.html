@@ -24,6 +24,7 @@ body{background:var(--sea);color:var(--fg);font-family:var(--f-body);overflow:hi
 #app{position:fixed;inset:0;overflow:hidden}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 #cv.look{cursor:grab}
+#ov{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 
 .plate{background:var(--panel);border:1px solid var(--line);border-radius:10px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 
@@ -144,7 +145,8 @@ dd{margin:0;font-variant-numeric:tabular-nums}
 </style>
 
 <div id="app">
-  <canvas id="cv" aria-label="地球の地図"></canvas>
+  <canvas id="cv" aria-label="3Dの地球"></canvas>
+  <canvas id="ov" aria-hidden="true"></canvas>
 
   <header class="hud">
     <div class="plate brand"><b>地球文明記</b><small>テントから大都市へ</small></div>
@@ -189,9 +191,9 @@ dd{margin:0;font-variant-numeric:tabular-nums}
   <div class="intro" id="intro">
     <div class="plate card">
       <h1>地球文明記</h1>
-      <p class="sub">あなたは地球を見守る神さま。ひとつのテントから始まった人類が、街をつくり、国を興し、争い、やがて大都市を築くまでを見届けよう。</p>
+      <p class="sub">ドラッグで地球を回し、ホイールやピンチで近づけます。あなたは地球を見守る神さま。ひとつのテントから始まった人類が、街をつくり、国を興し、争い、やがて大都市を築くまでを見届けよう。</p>
       <ol>
-        <li><span>1</span><div>「人類」で地図をタップすると、最初のテントがひとつ建ちます。</div></li>
+        <li><span>1</span><div>「人類」で地球をタップすると、最初のテントがひとつ建ちます。</div></li>
         <li><span>2</span><div>人が増えると村、町、城壁のある中世の街へと育ちます。</div></li>
         <li><span>3</span><div>「建国」で別の国を生み出すと、国境で戦争が起きます。勝った国が街と土地を手に入れます。</div></li>
         <li><span>4</span><div>近代には工場が、現代には高層ビルの大都市が並びます。</div></li>
@@ -204,8 +206,10 @@ dd{margin:0;font-variant-numeric:tabular-nums}
   </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 'use strict';
+const $ = id => document.getElementById(id);
 // ===== 定数 =====
 const W = 240, H = 120, TS = 8, TAU = Math.PI * 2;
 const LAT0 = 84, LAT1 = -78;
@@ -314,11 +318,11 @@ const terr = new Uint8Array(W*H), depth = new Uint8Array(W*H), fert = new Float3
 const owner = new Int16Array(W*H).fill(-1), score = new Float32Array(W*H);
 const isLand = t => t >= 2;
 const habitable = t => t >= 2 && t !== T.ICE;
-let S = [], N = [], sById = new Map(), armies = [], parts = [], planes = [], meteors = [], wars = [];
+let S = [], N = [], sById = new Map(), armies = [], planes = [], meteors = [], wars = [];
 let truce = new Map(), contacts = new Map(), logs = [], firstStage = [true,false,false,false,false,false];
 let tick = 0, year = -10000, eraIdx = 0, started = false, nextId = 1, speed = 1;
 let terrDirty = true, lastColonyLog = -999;
-let borderPaths = new Map(), roadPath = null;
+let borderSegs = [], roadSegs = [];
 const usedNames = new Set();
 
 function computeDepth(){
@@ -444,9 +448,11 @@ function uniqueName(){ for (let k = 0; k < 40; k++){ const n = genName(); if (!u
 const nm = id => N[id] ? N[id].base + GOV[eraIdx][N[id].gov] : '？';
 
 // ===== 国と街 =====
+const toHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 function createNation(){
   const id = N.length, hue = (id * 137.508 + 14) % 360, l = 48 + (id % 3) * 7, rgb = hsl(hue, 70, l);
   const n = { id, base:uniqueName(), gov:rnd()*3|0, hue, rgb, css:`rgb(${rgb})`, cssA:`rgba(${rgb},.38)`, line:`rgb(${hsl(hue, 85, Math.min(78, l + 16))})`,
+    hex:toHex(rgb), hexDim:toHex(hsl(hue, 45, l*.62)), lineRGB:hsl(hue, 85, Math.min(78, l + 16)).map(v => v/255),
     alive:true, capital:-1, aggr:.6 + rnd()*.9, born:Math.floor(year), pop:0, count:0, tiles:0, cx:0, cy:0 };
   N.push(n); return n;
 }
@@ -536,43 +542,36 @@ function recomputeTerritory(){
   for (const n of N){ n.tiles = 0; n.cx = 0; n.cy = 0; }
   contacts = new Map();
   const px = terImg.data; px.fill(0);
-  const paths = new Map();
-  const P = id => { let p = paths.get(id); if (!p){ p = new Path2D(); paths.set(id, p); } return p; };
+  const segs = [];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
     const i = y*W+x, o = owner[i]; if (o < 0) continue;
     const n = N[o]; n.tiles++; n.cx += x; n.cy += y;
-    const k = i*4; px[k] = n.rgb[0]; px[k+1] = n.rgb[1]; px[k+2] = n.rgb[2]; px[k+3] = 92;
+    const k = i*4; px[k] = n.rgb[0]; px[k+1] = n.rgb[1]; px[k+2] = n.rgb[2]; px[k+3] = 100;
     const r = x < W-1 ? owner[i+1] : -1, d = y < H-1 ? owner[i+W] : -1;
     const l = x > 0 ? owner[i-1] : -1, u = y > 0 ? owner[i-W] : -1;
     if (r >= 0 && r !== o){ const key = Math.min(o,r)*1000 + Math.max(o,r); contacts.set(key, (contacts.get(key) || 0) + 1); }
     if (d >= 0 && d !== o){ const key = Math.min(o,d)*1000 + Math.max(o,d); contacts.set(key, (contacts.get(key) || 0) + 1); }
-    const p = P(o), X = x*TS, Y = y*TS;
-    if (r !== o){ p.moveTo(X+TS, Y); p.lineTo(X+TS, Y+TS); }
-    if (l !== o){ p.moveTo(X, Y); p.lineTo(X, Y+TS); }
-    if (d !== o){ p.moveTo(X, Y+TS); p.lineTo(X+TS, Y+TS); }
-    if (u !== o){ p.moveTo(X, Y); p.lineTo(X+TS, Y); }
+    if (r !== o) segs.push(o, x+1, y, x+1, y+1);
+    if (l !== o) segs.push(o, x, y, x, y+1);
+    if (d !== o) segs.push(o, x, y+1, x+1, y+1);
+    if (u !== o) segs.push(o, x, y, x+1, y);
   }
   terCtx.putImageData(terImg, 0, 0);
-  borderPaths = paths;
+  borderSegs = segs;
   // 道
-  roadPath = null;
+  roadSegs = [];
   if (eraIdx >= 1){
-    roadPath = new Path2D();
     const lim = eraIdx >= 4 ? 11 : 8;
     for (const s of S){
       if (!s.alive || s.stage < 1) continue;
       const near = [];
       for (const o of S){ if (o === s || !o.alive || o.nation !== s.nation || o.id < s.id) continue; const d = Math.hypot(o.x - s.x, o.y - s.y); if (d < lim) near.push([d, o]); }
       near.sort((a, b) => a[0] - b[0]);
-      for (const [, o] of near.slice(0, 2)){
-        if (!landPath(s.x, s.y, o.x, o.y, 0)) continue;
-        roadPath.moveTo((s.x + .5)*TS, (s.y + .5)*TS); roadPath.lineTo((o.x + .5)*TS, (o.y + .5)*TS);
-      }
+      for (const [, o] of near.slice(0, 2)) if (landPath(s.x, s.y, o.x, o.y, 0)) roadSegs.push(s.x + .5, s.y + .5, o.x + .5, o.y + .5);
     }
   }
-  terrDirty = false;
+  terrDirty = false; globeDirty = true; linesDirty = true; cityDirty = true;
 }
-
 // ===== 戦争 =====
 const pairKey = (a, b) => Math.min(a,b)*1000 + Math.max(a,b);
 const warOf = (a, b) => wars.find(w => (w.a === a && w.b === b) || (w.a === b && w.b === a));
@@ -656,7 +655,7 @@ function updateArmies(){
     if (d < .6){ assault(a, t); continue; }
     const ti = (a.y | 0) * W + (a.x | 0), tt = terr[ti];
     const m = !isLand(tt) ? 1.3 : tt === T.MOUNT ? .55 : tt === T.FOREST ? .8 : 1;
-    a.x += dx / d * a.sp * m; a.y += dy / d * a.sp * m; a.dir = dx >= 0 ? 1 : -1;
+    a.x += dx / d * a.sp * m; a.y += dy / d * a.sp * m; a.hx = dx / d; a.hy = dy / d;
   }
   for (let i = 0; i < armies.length; i++){
     const a = armies[i]; if (a.dead) continue;
@@ -727,17 +726,23 @@ function step(){
 
 // ===== 演出：粒子 =====
 const FIRE = ['#ffd27a','#ff9a3d','#e5532f','#7a6a60'], DUST = ['#e8d8b0','#c9b28a','#9d8a6e','#ffe6a8'];
-function boom(x, y, n, pal, power = 1){
+let sparks = [];
+function hexRGB(h){ const v = parseInt(h.slice(1), 16); return [(v >> 16 & 255)/255, (v >> 8 & 255)/255, (v & 255)/255]; }
+function addSpark(p, v, n, g, life, size, c, grow){
+  if (sparks.length > 1500) return;
+  sparks.push({ x:p.x, y:p.y, z:p.z, vx:v.x, vy:v.y, vz:v.z, nx:n.x, ny:n.y, nz:n.z, g, life, max:life, size, c, grow });
+}
+function boom(fx, fy, n, pal, power = 1){
+  const c = surfPos(fx, fy, .2*U), nv = c.clone().normalize(), v = new THREE.Vector3();
   for (let k = 0; k < n; k++){
-    const a = rnd()*TAU, v = (.3 + rnd()*1.4) * power;
-    parts.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v*.7 - .3*power, g:1.2, life:.5 + rnd()*.6, max:1.1, r:.12 + rnd()*.18*power, c:pick(pal) });
+    v.set(rnd()*2 - 1, rnd()*2 - 1, rnd()*2 - 1).normalize().multiplyScalar((.2 + rnd()*.9) * U * power).addScaledVector(nv, (.6 + rnd()*.9) * U * power);
+    addSpark(c, v, nv, U*3, .5 + rnd()*.7, U*(.12 + rnd()*.16)*(1 + (power - 1)*.4), hexRGB(pick(pal)), false);
   }
 }
-function smoke(x, y){ parts.push({ x, y, vx:.15 + rnd()*.1, vy:-.35 - rnd()*.2, g:0, life:1.6, max:1.6, r:.12, c:'#9a9690', grow:true }); }
 
 function impact(x, y){
   shake = 1;
-  boom(x + .5, y + .5, 90, FIRE, 3);
+  boom(x + .5, y + .5, 120, FIRE, 3);
   const hit = [];
   for (const s of S){
     if (!s.alive) continue; const d = Math.hypot(s.x - x, s.y - y);
@@ -768,9 +773,9 @@ function paintTerrain(cx, cy, r, type){
   computeFert(cx - R - 3, cy - R - 3, cx + R + 3, cy + R + 3);
   for (let y = Math.max(0, cy - R - 8); y <= Math.min(H-1, cy + R + 8); y++) for (let x = Math.max(0, cx - R - 8); x <= Math.min(W-1, cx + R + 8); x++) paintTile(x, y);
   for (const s of S) if (s.alive && Math.abs(s.x - cx) < R + 4 && Math.abs(s.y - cy) < R + 4) s.fert = fertAround(s.x, s.y);
-  terrDirty = true;
+  computeElev(); baseCache.clear();
+  terrDirty = true; elevDirty = true; globeDirty = true; cityDirty = true;
 }
-
 // ===== 年代記 =====
 function fmtYear(y){ y = Math.floor(y); return y < 0 ? `紀元前${-y}年` : `${y}年`; }
 function fmtPop(p){
@@ -797,313 +802,466 @@ function showBanner(name, sub, msg){
 let toastT = 0;
 function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1800); }
 
-// ===== カメラと描画 =====
-const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
-let vw = 0, vh = 0, dpr = 1, shake = 0;
-const cam = { x:lonX(20)*TS, y:latY(12)*TS, z:1 };
-const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const minZoom = () => Math.min(vw / (W*TS), vh / (H*TS));
-function clampCam(){
-  const hw = vw / 2 / cam.z, hh = vh / 2 / cam.z, mw = W*TS, mh = H*TS;
-  cam.x = mw <= hw*2 ? mw/2 : clamp(cam.x, hw, mw - hw);
-  cam.y = mh <= hh*2 ? mh/2 : clamp(cam.y, hh, mh - hh);
+// ===== 3D の地球 =====
+const R = 100, U = R * 1.4 * Math.PI / 180, D2R = Math.PI / 180, FOV = 45;
+const elev = new Float32Array(W*H);
+const EL = [0, 0, .32, .5, .28, 2, .42, .55, .12];
+function computeElev(){
+  const raw = new Float32Array(W*H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){ const i = y*W+x, t = terr[i]; raw[i] = EL[t] * (t === T.MOUNT ? .6 + hash2(x, y, 13)*.9 : 1); }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+    const i = y*W+x; if (!isLand(terr[i])){ elev[i] = 0; continue; }
+    let s = raw[i]*4, w = 4;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++){ if (!dx && !dy) continue; s += raw[clamp(y+dy, 0, H-1)*W + (x+dx+W) % W]; w++; }
+    elev[i] = Math.max(.14, s / w);
+  }
 }
-function resize(){
-  dpr = Math.min(2, window.devicePixelRatio || 1); vw = window.innerWidth; vh = window.innerHeight;
-  cv.width = Math.round(vw * dpr); cv.height = Math.round(vh * dpr);
-  cam.z = clamp(cam.z, minZoom(), 6); clampCam();
+function elevAt(fx, fy){
+  const x = fx - .5, y = clamp(fy - .5, 0, H - 1.001), x0 = Math.floor(x), y0 = Math.floor(y), tx = x - x0, ty = y - y0;
+  const xa = ((x0 % W) + W) % W, xb = (xa + 1) % W, yb = Math.min(H-1, y0 + 1);
+  const e = (elev[y0*W+xa]*(1-tx) + elev[y0*W+xb]*tx)*(1-ty) + (elev[yb*W+xa]*(1-tx) + elev[yb*W+xb]*tx)*ty;
+  if (fy < 0) return e + (.35 - e) * Math.min(1, -fy / 2);
+  if (fy > H) return e + (.5 - e) * Math.min(1, (fy - H) / 2);
+  return e;
 }
-function zoomAt(sx, sy, f){
-  const wx = (sx - vw/2) / cam.z + cam.x, wy = (sy - vh/2) / cam.z + cam.y;
-  cam.z = clamp(cam.z * f, minZoom(), 6);
-  cam.x = wx - (sx - vw/2) / cam.z; cam.y = wy - (sy - vh/2) / cam.z; clampCam();
+const llOfTile = (fx, fy) => [LAT0 - fy / H * (LAT0 - LAT1), fx / W * 360 - 180];
+function dirLL(lat, lon, out){ const p = (lon + 180)*D2R, t = (90 - lat)*D2R; return out.set(-Math.cos(p)*Math.sin(t), Math.cos(t), Math.sin(p)*Math.sin(t)); }
+function surfPos(fx, fy, lift = 0, out = new THREE.Vector3()){ const [la, lo] = llOfTile(fx, fy); return dirLL(la, lo, out).multiplyScalar(R + elevAt(fx, fy) + lift); }
+const _e = new THREE.Vector3(), _n = new THREE.Vector3(), _s = new THREE.Vector3(), _m = new THREE.Matrix4(), _north = new THREE.Vector3();
+function frameAt(fx, fy, lift, yaw, m){
+  const [la, lo] = llOfTile(fx, fy), p = (lo + 180)*D2R, t = (90 - la)*D2R;
+  dirLL(la, lo, _n); _e.set(Math.sin(p), 0, Math.cos(p)); _s.set(-Math.cos(p)*Math.cos(t), -Math.sin(t), Math.sin(p)*Math.cos(t));
+  m.makeBasis(_e, _n, _s);
+  if (yaw) m.multiply(_m.makeRotationY(yaw));
+  const r = R + elevAt(fx, fy) + lift; m.setPosition(_n.x*r, _n.y*r, _n.z*r);
+  return m;
 }
-const toScreen = (tx, ty) => [(tx*TS - cam.x) * cam.z + vw/2, (ty*TS - cam.y) * cam.z + vh/2];
-const toTile = (sx, sy) => [((sx - vw/2) / cam.z + cam.x) / TS, ((sy - vh/2) / cam.z + cam.y) / TS];
+const _tv = new THREE.Vector3();
+function tileOfPoint(p){
+  const v = _tv.copy(p).normalize(), lat = Math.asin(clamp(v.y, -1, 1)) / D2R;
+  let lon = Math.atan2(v.z, -v.x) / D2R - 180; if (lon < -180) lon += 360;
+  return [(lon + 180) / 360 * W, (LAT0 - lat) / (LAT0 - LAT1) * H];
+}
 
-function ell(x, y, rx, ry, a0 = 0, a1 = TAU){ ctx.beginPath(); ctx.ellipse(x, y, Math.max(.1, rx), Math.max(.1, ry), 0, a0, a1); }
-function fs(fill){ ctx.fillStyle = fill; ctx.fill(); ctx.stroke(); }
-function house(x, y, w, h, wall, roof, u){
-  const X = x*u, Y = y*u, Wd = w*u, Hd = h*u;
-  ctx.beginPath(); ctx.rect(X - Wd/2, Y - Hd, Wd, Hd); fs(wall);
-  ctx.beginPath(); ctx.moveTo(X - Wd*.62, Y - Hd + .5); ctx.lineTo(X, Y - Hd - Wd*.55); ctx.lineTo(X + Wd*.62, Y - Hd + .5); ctx.closePath(); fs(roof);
+const cv = $('cv'), ov = $('ov'), octx = ov.getContext('2d');
+const renderer = new THREE.WebGLRenderer({ canvas:cv, antialias:true });
+renderer.setClearColor(0x03070e);
+const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(FOV, 1, .5, 4000);
+scene.add(new THREE.AmbientLight(0xffffff, .5));
+const sun = new THREE.DirectionalLight(0xfff1dc, .9); scene.add(sun); scene.add(sun.target);
+
+// 地球の表面の絵（正距円筒図法）
+const GW = 2048, GH = 1024, GY0 = (90 - LAT0) / 180 * GH, GY1 = (90 - LAT1) / 180 * GH;
+const gcv = document.createElement('canvas'); gcv.width = GW; gcv.height = GH; const gctx = gcv.getContext('2d');
+const scv = document.createElement('canvas'); scv.width = 512; scv.height = 256; const sctx = scv.getContext('2d');
+const wcv = document.createElement('canvas'); wcv.width = W; wcv.height = H; const wctx = wcv.getContext('2d'), wImg = wctx.createImageData(W, H);
+const globeTex = new THREE.CanvasTexture(gcv), specTex = new THREE.CanvasTexture(scv);
+globeTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+function composeGlobe(){
+  gctx.fillStyle = '#dbe5ec'; gctx.fillRect(0, 0, GW, Math.ceil(GY0) + 1);
+  gctx.fillStyle = '#e8eef2'; gctx.fillRect(0, Math.floor(GY1) - 1, GW, GH);
+  gctx.imageSmoothingEnabled = true; gctx.drawImage(tcv, 0, GY0, GW, GY1 - GY0);
+  gctx.imageSmoothingEnabled = false; gctx.drawImage(terCv, 0, GY0, GW, GY1 - GY0);
+  globeTex.needsUpdate = true;
+  const d = wImg.data;
+  for (let i = 0; i < W*H; i++){ const v = isLand(terr[i]) ? 0 : 255; d[i*4] = d[i*4+1] = d[i*4+2] = v; d[i*4+3] = 255; }
+  wctx.putImageData(wImg, 0, 0);
+  sctx.fillStyle = '#000'; sctx.fillRect(0, 0, 512, 256); sctx.imageSmoothingEnabled = true; sctx.drawImage(wcv, 0, GY0 / 4, 512, (GY1 - GY0) / 4);
+  specTex.needsUpdate = true;
 }
-function tent(x, y, sz, u){
-  const X = x*u, Y = y*u, a = sz*u;
-  ctx.beginPath(); ctx.moveTo(X - a*.36, Y); ctx.lineTo(X, Y - a*.55); ctx.lineTo(X + a*.36, Y); ctx.closePath(); fs('#ecdcb2');
-  ctx.beginPath(); ctx.moveTo(X - a*.09, Y); ctx.lineTo(X, Y - a*.24); ctx.lineTo(X + a*.09, Y); ctx.closePath(); ctx.fillStyle = '#5e432b'; ctx.fill();
-  ctx.beginPath(); ctx.moveTo(X - a*.06, Y - a*.66); ctx.lineTo(X, Y - a*.53); ctx.lineTo(X + a*.07, Y - a*.68); ctx.stroke();
+const globeGeo = new THREE.SphereGeometry(R, 360, 180);
+const gBase = globeGeo.attributes.position.array.slice(), gUV = globeGeo.attributes.uv.array;
+const globe = new THREE.Mesh(globeGeo, new THREE.MeshPhongMaterial({ map:globeTex, specularMap:specTex, specular:new THREE.Color(0x3d5a70), shininess:24, polygonOffset:true, polygonOffsetFactor:1, polygonOffsetUnits:1 }));
+scene.add(globe);
+function displaceGlobe(){
+  const p = globeGeo.attributes.position.array;
+  for (let k = 0, n = p.length / 3; k < n; k++){
+    const lon = gUV[k*2]*360 - 180, lat = gUV[k*2+1]*180 - 90;
+    const s = (R + elevAt((lon + 180) / 360 * W, (LAT0 - lat) / (LAT0 - LAT1) * H)) / R;
+    p[k*3] = gBase[k*3]*s; p[k*3+1] = gBase[k*3+1]*s; p[k*3+2] = gBase[k*3+2]*s;
+  }
+  globeGeo.attributes.position.needsUpdate = true; globeGeo.computeVertexNormals();
 }
-function flag(x, y, h, col, u, time){
-  const X = x*u, Y = y*u, top = Y - h*u, fw = Math.max(4, u*.28), fh = Math.max(3, u*.17), wv = Math.sin(time*4 + x*7) * fh*.25;
-  ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X, top); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(X, top); ctx.quadraticCurveTo(X + fw*.5, top - wv, X + fw, top + wv*.4); ctx.lineTo(X + fw, top + fh + wv*.4); ctx.quadraticCurveTo(X + fw*.5, top + fh - wv, X, top + fh); ctx.closePath(); fs(col);
+// 大気と星
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.06, 64, 32), new THREE.ShaderMaterial({
+  side:THREE.BackSide, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  vertexShader:'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader:'varying vec3 vN; void main(){ float i = pow(max(0.0, 0.6 - dot(vN, vec3(0.0, 0.0, 1.0))), 3.0); gl_FragColor = vec4(0.36, 0.62, 1.0, 1.0) * i * 1.5; }'
+})));
+{
+  const g = new THREE.BufferGeometry(), a = new Float32Array(2000*3), v = new THREE.Vector3();
+  for (let i = 0; i < 2000; i++){ v.set(rnd()*2 - 1, rnd()*2 - 1, rnd()*2 - 1).normalize().multiplyScalar(1600 + rnd()*400); a[i*3] = v.x; a[i*3+1] = v.y; a[i*3+2] = v.z; }
+  g.setAttribute('position', new THREE.BufferAttribute(a, 3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color:0xd6defa, size:1.5, sizeAttenuation:false })));
 }
-function star(x, y, r){
-  ctx.beginPath();
-  for (let k = 0; k < 10; k++){ const a = -Math.PI/2 + k*Math.PI/5, rr = k % 2 ? r*.45 : r; ctx.lineTo(x + Math.cos(a)*rr, y + Math.sin(a)*rr); }
-  ctx.closePath(); ctx.fillStyle = '#ffd36b'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(60,40,0,.9)'; ctx.stroke();
+
+// 建物の部品（インスタンス描画）
+const winTex = (() => {
+  const c = document.createElement('canvas'); c.width = 32; c.height = 64; const g = c.getContext('2d');
+  g.fillStyle = '#aab0b8'; g.fillRect(0, 0, 32, 64);
+  for (let y = 3; y < 62; y += 6) for (let x = 2; x < 30; x += 8){ g.fillStyle = hash2(x, y, 77) < .72 ? '#fff0c4' : '#5d6772'; g.fillRect(x, y, 5, 3); }
+  return new THREE.CanvasTexture(c);
+})();
+const GEO = {
+  box:new THREE.BoxGeometry(1, 1, 1).translate(0, .5, 0),
+  pyr:new THREE.ConeGeometry(.75, 1, 4).rotateY(Math.PI/4).translate(0, .5, 0),
+  cone:new THREE.ConeGeometry(.5, 1, 8).translate(0, .5, 0),
+  cyl:new THREE.CylinderGeometry(.5, .5, 1, 12).translate(0, .5, 0),
+  oct:new THREE.OctahedronGeometry(.5),
+};
+function pool(geo, cap, mat){
+  const m = new THREE.InstancedMesh(geo, mat || new THREE.MeshLambertMaterial({ color:0xffffff }), cap);
+  m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.frustumCulled = false;
+  scene.add(m); return { m, n:0, cap };
 }
+const CITY = { box:pool(GEO.box, 20000), pyr:pool(GEO.pyr, 9000), cone:pool(GEO.cone, 4000), cyl:pool(GEO.cyl, 4000),
+  sky:pool(GEO.box, 9000, new THREE.MeshLambertMaterial({ color:0xffffff, map:winTex, emissive:0x3a3426, emissiveMap:winTex })) };
+const MOB = { box:pool(GEO.box, 1600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 400) };
+const MARK = pool(GEO.oct, 64, new THREE.MeshLambertMaterial({ color:0xffffff, emissive:0x6a4a00 }));
+const _cc = new Map(); const C = h => { let c = _cc.get(h); if (!c){ c = new THREE.Color(h); _cc.set(h, c); } return c; };
+function put(P, mat, hex){ if (P.n >= P.cap) return; P.m.setMatrixAt(P.n, mat); P.m.setColorAt(P.n, C(hex)); P.n++; }
+function flush(P){ P.m.count = P.n; P.m.instanceMatrix.needsUpdate = true; if (P.m.instanceColor) P.m.instanceColor.needsUpdate = true; }
+
 const WALLS = ['#efe5d0','#e6d8bd','#f3ecdc'], ROOFS = ['#b4553d','#a4472f','#8f5c3a','#7b5d4d'];
-const BRICK = ['#9c4f3a','#b8664a','#7d6a5c','#8a5a48'], GLASS = ['#7f9cb4','#a7bccc','#5f7d96','#c4cfd6','#8aa3a8'];
-
-function drawSettlement(s, sx, sy, px, time){
-  const st = s.stage, n = N[s.nation], u = Math.max(px, MINU[st]), R = mulberry(s.seed);
-  ctx.save(); ctx.translate(sx, sy);
-  ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(.7, u*.045); ctx.strokeStyle = 'rgba(28,20,14,.85)';
-  ell(0, u*.14, u*SZ[st], u*SZ[st]*.52); ctx.fillStyle = n.cssA; ctx.fill();
+const BRICK = ['#9c4f3a','#b8664a','#7d6a5c','#8a5a48'], GLASS = ['#86a3bb','#a7bccc','#6a879f','#c4cfd6','#8aa3a8'];
+const partCache = new Map(), baseCache = new Map();
+function partsFor(s){
+  const st = s.stage, n = N[s.nation];
+  const bucket = st === 0 ? Math.min(2, Math.floor(s.pop / 18)) : st === 1 ? Math.min(2, Math.floor(s.pop / 140)) : st === 5 ? Math.min(7, Math.floor(s.pop / 400000)) : 0;
+  const key = `${st}|${s.nation}|${bucket}`;
+  const c = partCache.get(s.id); if (c && c.key === key) return c;
+  const Rn = mulberry(s.seed), P = []; let top = .4;
+  const add = (g, x, z, y, w, h, d, col, rot = 0, smoke = false) => { P.push({ g, x, z, y, w, h, d, c:col, rot, smoke }); if (y + h > top) top = y + h; };
+  const house = (x, z, k, wall, roof) => { const r = Rn()*3; add('box', x, z, 0, .26*k, .17*k, .22*k, wall, r); add('pyr', x, z, .17*k, .36*k, .17*k, .3*k, roof, r); };
+  add('cyl', 0, 0, -.05, SZ[st]*(st >= 4 ? 1.5 : 1.9), .08, SZ[st]*(st >= 4 ? 1.5 : 1.9), n.hexDim);
   if (st === 0){
-    const k = 1 + Math.min(2, Math.floor(s.pop / 18)), pos = [[0,.2,1],[-.44,.32,.82],[.44,.34,.82]];
-    pos.slice(0, k).sort((a, b) => a[1] - b[1]).forEach(p => tent(p[0], p[1], p[2], u));
-    ell(.05*u, .5*u, u*.07*(1 + Math.sin(time*13 + s.id)*.25), u*.06); ctx.fillStyle = '#ffb347'; ctx.fill();
+    const pos = [[0, 0, 1], [-.42, .14, .82], [.4, .2, .82]];
+    for (let i = 0; i <= bucket; i++){ const p = pos[i]; add('cone', p[0], p[1], 0, .52*p[2], .56*p[2], .52*p[2], '#ecdcb2', Rn()*6); }
+    add('box', .08, .42, 0, .1, .06, .1, '#ff9a3d');
   } else if (st === 1){
-    const k = 3 + Math.min(2, Math.floor(s.pop / 140)), hs = [[0, .12, 1.15]];
-    for (let i = 0; i < k; i++){ const a = i / k * TAU + R()*.6, r = .5 + R()*.12; hs.push([Math.cos(a)*r, Math.sin(a)*r*.5 + .18, .85]); }
-    hs.sort((a, b) => a[1] - b[1]).forEach(h => house(h[0], h[1], .3*h[2], .17*h[2], '#8d6b45', '#cfa553', u));
+    const k = 3 + bucket, hs = [[0, 0, 1.2]];
+    for (let i = 0; i < k; i++){ const a = i / k * TAU + Rn()*.6, r = .5 + Rn()*.12; hs.push([Math.cos(a)*r, Math.sin(a)*r, .9]); }
+    for (const h of hs){ const r = Rn()*3; add('box', h[0], h[1], 0, .26*h[2], .16*h[2], .26*h[2], '#8d6b45', r); add('pyr', h[0], h[1], .16*h[2], .36*h[2], .2*h[2], .36*h[2], '#cfa553', r); }
   } else if (st === 2){
-    const hs = [];
-    for (let i = 0; i < 7; i++){ const a = i / 7 * TAU + R()*.5, r = .62 + R()*.2; hs.push([Math.cos(a)*r, Math.sin(a)*r*.5 + .2, WALLS[R()*3|0], ROOFS[R()*4|0]]); }
-    hs.push([0, .12, 'T']);
-    hs.sort((a, b) => a[1] - b[1]).forEach(h => {
-      if (h[2] === 'T'){
-        const X = h[0]*u, Y = h[1]*u;
-        ctx.beginPath(); ctx.rect(X - .27*u, Y - .28*u, .54*u, .28*u); fs('#ece2cd');
-        ctx.beginPath(); ctx.moveTo(X - .33*u, Y - .27*u); ctx.lineTo(X, Y - .46*u); ctx.lineTo(X + .33*u, Y - .27*u); ctx.closePath(); fs('#c8b088');
-        if (u > 9){ ctx.beginPath(); for (let c = -2; c <= 2; c++){ ctx.moveTo(X + c*.1*u, Y - .25*u); ctx.lineTo(X + c*.1*u, Y - .02*u); } ctx.stroke(); }
-      } else house(h[0], h[1], .26, .17, h[2], h[3], u);
-    });
+    for (let i = 0; i < 7; i++){ const a = i / 7 * TAU + Rn()*.5, r = .62 + Rn()*.22; house(Math.cos(a)*r, Math.sin(a)*r, 1, WALLS[Rn()*3|0], ROOFS[Rn()*4|0]); }
+    add('box', 0, 0, 0, .55, .26, .38, '#ece2cd'); add('pyr', 0, 0, .26, .72, .16, .5, '#c8b088');
   } else if (st === 3){
-    const rx = 1.25*u, ry = .62*u, cy = .18*u, wl = Math.max(1.4, u*.11);
-    ell(0, cy, rx, ry); ctx.fillStyle = 'rgba(178,160,126,.6)'; ctx.fill();
-    ctx.save(); ctx.lineWidth = wl; ctx.strokeStyle = '#8b8477'; ell(0, cy, rx, ry, Math.PI, TAU); ctx.stroke(); ctx.restore();
-    const hs = [];
-    for (let i = 0; i < 9; i++){ const a = R()*TAU, r = .45 + Math.sqrt(R())*.5; hs.push([Math.cos(a)*r*1.05, Math.sin(a)*r*.42 + .2, WALLS[R()*3|0], ROOFS[R()*4|0]]); }
-    hs.sort((a, b) => a[1] - b[1]);
-    hs.filter(h => h[1] < .1).forEach(h => house(h[0], h[1], .21, .14, h[2], h[3], u));
-    // 天守
-    const X = 0, Y = .08*u, kw = .36*u, kh = .66*u;
-    ctx.beginPath(); ctx.rect(X - kw/2, Y - kh, kw, kh); fs('#b9b2a3');
-    for (let c = 0; c < 3; c++){ ctx.beginPath(); ctx.rect(X - kw/2 + c*kw*.4, Y - kh - .08*u, kw*.2, .08*u); fs('#b9b2a3'); }
-    if (u > 8){ ctx.fillStyle = '#3a3027'; ctx.fillRect(X - .04*u, Y - kh*.6, .08*u, .14*u); }
-    flag(0, (.08 - .66 - .08), .32, n.css, u, time);
-    hs.filter(h => h[1] >= .1).forEach(h => house(h[0], h[1], .21, .14, h[2], h[3], u));
-    ctx.save(); ctx.lineWidth = wl; ctx.strokeStyle = '#8b8477'; ell(0, cy, rx, ry, 0, Math.PI); ctx.stroke(); ctx.restore();
-    for (const a of [0, Math.PI*.5, Math.PI]){
-      const tx = Math.cos(a)*rx, ty = cy + Math.sin(a)*ry;
-      ctx.beginPath(); ctx.rect(tx - .09*u, ty - .26*u, .18*u, .26*u); fs('#a7a092');
+    const rr = 1.22, seg = 14;
+    for (let k = 0; k < seg; k++){
+      const mid = (k + .5) / seg * TAU;
+      add('box', Math.cos(mid)*rr, Math.sin(mid)*rr, 0, 2*rr*Math.sin(Math.PI/seg) + .03, .24, .09, '#8b8477', Math.atan2(-Math.cos(mid), -Math.sin(mid)));
     }
+    for (let k = 0; k < 4; k++){ const a = k*Math.PI/2 + Math.PI/4, x = Math.cos(a)*rr, z = Math.sin(a)*rr; add('cyl', x, z, 0, .24, .4, .24, '#a7a092'); add('cone', x, z, .4, .3, .22, .3, n.hex); }
+    for (let i = 0; i < 9; i++){ const a = Rn()*TAU, r = .42 + Rn()*.5; house(Math.cos(a)*r, Math.sin(a)*r, .85, WALLS[Rn()*3|0], ROOFS[Rn()*4|0]); }
+    add('box', 0, 0, 0, .4, .72, .4, '#b9b2a3');
+    for (const [x, z] of [[-.15,-.15],[.15,-.15],[-.15,.15],[.15,.15]]) add('box', x, z, .72, .1, .09, .1, '#b9b2a3');
+    add('cyl', 0, 0, .72, .03, .45, .03, '#4a3a2c'); add('box', .13, 0, 1.0, .24, .15, .02, n.hex);
   } else if (st === 4){
-    ell(0, .14*u, 1.6*u, .7*u); ctx.fillStyle = 'rgba(80,72,66,.4)'; ctx.fill();
-    const bs = [];
-    for (let i = 0; i < 10; i++) bs.push({ x:(R() - .5)*2, y:(R() - .5)*.75 + .22, w:.2 + R()*.18, h:.22 + R()*.45, c:BRICK[R()*4|0] });
-    bs.push({ x:.55, y:.05, w:.09, h:1.05, c:'#4e423d', ch:true });
-    bs.sort((a, b) => a.y - b.y);
-    for (const b of bs){
-      const X = b.x*u, Y = b.y*u, w = b.w*u, h = b.h*u;
-      ctx.beginPath(); ctx.rect(X - w/2, Y - h, w, h); fs(b.c);
-      if (b.ch){ if (rnd() < .05 * Math.min(3, speed || 0)) smoke(s.x + .5 + b.x*u/px, s.y + .5 + (b.y*u - h)/px); continue; }
-      if (u > 9){ ctx.fillStyle = 'rgba(255,222,150,.55)'; for (let yy = Y - h + .07*u; yy < Y - .07*u; yy += .12*u) ctx.fillRect(X - w/2 + .04*u, yy, w - .08*u, .04*u); }
-    }
-    flag(-.05, -.55, .4, n.css, u, time);
+    for (let i = 0; i < 10; i++){ const a = Rn()*TAU, r = .25 + Rn()*.95; add('sky', Math.cos(a)*r, Math.sin(a)*r, 0, .2 + Rn()*.18, .22 + Rn()*.48, .2 + Rn()*.18, BRICK[Rn()*4|0], Rn()*3); }
+    add('box', -.1, .05, 0, .7, .26, .4, '#6e625a'); add('pyr', -.1, .05, .26, .9, .12, .52, '#5b4f48');
+    add('cyl', .5, .15, 0, .12, 1.15, .12, '#4e423d', 0, true); add('cyl', .65, -.1, 0, .1, .9, .1, '#4e423d', 0, true);
+    add('cyl', -.1, .05, .38, .03, .5, .03, '#3a3a3a'); add('box', .03, .05, .74, .24, .15, .02, n.hex);
   } else {
-    ell(0, .14*u, 2.2*u, .9*u); ctx.fillStyle = 'rgba(255,214,140,.13)'; ctx.fill();
-    ell(0, .14*u, 1.7*u, .72*u); ctx.fillStyle = 'rgba(70,74,82,.5)'; ctx.fill();
-    const sc = .75 + Math.min(1, s.pop / 2e6) * .75, k = 9 + Math.min(7, Math.floor(s.pop / 400000)), bs = [];
-    for (let i = 0; i < k; i++){ const a = R()*TAU, r = Math.pow(R(), .8); bs.push({ x:Math.cos(a)*r*1.35, y:Math.sin(a)*r*.5 + .2, w:.17 + R()*.15, h:(.45 + R()*1.0)*(1.25 - r*.7)*sc, c:GLASS[R()*5|0], seed:R() }); }
-    bs.push({ x:0, y:.14, w:.24, h:2.05*sc, c:'#a3b9ca', tall:true, seed:.5 });
-    bs.sort((a, b) => a.y - b.y);
-    for (const b of bs){
-      const X = b.x*u, Y = b.y*u, w = b.w*u, h = b.h*u;
-      ctx.beginPath(); ctx.rect(X - w/2, Y - h, w, h); fs(b.c);
-      ctx.fillStyle = 'rgba(10,20,30,.22)'; ctx.fillRect(X + w*.15, Y - h, w*.35, h);
-      if (u > 8){
-        ctx.fillStyle = 'rgba(255,238,180,.6)';
-        let j = 0; for (let yy = Y - h + .08*u; yy < Y - .06*u; yy += .1*u){ if (hash2(s.id, j++, b.seed*1e6|0) > .35) ctx.fillRect(X - w/2 + .03*u, yy, w*.6, Math.max(1, .035*u)); }
-      }
-      if (b.tall){
-        ctx.beginPath(); ctx.moveTo(X, Y - h); ctx.lineTo(X, Y - h - .35*u); ctx.stroke();
-        if (Math.sin(time*4) > 0){ ctx.beginPath(); ctx.arc(X, Y - h - .35*u, Math.max(1.5, u*.05), 0, TAU); ctx.fillStyle = '#ff4a3a'; ctx.fill(); }
-      }
-    }
+    const sc = .75 + Math.min(1, s.pop / 2e6) * .75, k = 9 + bucket;
+    for (let i = 0; i < k; i++){ const a = Rn()*TAU, r = Math.pow(Rn(), .8)*1.4; add('sky', Math.cos(a)*r, Math.sin(a)*r, 0, .18 + Rn()*.15, (.5 + Rn()*1.1)*(1.3 - r*.65)*sc, .18 + Rn()*.15, GLASS[Rn()*5|0], Rn() < .5 ? 0 : Math.PI/4); }
+    const th = 2.1*sc*1.05;
+    add('sky', 0, 0, 0, .28, th, .28, '#a3b9ca'); add('cyl', 0, 0, th, .04, .5, .04, '#cfd6dc'); add('box', 0, 0, th + .5, .07, .07, .07, '#ff4a3a');
   }
-  if (s.capital) star(u*SZ[st]*.85, -u*(st >= 5 ? 1.3 : st >= 3 ? .7 : .45), Math.max(4, u*.17));
-  ctx.restore();
+  const out = { key, P, top }; partCache.set(s.id, out); return out;
 }
-
-function drawArmy(a, sx, sy, px, time){
-  const n = N[a.nation], u = Math.max(px*.85, 9) * (.85 + Math.min(.5, Math.log10(a.str + 1) * .1));
-  const ti = (a.y | 0) * W + (a.x | 0), water = !isLand(terr[ti]);
-  ctx.save(); ctx.translate(sx, sy); if (a.dir < 0) ctx.scale(-1, 1);
-  ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(.8, u*.06); ctx.strokeStyle = 'rgba(18,12,8,.92)';
-  if (water){
-    const bob = Math.sin(time*3 + a.phase) * u*.03;
-    ctx.translate(0, bob);
-    ctx.beginPath(); ctx.moveTo(-.48*u, -.05*u); ctx.lineTo(.5*u, -.05*u); ctx.lineTo(.32*u, .2*u); ctx.lineTo(-.32*u, .2*u); ctx.closePath(); fs(eraIdx >= 4 ? '#59606a' : '#6b4a2e');
-    if (eraIdx >= 4){ ctx.beginPath(); ctx.rect(-.15*u, -.28*u, .32*u, .23*u); fs('#8a929c'); ctx.beginPath(); ctx.rect(-.05*u, -.45*u, .1*u, .17*u); fs(n.css); }
-    else { ctx.beginPath(); ctx.moveTo(0, -.05*u); ctx.lineTo(0, -.75*u); ctx.stroke(); ctx.beginPath(); ctx.moveTo(.02*u, -.72*u); ctx.quadraticCurveTo(.4*u, -.4*u, .02*u, -.12*u); ctx.closePath(); fs(n.css); }
-  } else if (eraIdx >= 5){
-    ctx.beginPath(); ctx.rect(-.5*u, -.02*u, u, .16*u); fs('#2d2f30');
-    ctx.beginPath(); ctx.rect(-.45*u, -.24*u, .9*u, .23*u); fs(n.css);
-    ctx.beginPath(); ctx.rect(-.18*u, -.42*u, .36*u, .19*u); fs(n.css);
-    ctx.beginPath(); ctx.moveTo(.18*u, -.33*u); ctx.lineTo(.62*u, -.36*u); ctx.lineWidth = Math.max(1.4, u*.08); ctx.stroke();
-  } else {
-    const bob = Math.abs(Math.sin(time*9 + a.phase)) * u*.06;
-    ctx.translate(0, -bob);
-    ctx.beginPath(); ctx.moveTo(-.08*u, -.1*u); ctx.lineTo(-.12*u, .12*u); ctx.moveTo(.08*u, -.1*u); ctx.lineTo(.12*u, .12*u); ctx.stroke();
-    ctx.beginPath(); ctx.rect(-.14*u, -.45*u, .28*u, .36*u); fs(n.css);
-    ctx.beginPath(); ctx.arc(0, -.57*u, .12*u, 0, TAU); fs(eraIdx >= 2 && eraIdx < 4 ? '#a9aeb4' : '#efcfa2');
-    if (eraIdx >= 4){ ctx.beginPath(); ctx.moveTo(-.1*u, -.3*u); ctx.lineTo(.42*u, -.48*u); ctx.lineWidth = Math.max(1.2, u*.07); ctx.stroke(); }
-    else {
-      ctx.beginPath(); ctx.moveTo(.24*u, .1*u); ctx.lineTo(.24*u, -.95*u); ctx.stroke();
-      ctx.beginPath(); ctx.rect(.24*u, -.95*u, .34*u, .22*u); fs(n.css);
-      if (eraIdx >= 2){ ell(-.2*u, -.28*u, .11*u, .15*u); fs('#7d6a52'); }
-    }
-  }
-  ctx.restore();
+function baseOf(s){
+  let b = baseCache.get(s.id);
+  if (!b){ b = frameAt(s.x + .5, s.y + .5, 0, (hash2(s.id, 1, 2) - .5)*1.2, new THREE.Matrix4()); baseCache.set(s.id, b); }
+  return b;
 }
-
-function render(time){
-  const px = TS * cam.z;
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.fillStyle = '#0a2133'; ctx.fillRect(0, 0, vw, vh);
-  let sxk = 0, syk = 0;
-  if (shake > 0 && !reduceMotion){ sxk = (rnd() - .5) * 14 * shake; syk = (rnd() - .5) * 14 * shake; }
-  const ox = vw/2 - cam.x*cam.z + sxk, oy = vh/2 - cam.y*cam.z + syk;
-  ctx.save(); ctx.translate(ox, oy); ctx.scale(cam.z, cam.z);
-  ctx.imageSmoothingEnabled = cam.z < 1;
-  ctx.drawImage(tcv, 0, 0);
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(terCv, 0, 0, W*TS, H*TS);
-  if (roadPath){
-    ctx.lineCap = 'round';
-    ctx.lineWidth = (eraIdx >= 5 ? 2.4 : eraIdx >= 4 ? 1.8 : 1.3) / cam.z;
-    ctx.strokeStyle = eraIdx >= 4 ? 'rgba(62,62,66,.85)' : 'rgba(128,96,58,.7)';
-    ctx.stroke(roadPath);
-    if (eraIdx >= 5){ ctx.lineWidth = .7 / cam.z; ctx.strokeStyle = 'rgba(255,226,140,.6)'; ctx.stroke(roadPath); }
-  }
-  for (const [id, p] of borderPaths){
-    if (!N[id] || !N[id].alive) continue;
-    ctx.lineWidth = 3.2 / cam.z; ctx.strokeStyle = 'rgba(8,12,18,.42)'; ctx.stroke(p);
-    ctx.lineWidth = 1.5 / cam.z; ctx.strokeStyle = N[id].line; ctx.stroke(p);
-  }
-  ctx.restore();
-  ctx.translate(sxk, syk);
-
-  // 街
-  const vis = [];
+const _L = new THREE.Matrix4(), _W = new THREE.Matrix4(), _W2 = new THREE.Matrix4(), _q = new THREE.Quaternion(), IDQ = new THREE.Quaternion();
+const _p = new THREE.Vector3(), _sc = new THREE.Vector3(), YAX = new THREE.Vector3(0, 1, 0);
+let chimneys = [], capitals = [];
+function rebuildCities(){
+  for (const k in CITY) CITY[k].n = 0;
+  chimneys = []; capitals = [];
   for (const s of S){
     if (!s.alive) continue;
-    const [x, y] = toScreen(s.x + .5, s.y + .5);
-    const m = Math.max(px, 8) * 2.6;
-    if (x < -m || y < -m*1.4 || x > vw + m || y > vh + m) continue;
-    vis.push([y, s, x]);
+    const b = baseOf(s), pc = partsFor(s);
+    for (const p of pc.P){
+      _q.setFromAxisAngle(YAX, p.rot); _p.set(p.x*U, p.y*U, p.z*U); _sc.set(p.w*U, p.h*U, p.d*U);
+      _L.compose(_p, _q, _sc); _W.multiplyMatrices(b, _L); put(CITY[p.g], _W, p.c);
+      if (p.smoke) chimneys.push(new THREE.Vector3(p.x*U, (p.y + p.h)*U, p.z*U).applyMatrix4(b));
+    }
+    if (s.capital) capitals.push([b, pc.top]);
   }
-  vis.sort((a, b) => a[0] - b[0]);
-  for (const [y, s, x] of vis) drawSettlement(s, x, y, px, time);
-
-  // 国名
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-  for (const n of N){
-    if (!n.alive || n.tiles < 6) continue;
-    const [x, y] = toScreen(n.cx / n.tiles + .5, n.cy / n.tiles + .5);
-    if (x < -100 || y < -40 || x > vw + 100 || y > vh + 40) continue;
-    const fsz = clamp(Math.sqrt(n.tiles) * px * .2, 11, 26);
-    ctx.font = `400 ${fsz}px 'Dela Gothic One', 'Hiragino Sans', sans-serif`;
-    ctx.lineWidth = Math.max(3, fsz * .28); ctx.strokeStyle = 'rgba(8,12,18,.8)'; ctx.strokeText(nm(n.id), x, y - px*1.6);
-    ctx.fillStyle = n.line; ctx.fillText(nm(n.id), x, y - px*1.6);
-  }
-  // 街の名前
-  if (px >= 13){
-    ctx.font = `700 ${clamp(px*.42, 11, 14)}px 'Zen Kaku Gothic New', sans-serif`;
-    for (const [y, s, x] of vis){
-      if (s.stage < 1 && px < 22) continue;
-      const u = Math.max(px, MINU[s.stage]);
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(8,12,18,.85)'; ctx.strokeText(s.name, x, y + u*(SZ[s.stage]*.5 + .35));
-      ctx.fillStyle = '#f4efe2'; ctx.fillText(s.name, x, y + u*(SZ[s.stage]*.5 + .35));
+  for (const k in CITY) flush(CITY[k]);
+  cityDirty = false;
+}
+function part(pool, base, k, x, y, z, w, h, d, c){
+  _p.set(x*U*k, y*U*k, z*U*k); _sc.set(w*U*k, h*U*k, d*U*k); _L.compose(_p, IDQ, _sc); _W.multiplyMatrices(base, _L); put(MOB[pool], _W, c);
+}
+const _pa = new THREE.Vector3(), _pb = new THREE.Vector3(), _f = new THREE.Vector3(), _side = new THREE.Vector3(), _up = new THREE.Vector3();
+function slerpDir(a, b, t, out){
+  const w = Math.acos(clamp(a.dot(b), -1, 1)); if (w < 1e-4) return out.copy(a);
+  const sw = Math.sin(w); return out.copy(a).multiplyScalar(Math.sin((1 - t)*w) / sw).addScaledVector(b, Math.sin(t*w) / sw);
+}
+function planePos(p, t, out){ slerpDir(p.a, p.b, t, out); return out.multiplyScalar(R + 3 + Math.sin(t*Math.PI)*p.h); }
+function rebuildMobiles(time){
+  for (const k in MOB) MOB[k].n = 0;
+  for (const a of armies){
+    const water = !isLand(terr[(a.y|0)*W + (a.x|0)]);
+    frameAt(a.x, a.y, 0, Math.atan2(-(a.hy || 0), a.hx ?? 1), _W2);
+    const k = 1.5 * (.85 + Math.min(.5, Math.log10(a.str + 1)*.1)), nc = N[a.nation].hex;
+    if (water){
+      const bob = Math.sin(time*3 + a.phase)*.03;
+      part('box', _W2, k, 0, bob, 0, .72, .14, .26, eraIdx >= 4 ? '#59606a' : '#6b4a2e');
+      if (eraIdx >= 4){ part('box', _W2, k, -.05, .14 + bob, 0, .26, .16, .18, '#8a929c'); part('box', _W2, k, 0, .3 + bob, 0, .06, .12, .06, nc); }
+      else { part('cyl', _W2, k, 0, .14 + bob, 0, .04, .62, .04, '#5a4330'); part('box', _W2, k, .02, .3 + bob, 0, .03, .38, .32, nc); }
+    } else if (eraIdx >= 5){
+      part('box', _W2, k, 0, 0, 0, .6, .1, .38, '#2d2f30'); part('box', _W2, k, 0, .1, 0, .54, .13, .32, nc);
+      part('box', _W2, k, -.03, .23, 0, .26, .11, .22, nc); part('box', _W2, k, .26, .26, 0, .34, .04, .05, '#2d2f30');
+    } else {
+      const bob = Math.abs(Math.sin(time*9 + a.phase))*.05;
+      part('box', _W2, k, 0, bob, 0, .14, .14, .1, '#3b3026'); part('box', _W2, k, 0, .14 + bob, 0, .2, .24, .14, nc);
+      part('box', _W2, k, 0, .38 + bob, 0, .13, .13, .13, eraIdx >= 2 && eraIdx < 4 ? '#a9aeb4' : '#efcfa2');
+      if (eraIdx >= 4) part('box', _W2, k, .14, .28 + bob, 0, .36, .04, .04, '#2b2420');
+      else { part('cyl', _W2, k, -.04, bob, .12, .03, .86, .03, '#5a4330'); part('box', _W2, k, .09, .62 + bob, .12, .24, .15, .02, nc); }
     }
   }
-  // 軍隊
-  for (const a of armies){
-    const [x, y] = toScreen(a.x, a.y);
-    if (x < -30 || y < -30 || x > vw + 30 || y > vh + 30) continue;
-    drawArmy(a, x, y, px, time);
+  for (const pl of planes){
+    const t = pl.t / pl.dur; planePos(pl, t, _pa); planePos(pl, Math.min(1, t + .01), _pb);
+    _up.copy(_pa).normalize(); _f.copy(_pb).sub(_pa); _f.addScaledVector(_up, -_f.dot(_up)).normalize(); _side.crossVectors(_f, _up);
+    _W2.makeBasis(_f, _up, _side).setPosition(_pa);
+    part('box', _W2, 1, -.45, -.06, 0, 1, .13, .13, '#f2f4f6'); part('box', _W2, 1, -.05, -.03, 0, .26, .03, 1, '#e6e9ee'); part('box', _W2, 1, -.88, 0, 0, .14, .22, .04, '#e05a4a');
+    if (rnd() < .5) addSpark(_pa, _tv.set(0, 0, 0), _up, 0, 1.4, U*.1, [1, 1, 1], true);
   }
-  // 飛行機
-  for (const p of planes){
-    const t = p.t / p.dur, wx = p.x0 + (p.x1 - p.x0)*t, wy = p.y0 + (p.y1 - p.y0)*t - Math.sin(t*Math.PI)*3;
-    const [x, y] = toScreen(wx, wy), [x0, y0] = toScreen(p.x0 + (p.x1 - p.x0)*Math.max(0, t - .12), p.y0 + (p.y1 - p.y0)*Math.max(0, t - .12) - Math.sin(Math.max(0, t - .12)*Math.PI)*3);
-    const g = ctx.createLinearGradient(x0, y0, x, y); g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,.55)');
-    ctx.strokeStyle = g; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x, y); ctx.stroke();
-    ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(y - y0, x - x0)); const k = Math.max(5, px*.5);
-    ctx.fillStyle = '#f2f4f6'; ctx.strokeStyle = 'rgba(20,20,30,.8)'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(k, 0); ctx.lineTo(-k*.8, -k*.15); ctx.lineTo(-k*.8, k*.15); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(.1*k, 0); ctx.lineTo(-.3*k, -k*.75); ctx.lineTo(-.45*k, -k*.75); ctx.lineTo(-.3*k, 0); ctx.lineTo(-.45*k, k*.75); ctx.lineTo(-.3*k, k*.75); ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.restore();
+  for (const k in MOB) flush(MOB[k]);
+  MARK.n = 0;
+  for (const [b, top] of capitals){
+    _q.setFromAxisAngle(YAX, time*1.5); _p.set(0, (top + .35 + Math.sin(time*2)*.06)*U, 0); _sc.setScalar(.34*U);
+    _L.compose(_p, _q, _sc); _W.multiplyMatrices(b, _L); put(MARK, _W, '#ffd36b');
   }
-  // 粒子
-  for (const p of parts){
-    const [x, y] = toScreen(p.x, p.y), a = clamp(p.life / p.max, 0, 1);
-    ctx.globalAlpha = p.grow ? a * .55 : a;
-    ctx.fillStyle = p.c; ctx.beginPath();
-    ctx.arc(x, y, Math.max(1.2, p.r * px * (p.grow ? 1 + (1 - a)*2.5 : 1)), 0, TAU); ctx.fill();
+  flush(MARK);
+}
+
+// 国境線と道
+let borderLines = null, roadLines = null;
+const lineMat = new THREE.LineBasicMaterial({ vertexColors:true, transparent:true, opacity:.95, depthWrite:false });
+const roadMat = new THREE.LineBasicMaterial({ color:0x8a6a44, transparent:true, opacity:.8, depthWrite:false });
+function buildLines(){
+  if (borderLines){ scene.remove(borderLines); borderLines.geometry.dispose(); }
+  if (roadLines){ scene.remove(roadLines); roadLines.geometry.dispose(); }
+  const bs = borderSegs, pos = [], col = [];
+  for (let k = 0; k < bs.length; k += 5){
+    const n = N[bs[k]]; if (!n || !n.alive) continue;
+    surfPos(bs[k+1], bs[k+2], .14, _pa); surfPos(bs[k+3], bs[k+4], .14, _pb);
+    pos.push(_pa.x, _pa.y, _pa.z, _pb.x, _pb.y, _pb.z);
+    const c = n.lineRGB; col.push(c[0], c[1], c[2], c[0], c[1], c[2]);
   }
-  ctx.globalAlpha = 1;
-  // 隕石
+  let g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  borderLines = new THREE.LineSegments(g, lineMat); borderLines.frustumCulled = false; scene.add(borderLines);
+  const rp = [];
+  for (let k = 0; k < roadSegs.length; k += 4){
+    const [x0, y0, x1, y1] = [roadSegs[k], roadSegs[k+1], roadSegs[k+2], roadSegs[k+3]];
+    for (let j = 0; j < 4; j++){
+      surfPos(x0 + (x1 - x0)*j/4, y0 + (y1 - y0)*j/4, .1, _pa); surfPos(x0 + (x1 - x0)*(j+1)/4, y0 + (y1 - y0)*(j+1)/4, .1, _pb);
+      rp.push(_pa.x, _pa.y, _pa.z, _pb.x, _pb.y, _pb.z);
+    }
+  }
+  roadMat.color.set(eraIdx >= 4 ? 0x4c4d52 : 0x8a6a44);
+  g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3));
+  roadLines = new THREE.LineSegments(g, roadMat); roadLines.frustumCulled = false; scene.add(roadLines);
+  linesDirty = false;
+}
+
+// 粒子（爆発・煙・飛行機雲）
+const PMAX = 1600, pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array(PMAX*3), pCol = new Float32Array(PMAX*4), pSize = new Float32Array(PMAX);
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3).setUsage(THREE.DynamicDrawUsage));
+pGeo.setAttribute('rgba', new THREE.BufferAttribute(pCol, 4).setUsage(THREE.DynamicDrawUsage));
+pGeo.setAttribute('size', new THREE.BufferAttribute(pSize, 1).setUsage(THREE.DynamicDrawUsage));
+const pMat = new THREE.ShaderMaterial({
+  uniforms:{ scale:{ value:500 } }, transparent:true, depthWrite:false,
+  vertexShader:'attribute float size; attribute vec4 rgba; varying vec4 vC; uniform float scale; void main(){ vC = rgba; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = max(1.5, size * scale / -mv.z); gl_Position = projectionMatrix * mv; }',
+  fragmentShader:'varying vec4 vC; void main(){ float d = length(gl_PointCoord - 0.5); if (d > 0.5) discard; gl_FragColor = vec4(vC.rgb, vC.a * smoothstep(0.5, 0.15, d)); }'
+});
+const pts = new THREE.Points(pGeo, pMat); pts.frustumCulled = false; scene.add(pts);
+function updateSparks(dt){
+  for (const p of sparks){
+    p.life -= dt; p.vx -= p.nx*p.g*dt; p.vy -= p.ny*p.g*dt; p.vz -= p.nz*p.g*dt;
+    p.x += p.vx*dt; p.y += p.vy*dt; p.z += p.vz*dt;
+  }
+  if (sparks.length) sparks = sparks.filter(p => p.life > 0);
+  let n = 0;
+  for (const p of sparks){
+    if (n >= PMAX) break;
+    const a = clamp(p.life / p.max, 0, 1);
+    pPos[n*3] = p.x; pPos[n*3+1] = p.y; pPos[n*3+2] = p.z;
+    pCol[n*4] = p.c[0]; pCol[n*4+1] = p.c[1]; pCol[n*4+2] = p.c[2]; pCol[n*4+3] = p.grow ? a*.6 : a;
+    pSize[n] = p.size * (p.grow ? 1 + (1 - a)*2.5 : 1); n++;
+  }
+  pGeo.setDrawRange(0, n);
+  pGeo.attributes.position.needsUpdate = true; pGeo.attributes.rgba.needsUpdate = true; pGeo.attributes.size.needsUpdate = true;
+}
+const SMOKE = hexRGB('#9a9690');
+function puffChimneys(){
+  const k = .035 * Math.min(3, speed);
+  for (const c of chimneys) if (rnd() < k){ _up.copy(c).normalize(); _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.15).addScaledVector(_up, U*.35); addSpark(c, _f, _up, -U*.04, 2.2, U*.16, SMOKE, true); }
+}
+// 隕石
+const meteorGeo = new THREE.SphereGeometry(1, 16, 12), meteorMat = new THREE.MeshBasicMaterial({ color:0xfff0c8 });
+function launchMeteor(x, y){
+  const to = surfPos(x + .5, y + .5, 0), [la, lo] = llOfTile(x + .5, y + .5), p = (lo + 180)*D2R;
+  const from = to.clone().normalize().multiplyScalar(R + 80).add(new THREE.Vector3(Math.sin(p), 0, Math.cos(p)).multiplyScalar(-50));
+  const mesh = new THREE.Mesh(meteorGeo, meteorMat); mesh.scale.setScalar(U*.45); scene.add(mesh);
+  meteors.push({ x, y, t:0, from, to, mesh });
+  void la;
+}
+function updateMeteors(dt){
   for (const m of meteors){
-    const t = Math.min(1, m.t / .9), sx0 = m.x + 22, sy0 = m.y - 26;
-    const [x, y] = toScreen(sx0 + (m.x + .5 - sx0)*t, sy0 + (m.y + .5 - sy0)*t), [tx, ty] = toScreen(sx0 + (m.x + .5 - sx0)*Math.max(0, t - .25), sy0 + (m.y + .5 - sy0)*Math.max(0, t - .25));
-    const g = ctx.createLinearGradient(tx, ty, x, y); g.addColorStop(0, 'rgba(255,140,40,0)'); g.addColorStop(1, 'rgba(255,220,140,.95)');
-    ctx.strokeStyle = g; ctx.lineWidth = Math.max(5, px*.9); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(x, y); ctx.stroke();
-    ctx.fillStyle = '#fff3d0'; ctx.beginPath(); ctx.arc(x, y, Math.max(4, px*.6), 0, TAU); ctx.fill();
+    m.t += dt; const t = Math.min(1, m.t / 1.1);
+    m.mesh.position.copy(m.from).lerp(m.to, t*t);
+    _up.copy(m.mesh.position).normalize();
+    for (let k = 0; k < 3; k++) addSpark(m.mesh.position, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.6), _up, 0, .5 + rnd()*.3, U*(.25 + rnd()*.25), hexRGB(pick(FIRE)), false);
+    if (t >= 1 && !m.done){ m.done = true; scene.remove(m.mesh); impact(m.x, m.y); }
   }
-  // 道具のカーソル
+  meteors = meteors.filter(m => !m.done);
+}
+
+// ===== カメラ =====
+let vw = 0, vh = 0, dpr = 1, shake = 0;
+const camS = { lon:20, lat:8, alt:250 }, camG = { lon:20, lat:8, alt:250 };
+const ALT_MIN = 13, ALT_MAX = 330;
+const wrapLon = l => ((l + 180) % 360 + 360) % 360 - 180;
+function updateCamera(dt){
+  const k = 1 - Math.exp(-dt*7);
+  camS.lon = wrapLon(camS.lon + wrapLon(camG.lon - camS.lon)*k); camS.lat += (camG.lat - camS.lat)*k;
+  camS.alt = Math.exp(Math.log(camS.alt) + (Math.log(camG.alt) - Math.log(camS.alt))*k);
+  const tilt = Math.pow(clamp((125 - camS.alt) / 105, 0, 1), 1.2) * 1.0;
+  const p = (camS.lon + 180)*D2R, t = (90 - camS.lat)*D2R;
+  dirLL(camS.lat, camS.lon, _n); _north.set(Math.cos(p)*Math.cos(t), Math.sin(t), -Math.sin(p)*Math.cos(t));
+  _pa.copy(_n).multiplyScalar(R + .4);
+  const c = Math.cos(tilt), s = Math.sin(tilt);
+  camera.position.copy(_pa).addScaledVector(_n, c*camS.alt).addScaledVector(_north, -s*camS.alt);
+  if (shake > 0 && !reduceMotion) camera.position.add(_f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(shake*2.5));
+  camera.up.copy(_north).multiplyScalar(c).addScaledVector(_n, s);
+  camera.lookAt(_pa);
+  camera.near = clamp(camS.alt*.06, .5, 25); camera.updateProjectionMatrix();
+  camera.updateMatrixWorld();
+  const d = camera.position.length();
+  _side.setFromMatrixColumn(camera.matrixWorld, 0); _up.setFromMatrixColumn(camera.matrixWorld, 1);
+  sun.position.copy(camera.position).addScaledVector(_side, -.45*d).addScaledVector(_up, .7*d);
+}
+function rotateBy(dx, dy){
+  const deg = 2*camS.alt*Math.tan(FOV*D2R/2) / vh / R / D2R;
+  camS.lon = wrapLon(camS.lon - dx*deg / Math.max(.25, Math.cos(camS.lat*D2R)));
+  camS.lat = clamp(camS.lat + dy*deg, -70, 78);
+  camG.lon = camS.lon; camG.lat = camS.lat;
+}
+function zoomBy(f){ camG.alt = clamp(camG.alt * f, ALT_MIN, ALT_MAX); }
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function resize(){
+  dpr = Math.min(2, window.devicePixelRatio || 1); vw = window.innerWidth; vh = window.innerHeight;
+  renderer.setPixelRatio(dpr); renderer.setSize(vw, vh, false);
+  camera.aspect = vw / vh; camera.updateProjectionMatrix();
+  ov.width = Math.round(vw*dpr); ov.height = Math.round(vh*dpr);
+  pMat.uniforms.scale.value = vh*dpr / (2*Math.tan(FOV*D2R/2));
+}
+const _pr = new THREE.Vector3(), _ndc = new THREE.Vector2(), ray = new THREE.Raycaster(), _sph = new THREE.Sphere(new THREE.Vector3(), R + .35), _hit = new THREE.Vector3();
+function project(v){ _pr.copy(v).project(camera); if (_pr.z > 1 || _pr.z < -1) return null; return [(_pr.x + 1)/2*vw, (1 - _pr.y)/2*vh]; }
+function facing(v){ _tv.copy(camera.position).sub(v).normalize(); return _pb.copy(v).normalize().dot(_tv); }
+function pxPerTile(v){ return vh / (2*Math.tan(FOV*D2R/2)*camera.position.distanceTo(v)) * U; }
+function hitTile(sx, sy){
+  _ndc.set(sx / vw*2 - 1, -(sy / vh)*2 + 1); ray.setFromCamera(_ndc, camera);
+  const p = ray.ray.intersectSphere(_sph, _hit); if (!p) return null;
+  const [fx, fy] = tileOfPoint(p); if (fy < 0 || fy >= H) return null;
+  return [fx, fy];
+}
+function ringPts(fx, fy, r, lift){
+  const out = [];
+  for (let k = 0; k <= 32; k++){
+    const a = k / 32 * TAU, v = surfPos(fx + Math.cos(a)*r, fy + Math.sin(a)*r, lift, _pa);
+    if (facing(v) < .02) return null; const p = project(v); if (!p) return null; out.push(p);
+  }
+  return out;
+}
+function strokeRing(pts, color, dash){
+  if (!pts) return;
+  octx.setLineDash(dash ? [5, 4] : []); octx.lineWidth = 2; octx.strokeStyle = color; octx.beginPath();
+  pts.forEach((p, i) => i ? octx.lineTo(p[0], p[1]) : octx.moveTo(p[0], p[1])); octx.stroke(); octx.setLineDash([]);
+}
+function drawOverlay(){
+  octx.setTransform(dpr, 0, 0, dpr, 0, 0); octx.clearRect(0, 0, vw, vh);
+  octx.textAlign = 'center'; octx.textBaseline = 'middle'; octx.lineJoin = 'round';
+  for (const n of N){
+    if (!n.alive || n.tiles < 6) continue;
+    const v = surfPos(n.cx / n.tiles + .5, n.cy / n.tiles + .5, 1.6*U, _pa), f = facing(v);
+    if (f < .12) continue;
+    const p = project(v); if (!p || p[0] < -120 || p[0] > vw + 120 || p[1] < -40 || p[1] > vh + 40) continue;
+    const ppt = pxPerTile(v), fsz = clamp(Math.sqrt(n.tiles) * ppt * .2, 11, 26);
+    octx.globalAlpha = clamp((f - .12) / .2, 0, 1);
+    octx.font = `400 ${fsz}px 'Dela Gothic One', 'Hiragino Sans', sans-serif`;
+    octx.lineWidth = Math.max(3, fsz*.28); octx.strokeStyle = 'rgba(8,12,18,.8)'; octx.strokeText(nm(n.id), p[0], p[1]);
+    octx.fillStyle = n.line; octx.fillText(nm(n.id), p[0], p[1]);
+  }
+  octx.globalAlpha = 1;
+  const center = _pb.copy(camera.position).normalize().multiplyScalar(R);
+  const pptC = pxPerTile(center);
+  if (pptC >= 15){
+    octx.font = `700 ${clamp(pptC*.32, 11, 14)}px 'Zen Kaku Gothic New', sans-serif`;
+    for (const s of S){
+      if (!s.alive || (s.stage < 1 && pptC < 26)) continue;
+      const v = surfPos(s.x + .5, s.y + .5 + SZ[s.stage]*.9, .1, _pa); if (facing(v) < .1) continue;
+      const p = project(v); if (!p || p[0] < -60 || p[0] > vw + 60 || p[1] < -20 || p[1] > vh + 20) continue;
+      octx.lineWidth = 3; octx.strokeStyle = 'rgba(8,12,18,.85)'; octx.strokeText(s.name, p[0], p[1] + 8);
+      octx.fillStyle = '#f4efe2'; octx.fillText(s.name, p[0], p[1] + 8);
+    }
+  }
+  if (sel && sel.type === 'city'){ const s = sById.get(sel.id); if (s) strokeRing(ringPts(s.x + .5, s.y + .5, SZ[s.stage] + .35, .15), '#ffd36b', false); }
   if (hover && tool !== 'look' && !pinch){
-    const [x, y] = toScreen(Math.floor(hover[0]) + .5, Math.floor(hover[1]) + .5);
-    const r = (TERRAIN_TOOLS[tool] ? BRUSH : tool === 'meteor' ? 3.2 : .7) * px;
-    ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.strokeStyle = tool === 'meteor' ? 'rgba(255,140,90,.9)' : 'rgba(255,240,200,.85)';
-    ctx.beginPath(); ctx.arc(x, y, Math.max(6, r), 0, TAU); ctx.stroke(); ctx.setLineDash([]);
-  }
-  // 選択
-  if (sel && sel.type === 'city'){
-    const s = sById.get(sel.id);
-    if (s){ const [x, y] = toScreen(s.x + .5, s.y + .5), u = Math.max(px, MINU[s.stage]); ctx.lineWidth = 2; ctx.strokeStyle = '#ffd36b'; ell(x, y + u*.14, u*SZ[s.stage] + 4, u*SZ[s.stage]*.52 + 3); ctx.stroke(); }
+    const r = TERRAIN_TOOLS[tool] !== undefined ? BRUSH : tool === 'meteor' ? 3.2 : .7;
+    strokeRing(ringPts(Math.floor(hover[0]) + .5, Math.floor(hover[1]) + .5, r, .15), tool === 'meteor' ? 'rgba(255,140,90,.95)' : 'rgba(255,240,200,.9)', true);
   }
 }
 
 // ===== ループ =====
-let lastT = performance.now(), acc = 0;
+let lastT = performance.now(), acc = 0, frameNo = 0, uiT = 0, lastCompose = -1e9, lastElev = -1e9;
+let globeDirty = true, linesDirty = true, cityDirty = true, elevDirty = true;
 function frame(now){
-  const dt = Math.min(.1, (now - lastT) / 1000); lastT = now;
+  const dt = Math.min(.1, (now - lastT) / 1000), time = now / 1000; lastT = now; frameNo++;
   if (started && speed > 0){
     acc += dt * 10 * speed; let n = 0;
     while (acc >= 1 && n < 40){ step(); acc -= 1; n++; }
     if (acc > 40) acc = 0;
   }
-  for (const p of parts){ p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.g * dt; }
-  if (parts.length) parts = parts.filter(p => p.life > 0);
-  if (parts.length > 900) parts.splice(0, parts.length - 900);
-  for (const m of meteors){ m.t += dt; if (m.t >= .9 && !m.done){ m.done = true; impact(m.x, m.y); } }
-  meteors = meteors.filter(m => !m.done);
-  shake = Math.max(0, shake - dt * 2);
+  if (!started && !$('intro').hidden) camG.lon = wrapLon(camG.lon + dt*6);
+  updateCamera(dt);
+  shake = Math.max(0, shake - dt*1.6);
+  updateMeteors(dt);
   if (speed > 0){
     for (const p of planes) p.t += dt * Math.min(speed, 3);
     planes = planes.filter(p => p.t < p.dur);
-    if (eraIdx >= 5 && planes.length < 7 && rnd() < .02 * Math.min(speed, 3)){
+    if (eraIdx >= 5 && planes.length < 8 && rnd() < .02 * Math.min(speed, 3)){
       const big = S.filter(s => s.alive && s.stage >= 4);
-      if (big.length >= 2){ const a = pick(big), b = pick(big); const d = Math.hypot(a.x - b.x, a.y - b.y); if (d > 12) planes.push({ x0:a.x + .5, y0:a.y + .5, x1:b.x + .5, y1:b.y + .5, t:0, dur:clamp(d / 9, 2, 9) }); }
+      if (big.length >= 2){
+        const a = pick(big), b = pick(big), d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d > 12) planes.push({ a:surfPos(a.x + .5, a.y + .5).normalize(), b:surfPos(b.x + .5, b.y + .5).normalize(), t:0, dur:clamp(d / 8, 2.5, 10), h:4 + d*.15 });
+      }
     }
   }
-  render(now / 1000);
+  if (globeDirty && now - lastCompose > 200){ composeGlobe(); globeDirty = false; lastCompose = now; }
+  if (elevDirty && now - lastElev > 150){ displaceGlobe(); elevDirty = false; lastElev = now; linesDirty = true; }
+  if (linesDirty) buildLines();
+  if (cityDirty || (frameNo % 12 === 0 && started && speed > 0)) rebuildCities();
+  if (speed > 0) puffChimneys();
+  rebuildMobiles(time);
+  updateSparks(dt);
+  renderer.render(scene, camera);
+  drawOverlay();
   if (now - uiT > 300){ uiT = now; updateUI(); }
   requestAnimationFrame(frame);
 }
-let uiT = 0;
-
 // ===== UI =====
 let tool = 'human', sel = null, warPick = false, hover = null;
 const BRUSH = 1.6;
 const TERRAIN_TOOLS = { land:'land', sea:'sea', forest:T.FOREST, mount:T.MOUNT };
-const $ = id => document.getElementById(id);
 
 function setTool(t){
   tool = t; document.querySelectorAll('[data-tool]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tool === t ? 'true' : 'false'));
@@ -1164,59 +1322,61 @@ function spawnHumans(x, y, forceNation){
 }
 $('startAfrica').addEventListener('click', () => {
   const p = findHabitableNear(Math.round(lonX(36)), Math.round(latY(-2)));
-  if (p){ spawnHumans(p[0], p[1], false); const [tx, ty] = p; cam.z = Math.max(cam.z, minZoom() * 2.2); cam.x = (tx + .5) * TS; cam.y = (ty + .5) * TS; clampCam(); }
+  if (p){ spawnHumans(p[0], p[1], false); focusOn(p[0], p[1], 48); }
 });
-$('startFree').addEventListener('click', () => { $('intro').hidden = true; setTool('human'); toast('地図の陸地をタップして人類を生み出そう'); });
+$('startFree').addEventListener('click', () => { $('intro').hidden = true; setTool('human'); toast('地球の陸地をタップして人類を生み出そう'); });
 
 function applyTool(sx, sy){
-  const [fx, fy] = toTile(sx, sy), x = Math.floor(fx), y = Math.floor(fy);
+  const h = hitTile(sx, sy); if (!h) return;
+  const x = Math.floor(h[0]), y = Math.floor(h[1]);
   if (x < 0 || y < 0 || x >= W || y >= H) return;
   if (tool === 'human') spawnHumans(x, y, false);
   else if (tool === 'nation'){
     if (!started && !habitable(terr[y*W+x])){ toast('陸地をタップしてください'); return; }
     spawnHumans(x, y, true);
   }
-  else if (tool === 'meteor'){ meteors.push({ x, y, t:0 }); }
+  else if (tool === 'meteor') launchMeteor(x, y);
   else if (TERRAIN_TOOLS[tool] !== undefined) paintTerrain(x, y, BRUSH, TERRAIN_TOOLS[tool]);
   else if (tool === 'look') selectAt(sx, sy);
 }
 function selectAt(sx, sy){
-  const px = TS * cam.z; let best = null, bd = 1e9;
+  let best = null, bd = 1e9;
   for (const s of S){
     if (!s.alive) continue;
-    const [x, y] = toScreen(s.x + .5, s.y + .5), u = Math.max(px, MINU[s.stage]), d = Math.hypot(x - sx, y - sy + u*.2);
-    if (d < Math.max(12, u*SZ[s.stage]) && d < bd){ bd = d; best = s; }
+    const v = surfPos(s.x + .5, s.y + .5, .3*U, _pa); if (facing(v) < .05) continue;
+    const p = project(v); if (!p) continue;
+    const d = Math.hypot(p[0] - sx, p[1] - sy);
+    if (d < Math.max(14, pxPerTile(v) * SZ[s.stage]) && d < bd){ bd = d; best = s; }
   }
   warPick = false;
   if (best){ sel = { type:'city', id:best.id }; openSide(); return; }
-  const [fx, fy] = toTile(sx, sy), x = Math.floor(fx), y = Math.floor(fy);
-  const o = x >= 0 && y >= 0 && x < W && y < H ? owner[y*W+x] : -1;
+  const h = hitTile(sx, sy);
+  const o = h ? owner[Math.floor(h[1])*W + Math.floor(h[0])] : -1;
   sel = o >= 0 ? { type:'nation', id:o } : null;
   if (sel) openSide();
 }
 function openSide(){ if (innerWidth <= 760){ $('side').classList.add('open'); $('sideToggle').setAttribute('aria-expanded', 'true'); } updateUI(true); }
-
-// ポインター操作
+// ポインター操作：ドラッグで地球を回す、ホイールとピンチで近づく
 const pointers = new Map(); let drag = null, pinch = null;
 cv.addEventListener('pointerdown', e => {
   cv.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
   if (pointers.size === 2){
     const [a, b] = [...pointers.values()];
-    pinch = { d:Math.hypot(a.x - b.x, a.y - b.y), z:cam.z, mx:(a.x + b.x)/2, my:(a.y + b.y)/2 }; drag = null; return;
+    pinch = { d:Math.hypot(a.x - b.x, a.y - b.y), alt:camS.alt, mx:(a.x + b.x)/2, my:(a.y + b.y)/2 }; drag = null; return;
   }
   const pan = e.button === 1 || e.button === 2;
   drag = { sx:e.clientX, sy:e.clientY, lx:e.clientX, ly:e.clientY, moved:false, pan, paint:false };
   if (!pan && e.button === 0 && TERRAIN_TOOLS[tool] !== undefined){ drag.paint = true; applyTool(e.clientX, e.clientY); }
 });
 cv.addEventListener('pointermove', e => {
-  hover = toTile(e.clientX, e.clientY);
+  hover = hitTile(e.clientX, e.clientY);
   if (!pointers.has(e.pointerId)) return;
   pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
   if (pinch && pointers.size >= 2){
     const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y), mx = (a.x + b.x)/2, my = (a.y + b.y)/2;
-    cam.x -= (mx - pinch.mx) / cam.z; cam.y -= (my - pinch.my) / cam.z;
-    zoomAt(mx, my, pinch.z * d / pinch.d / cam.z);
+    camG.alt = camS.alt = clamp(pinch.alt * pinch.d / Math.max(10, d), ALT_MIN, ALT_MAX);
+    rotateBy(mx - pinch.mx, my - pinch.my);
     pinch.mx = mx; pinch.my = my; return;
   }
   if (!drag) return;
@@ -1224,9 +1384,7 @@ cv.addEventListener('pointermove', e => {
   if (drag.paint){
     const steps = Math.ceil(Math.hypot(e.clientX - drag.lx, e.clientY - drag.ly) / 6);
     for (let k = 1; k <= steps; k++) applyTool(drag.lx + (e.clientX - drag.lx)*k/steps, drag.ly + (e.clientY - drag.ly)*k/steps);
-  } else if (drag.moved){
-    cam.x -= (e.clientX - drag.lx) / cam.z; cam.y -= (e.clientY - drag.ly) / cam.z; clampCam();
-  }
+  } else if (drag.moved) rotateBy(e.clientX - drag.lx, e.clientY - drag.ly);
   drag.lx = e.clientX; drag.ly = e.clientY;
 });
 function endPointer(e){
@@ -1240,15 +1398,18 @@ cv.addEventListener('pointerup', endPointer);
 cv.addEventListener('pointercancel', e => { pointers.delete(e.pointerId); pinch = null; drag = null; });
 cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') hover = null; });
 cv.addEventListener('contextmenu', e => e.preventDefault());
-cv.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * .0015)); }, { passive:false });
+cv.addEventListener('wheel', e => { e.preventDefault(); zoomBy(Math.exp(e.deltaY * .0015)); }, { passive:false });
 window.addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
   if (e.key === ' '){ e.preventDefault(); setSpeed(speed ? 0 : 1); }
-  else if (e.key === '+' || e.key === '=') zoomAt(vw/2, vh/2, 1.25);
-  else if (e.key === '-') zoomAt(vw/2, vh/2, .8);
+  else if (e.key === '+' || e.key === '=') zoomBy(.8);
+  else if (e.key === '-') zoomBy(1.25);
+  else if (e.key === 'ArrowLeft') rotateBy(60, 0);
+  else if (e.key === 'ArrowRight') rotateBy(-60, 0);
+  else if (e.key === 'ArrowUp') rotateBy(0, 60);
+  else if (e.key === 'ArrowDown') rotateBy(0, -60);
 });
 window.addEventListener('resize', resize);
-
 // 右パネル
 const infoEl = $('info'), natEl = $('nations');
 let infoKey = '', natKey = '';
@@ -1273,7 +1434,7 @@ function updateUI(force){
     natKey = key;
     natEl.innerHTML = top.length ? top.map(n => `<button class="row${sel && sel.type === 'nation' && sel.id === n.id ? ' sel' : ''}" type="button" data-nation="${n.id}"><span class="sw" style="background:${n.css}"></span><span class="nm">${nm(n.id)}${warCount(n.id) ? '<em>交戦中</em>' : ''}</span><span class="pp" data-np="${n.id}"></span></button>`).join('')
       + (list.length > 10 ? `<div class="more">ほか${list.length - 10}か国</div>` : '')
-      : '<p class="hint">まだ国はありません。「人類」か「建国」で地図をタップしよう。</p>';
+      : '<p class="hint">まだ国はありません。「人類」か「建国」で地球をタップしよう。</p>';
   }
   for (const n of top){ const el = natEl.querySelector(`[data-np="${n.id}"]`); if (el) el.textContent = fmtPop(n.pop); }
 
@@ -1302,7 +1463,7 @@ function updateUI(force){
         ${warPick && others.length ? `<div class="picks"><p>どの国に宣戦布告しますか？</p>${others.map(o => `<button class="row" type="button" data-war="${n.id}-${o.id}"><span class="sw" style="background:${o.css}"></span><span class="nm">${nm(o.id)}</span><span class="pp">${fmtPop(o.pop)}</span></button>`).join('')}</div>` : ''}`;
     }
   }
-  if (!sel){ k2 = 'none'; if (k2 !== infoKey || force) html = '<p class="hint">「見る」を選んで地図の国や街をタップすると、ここに詳しく出ます。国を選ぶと宣戦布告や講和もできます。</p>'; }
+  if (!sel){ k2 = 'none'; if (k2 !== infoKey || force) html = '<p class="hint">「見る」を選んで地球の国や街をタップすると、ここに詳しく出ます。国を選ぶと宣戦布告や講和もできます。</p>'; }
   if (html){ infoEl.innerHTML = html; }
   infoKey = k2;
   if (sel && sel.type === 'city'){ const s = sById.get(sel.id), f = infoEl.querySelector('[data-f="cpop"]'); if (s && f) f.textContent = fmtPop(s.pop); }
@@ -1322,19 +1483,19 @@ document.getElementById('side').addEventListener('click', e => {
   else if (b.dataset.war){ const [a, c] = b.dataset.war.split('-').map(Number); declareWar(a, c); warPick = false; updateUI(true); }
   else if (b.dataset.peace){ const [a, c] = b.dataset.peace.split('-').map(Number); const w = warOf(a, c); if (w) makePeace(w); updateUI(true); }
 });
-function focusOn(x, y){ cam.z = Math.max(cam.z, minZoom() * 2.5); cam.x = (x + .5) * TS; cam.y = (y + .5) * TS; clampCam(); }
-
+function focusOn(x, y, alt = 40){ const [la, lo] = llOfTile(x + .5, y + .5); camG.lat = clamp(la - Math.min(6, alt*.05), -70, 78); camG.lon = lo; camG.alt = Math.min(camG.alt, alt); }
 // ===== 保存と復元（ページ更新時に世界を引き継ぐ） =====
 function serialize(){
-  return { v:1, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, cam:{ ...cam } };
+  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, camS:{ ...camS }, camG:{ ...camG } };
 }
 function restore(d){
-  if (!d || d.v !== 1 || !d.terr || d.terr.length !== W*H) return;
+  if (!d || d.v !== 2 || !d.terr || d.terr.length !== W*H) return;
   terr.set(d.terr); computeDepth(); computeFert();
   N = d.N; N.forEach(n => usedNames.add(n.base));
   S = d.S; sById = new Map(S.map(s => [s.id, s]));
   wars = d.wars; truce = new Map(d.truce); tick = d.tick; year = d.year; eraIdx = d.eraIdx; nextId = d.nextId;
-  logs = d.logs || []; firstStage = d.firstStage || firstStage; started = d.started; Object.assign(cam, d.cam || {});
+  logs = d.logs || []; firstStage = d.firstStage || firstStage; started = d.started;
+  Object.assign(camS, d.camS || {}); Object.assign(camG, d.camG || {});
   setSpeed(d.speed ?? 1);
   if (started) $('intro').hidden = true;
 }
@@ -1342,9 +1503,7 @@ function restore(d){
 function start(data){
   genWorld();
   try { restore(data && data.game); } catch (err) { /* 古いデータは使わない */ }
-  paintAll(); resize();
-  if (!started) cam.z = Math.max(minZoom(), Math.min(vw / (W*TS) * 1.15, 6));
-  clampCam();
+  paintAll(); computeElev(); resize();
   recomputeTerritory(); renderLog(); updateUI(true);
   requestAnimationFrame(t => { lastT = t; frame(t); });
 }
