@@ -196,7 +196,7 @@ dd{margin:0;font-variant-numeric:tabular-nums}
         <li><span>1</span><div>「人類」で地球をタップすると、最初のテントがひとつ建ちます。</div></li>
         <li><span>2</span><div>人が増えると村、町、城壁のある中世の街へと育ちます。</div></li>
         <li><span>3</span><div>「建国」で別の国を生み出すと、国境で戦争が起きます。勝った国が街と土地を手に入れます。</div></li>
-        <li><span>4</span><div>近代には工場が、現代には高層ビルの大都市が並びます。</div></li>
+        <li><span>4</span><div>近代には工場が、現代には高層ビルの大都市が並びます。その先の未来には、光る塔と空飛ぶ円盤の未来都市が生まれます。</div></li>
       </ol>
       <div class="acts">
         <button class="btn go" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
@@ -224,13 +224,14 @@ const ERAS = [
   { name:'近世',     start:1500,   rate:.25,  mult:100,  maxStage:3, war:1,   msg:'大航海の時代。人々は海を越えはじめた' },
   { name:'近代',     start:1800,   rate:.14,  mult:1500,  maxStage:4, war:1.1, msg:'産業革命が起こり、工場の煙が上がりはじめた' },
   { name:'現代',     start:1950,   rate:.08,  mult:20000, maxStage:5, war:.9,  msg:'高層ビルが立ち並ぶ大都市の時代へ' },
+  { name:'未来',     start:2100,   rate:.1,   mult:90000, maxStage:6, war:.8,  msg:'光る塔と空飛ぶ乗り物の未来都市が生まれはじめた' },
 ];
-const STAGE_NAME = ['テント','村','町','中世の街','工業都市','大都市'];
-const STAGE_FIRST = ['', '最初の村が生まれた', '最初の町が生まれた', '最初の中世の街が生まれた', '最初の工業都市が生まれた', '最初の大都市が生まれた'];
-const POP_ST = [0, 50, 300, 1000, 12000, 300000];
-const SZ   = [.7, .95, 1.2, 1.5, 1.7, 2.0];
-const MINU = [7, 6.2, 5.4, 4.8, 4.4, 4];
-const GOV = [['族','族','族'],['王国','都市国家','王国'],['王国','帝国','公国'],['王国','帝国','共和国'],['帝国','共和国','連邦'],['共和国','連邦','合衆国']];
+const STAGE_NAME = ['テント','村','町','中世の街','工業都市','大都市','未来都市'];
+const STAGE_FIRST = ['', '最初の村が生まれた', '最初の町が生まれた', '最初の中世の街が生まれた', '最初の工業都市が生まれた', '最初の大都市が生まれた', '最初の未来都市が生まれた'];
+const POP_ST = [0, 50, 300, 1000, 12000, 300000, 2500000];
+const SZ   = [.7, .95, 1.2, 1.5, 1.7, 2.0, 2.1];
+const MINU = [7, 6.2, 5.4, 4.8, 4.4, 4, 3.8];
+const GOV = [['族','族','族'],['王国','都市国家','王国'],['王国','帝国','公国'],['王国','帝国','共和国'],['帝国','共和国','連邦'],['共和国','連邦','合衆国'],['連邦','惑星連合','同盟']];
 const MAXS = 500, MAXN = 28;
 const KM2_PER_TILE = 22000;
 
@@ -319,7 +320,7 @@ const owner = new Int16Array(W*H).fill(-1), score = new Float32Array(W*H);
 const isLand = t => t >= 2;
 const habitable = t => t >= 2 && t !== T.ICE;
 let S = [], N = [], sById = new Map(), armies = [], planes = [], meteors = [], wars = [];
-let truce = new Map(), contacts = new Map(), logs = [], firstStage = [true,false,false,false,false,false];
+let truce = new Map(), contacts = new Map(), logs = [], firstStage = [true,false,false,false,false,false,false];
 let tick = 0, year = -10000, eraIdx = 0, started = false, nextId = 1, speed = 1;
 let terrDirty = true, lastColonyLog = -999;
 let borderSegs = [], roadSegs = [];
@@ -633,7 +634,7 @@ function capture(t, nid){
 function assault(a, t){
   const def = t.pop * .22 * (t.stage >= 3 ? 1.6 : 1) * (t.capital ? 1.3 : 1) + 5;
   const atk = a.str * (.6 + rnd()*.8), dr = def * (.6 + rnd()*.8);
-  boom(t.x + .5, t.y + .5, 18, eraIdx >= 4 ? FIRE : DUST);
+  boom(t.x + .5, t.y + .5, 18, warPal());
   if (atk > dr){ capture(t, a.nation); t.pop = Math.max(5, t.pop * .65 + a.str * .3); }
   else t.pop = Math.max(3, t.pop - a.str * .4);
   a.dead = true;
@@ -657,7 +658,7 @@ function updateArmies(){
       const b = armies[j]; if (b.dead || b.nation === a.nation) continue;
       if (Math.abs(a.x - b.x) > 1 || Math.abs(a.y - b.y) > 1 || !warOf(a.nation, b.nation)) continue;
       const ra = a.str * (.7 + rnd()*.6), rb = b.str * (.7 + rnd()*.6);
-      boom((a.x + b.x)/2, (a.y + b.y)/2, 12, eraIdx >= 4 ? FIRE : DUST);
+      boom((a.x + b.x)/2, (a.y + b.y)/2, 12, warPal());
       if (ra >= rb){ b.dead = true; a.str = Math.max(1, a.str - b.str*.6); } else { a.dead = true; b.str = Math.max(1, b.str - a.str*.6); break; }
     }
   }
@@ -702,7 +703,8 @@ function step(){
 }
 
 // ===== 演出：粒子 =====
-const FIRE = ['#ffd27a','#ff9a3d','#e5532f','#7a6a60'], DUST = ['#e8d8b0','#c9b28a','#9d8a6e','#ffe6a8'];
+const FIRE = ['#ffd27a','#ff9a3d','#e5532f','#7a6a60'], DUST = ['#e8d8b0','#c9b28a','#9d8a6e','#ffe6a8'], PLASMA = ['#7ff3ff','#c48bff','#ffffff','#4fb6ff'];
+const warPal = () => eraIdx >= 6 ? PLASMA : eraIdx >= 4 ? FIRE : DUST;
 let sparks = [];
 function hexRGB(h){ const v = parseInt(h.slice(1), 16); return [(v >> 16 & 255)/255, (v >> 8 & 255)/255, (v & 255)/255]; }
 function addSpark(p, v, n, g, life, size, c, grow){
@@ -885,15 +887,24 @@ const GEO = {
   cone:new THREE.ConeGeometry(.5, 1, 8).translate(0, .5, 0),
   cyl:new THREE.CylinderGeometry(.5, .5, 1, 12).translate(0, .5, 0),
   oct:new THREE.OctahedronGeometry(.5),
+  dome:new THREE.SphereGeometry(.5, 16, 8, 0, TAU, 0, Math.PI/2),
+  ring:new THREE.TorusGeometry(.5, .05, 8, 40).rotateX(Math.PI/2),
 };
 function pool(geo, cap, mat){
   const m = new THREE.InstancedMesh(geo, mat || new THREE.MeshLambertMaterial({ color:0xffffff }), cap);
   m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.frustumCulled = false;
   scene.add(m); return { m, n:0, cap };
 }
-const CITY = { box:pool(GEO.box, 20000), pyr:pool(GEO.pyr, 9000), cone:pool(GEO.cone, 4000), cyl:pool(GEO.cyl, 4000),
+const glowMat = () => new THREE.MeshBasicMaterial({ color:0xffffff });
+const CITY = { box:pool(GEO.box, 20000), pyr:pool(GEO.pyr, 9000), cone:pool(GEO.cone, 4000), cyl:pool(GEO.cyl, 9000),
+  dome:pool(GEO.dome, 8000, new THREE.MeshPhongMaterial({ color:0xffffff, shininess:80, specular:0x99bbcc })), ring:pool(GEO.ring, 1200, glowMat()), glow:pool(GEO.cyl, 14000, glowMat()),
   sky:pool(GEO.box, 9000, new THREE.MeshLambertMaterial({ color:0xffffff, map:winTex, emissive:0x3a3426, emissiveMap:winTex })) };
-const MOB = { box:pool(GEO.box, 1600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 400) };
+const MOB = { box:pool(GEO.box, 1600), cone:pool(GEO.cone, 300), cyl:pool(GEO.cyl, 400), dome:pool(GEO.dome, 400), glow:pool(GEO.box, 900, glowMat()) };
+// 未来の時代：地球をめぐる軌道リングと人工衛星
+const orbitRing = new THREE.Mesh(new THREE.TorusGeometry(R*1.32, .45, 8, 180), new THREE.MeshBasicMaterial({ color:0x7fdcff, transparent:true, opacity:.5 }));
+orbitRing.rotation.x = Math.PI/2 + .38; orbitRing.visible = false; scene.add(orbitRing);
+const SATS = Array.from({ length:8 }, (_, i) => ({ r:R*(1.16 + (i % 4)*.07), sp:.12 + hash2(i, 3, 5)*.1, ph:hash2(i, 4, 5)*TAU,
+  m:new THREE.Matrix4().makeRotationY(hash2(i, 5, 5)*TAU).multiply(new THREE.Matrix4().makeRotationX((hash2(i, 6, 5) - .5)*2.2)) }));
 const MARK = pool(GEO.oct, 64, new THREE.MeshLambertMaterial({ color:0xffffff, emissive:0x6a4a00 }));
 const _cc = new Map(); const C = h => { let c = _cc.get(h); if (!c){ c = new THREE.Color(h); _cc.set(h, c); } return c; };
 function put(P, mat, hex){ if (P.n >= P.cap) return; P.m.setMatrixAt(P.n, mat); P.m.setColorAt(P.n, C(hex)); P.n++; }
@@ -904,7 +915,7 @@ const BRICK = ['#9c4f3a','#b8664a','#7d6a5c','#8a5a48'], GLASS = ['#86a3bb','#a7
 const partCache = new Map(), baseCache = new Map();
 function partsFor(s){
   const st = s.stage, n = N[s.nation];
-  const bucket = st === 0 ? Math.min(2, Math.floor(s.pop / 18)) : st === 1 ? Math.min(2, Math.floor(s.pop / 140)) : st === 5 ? Math.min(7, Math.floor(s.pop / 400000)) : 0;
+  const bucket = st === 0 ? Math.min(2, Math.floor(s.pop / 18)) : st === 1 ? Math.min(2, Math.floor(s.pop / 140)) : st === 5 ? Math.min(7, Math.floor(s.pop / 400000)) : st === 6 ? Math.min(6, Math.floor(s.pop / 3e6)) : 0;
   const key = `${st}|${s.nation}|${bucket}`;
   const c = partCache.get(s.id); if (c && c.key === key) return c;
   const Rn = mulberry(s.seed), P = []; let top = .4;
@@ -938,6 +949,19 @@ function partsFor(s){
     add('box', -.1, .05, 0, .7, .26, .4, '#6e625a'); add('pyr', -.1, .05, .26, .9, .12, .52, '#5b4f48');
     add('cyl', .5, .15, 0, .12, 1.15, .12, '#4e423d', 0, true); add('cyl', .65, -.1, 0, .1, .9, .1, '#4e423d', 0, true);
     add('cyl', -.1, .05, .38, .03, .5, .03, '#3a3a3a'); add('box', .03, .05, .74, .24, .15, .02, n.hex);
+  } else if (st === 6){
+    const sc = .85 + Math.min(1, s.pop / 2e7) * .6, k = 6 + bucket, FUT = ['#eef3f7','#d9e6ee','#c9f1f4','#e9e4f7'];
+    for (let i = 0; i < k; i++){
+      const a = i / k * TAU + Rn()*.4, r = .75 + Rn()*.45, x = Math.cos(a)*r, z = Math.sin(a)*r, h = (.7 + Rn()*1.0)*sc, w = .2 + Rn()*.12;
+      add('cyl', x, z, 0, w, h, w, FUT[Rn()*4|0]);
+      add('glow', x, z, h*.33, w*1.1, .04, w*1.1, '#5fe3ff'); add('glow', x, z, h*.66, w*1.1, .04, w*1.1, '#5fe3ff');
+      add('dome', x, z, h, w, w*.9, w, '#bfeaff');
+    }
+    for (let i = 0; i < 3; i++){ const a = Rn()*TAU, r = .3 + Rn()*.45; add('dome', Math.cos(a)*r, Math.sin(a)*r, 0, .55, .5, .55, '#a9e4f5'); }
+    const th = 3*sc;
+    add('cone', 0, 0, 0, .55, th, .55, '#f4f8fb'); add('glow', 0, 0, th*.25, .46, .05, .46, '#ff7ae0');
+    add('ring', 0, 0, th*.5, 1.7, 1, 1.7, '#5fe3ff'); add('ring', 0, 0, th*.75, 1.0, 1, 1.0, '#c48bff');
+    add('glow', 0, 0, th, .1, .12, .1, '#ffffff');
   } else {
     const sc = .75 + Math.min(1, s.pop / 2e6) * .75, k = 9 + bucket;
     for (let i = 0; i < k; i++){ const a = Rn()*TAU, r = Math.pow(Rn(), .8)*1.4; add('sky', Math.cos(a)*r, Math.sin(a)*r, 0, .18 + Rn()*.15, (.5 + Rn()*1.1)*(1.3 - r*.65)*sc, .18 + Rn()*.15, GLASS[Rn()*5|0], Rn() < .5 ? 0 : Math.PI/4); }
@@ -985,7 +1009,11 @@ function rebuildMobiles(time){
     const water = !isLand(terr[(a.y|0)*W + (a.x|0)]);
     frameAt(a.x, a.y, 0, Math.atan2(-(a.hy || 0), a.hx ?? 1), _W2);
     const k = 1.5 * (.85 + Math.min(.5, Math.log10(a.str + 1)*.1)), nc = N[a.nation].hex;
-    if (water){
+    if (eraIdx >= 6){
+      const hov = .2 + Math.sin(time*4 + a.phase)*.04;
+      part('box', _W2, k, 0, hov, 0, .62, .12, .36, nc); part('dome', _W2, k, -.04, hov + .12, 0, .3, .28, .3, '#bfeaff');
+      part('glow', _W2, k, 0, hov - .04, 0, .52, .03, .3, '#5fe3ff'); part('glow', _W2, k, .31, hov + .04, 0, .04, .04, .22, '#ff7ae0');
+    } else if (water){
       const bob = Math.sin(time*3 + a.phase)*.03;
       part('box', _W2, k, 0, bob, 0, .72, .14, .26, eraIdx >= 4 ? '#59606a' : '#6b4a2e');
       if (eraIdx >= 4){ part('box', _W2, k, -.05, .14 + bob, 0, .26, .16, .18, '#8a929c'); part('box', _W2, k, 0, .3 + bob, 0, .06, .12, .06, nc); }
@@ -1005,8 +1033,18 @@ function rebuildMobiles(time){
     const t = pl.t / pl.dur; planePos(pl, t, _pa); planePos(pl, Math.min(1, t + .01), _pb);
     _up.copy(_pa).normalize(); _f.copy(_pb).sub(_pa); _f.addScaledVector(_up, -_f.dot(_up)).normalize(); _side.crossVectors(_f, _up);
     _W2.makeBasis(_f, _up, _side).setPosition(_pa);
-    part('box', _W2, 1, -.45, -.06, 0, 1, .13, .13, '#f2f4f6'); part('box', _W2, 1, -.05, -.03, 0, .26, .03, 1, '#e6e9ee'); part('box', _W2, 1, -.88, 0, 0, .14, .22, .04, '#e05a4a');
-    if (rnd() < .5) addSpark(_pa, _tv.set(0, 0, 0), _up, 0, 1.4, U*.1, [1, 1, 1], true);
+    if (eraIdx >= 6){
+      part('cyl', _W2, 1, 0, -.06, 0, 1, .12, 1, '#dfe7ee'); part('dome', _W2, 1, 0, .06, 0, .5, .5, .5, '#9fe8ff'); part('glow', _W2, 1, 0, -.1, 0, .7, .04, .7, '#5fe3ff');
+      if (rnd() < .5) addSpark(_pa, _tv.set(0, 0, 0), _up, 0, 1, U*.1, [.5, .9, 1], true);
+    } else {
+      part('box', _W2, 1, -.45, -.06, 0, 1, .13, .13, '#f2f4f6'); part('box', _W2, 1, -.05, -.03, 0, .26, .03, 1, '#e6e9ee'); part('box', _W2, 1, -.88, 0, 0, .14, .22, .04, '#e05a4a');
+      if (rnd() < .5) addSpark(_pa, _tv.set(0, 0, 0), _up, 0, 1.4, U*.1, [1, 1, 1], true);
+    }
+  }
+  if (eraIdx >= 6) for (const st of SATS){
+    const t = time*st.sp + st.ph;
+    _W2.makeRotationY(-t).premultiply(st.m); _pa.set(st.r, 0, 0).applyMatrix4(_W2); _W2.setPosition(_pa);
+    part('box', _W2, 1, 0, -.3, 0, .5, .6, .5, '#d7dde3'); part('box', _W2, 1, 0, -.04, 0, .3, .08, 2.4, '#3d6fd6'); part('glow', _W2, 1, 0, .3, 0, .08, .08, .08, '#ff7ae0');
   }
   for (const k in MOB) flush(MOB[k]);
   MARK.n = 0;
@@ -1042,7 +1080,7 @@ function buildLines(){
       rp.push(_pa.x, _pa.y, _pa.z, _pb.x, _pb.y, _pb.z);
     }
   }
-  roadMat.color.set(eraIdx >= 4 ? 0x4c4d52 : 0x8a6a44);
+  roadMat.color.set(eraIdx >= 6 ? 0x5fe3ff : eraIdx >= 4 ? 0x4c4d52 : 0x8a6a44);
   g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(rp, 3));
   roadLines = new THREE.LineSegments(g, roadMat); roadLines.frustumCulled = false; scene.add(roadLines);
   linesDirty = false;
@@ -1212,10 +1250,11 @@ function frame(now){
   updateCamera(dt);
   shake = Math.max(0, shake - dt*1.6);
   updateMeteors(dt);
+  orbitRing.visible = eraIdx >= 6;
   if (speed > 0){
     for (const p of planes) p.t += dt * Math.min(speed, 3);
     planes = planes.filter(p => p.t < p.dur);
-    if (eraIdx >= 5 && planes.length < 8 && rnd() < .02 * Math.min(speed, 3)){
+    if (eraIdx >= 5 && planes.length < (eraIdx >= 6 ? 16 : 8) && rnd() < (eraIdx >= 6 ? .05 : .02) * Math.min(speed, 3)){
       const big = S.filter(s => s.alive && s.stage >= 4);
       if (big.length >= 2){
         const a = pick(big), b = pick(big), d = Math.hypot(a.x - b.x, a.y - b.y);
@@ -1249,7 +1288,7 @@ function setSpeed(v){ speed = v; document.querySelectorAll('[data-speed]').forEa
 document.querySelectorAll('[data-speed]').forEach(b => b.addEventListener('click', () => setSpeed(+b.dataset.speed)));
 $('nextEra').addEventListener('click', () => {
   if (!started){ toast('まず「人類」で地球に人を生み出してください'); return; }
-  if (eraIdx >= ERAS.length - 1){ toast('もう現代です'); return; }
+  if (eraIdx >= ERAS.length - 1){ toast('これより先の時代はありません'); return; }
   year = ERAS[eraIdx + 1].start; advanceEra();
 });
 $('sideToggle').addEventListener('click', () => { const o = $('side').classList.toggle('open'); $('sideToggle').setAttribute('aria-expanded', o ? 'true' : 'false'); });
