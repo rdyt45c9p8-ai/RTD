@@ -1,0 +1,2545 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ドライブタウン3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@500;700;900&display=swap">
+<style>
+  /* Layout: full-screen 3D town; HUD pinned to the corners; jobs open as full-screen panels styled like road signs */
+  :root {
+    --night: #0f1626;
+    --panel: rgba(15, 22, 38, 0.88);
+    --panel-2: #1a2440;
+    --panel-3: #232f52;
+    --line: rgba(255, 255, 255, 0.16);
+    --text: #f4f1e6;
+    --muted: #aab3c7;
+    --signal: #ffc928;
+    --signal-ink: #1d1a10;
+    --tomato: #ff5b3a;
+    --mint: #38d39f;
+    --sky: #5fbfff;
+    --ticket: #fff8e8;
+    --ticket-ink: #3a2c1c;
+    --display: "Mochiy Pop One", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+    --body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--night);
+    color: var(--text);
+    font-family: var(--body);
+    font-weight: 700;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+  }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+  button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--signal); outline-offset: 2px; }
+  input[type="text"] { -webkit-user-select: text; user-select: text; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  .tl {
+    position: absolute;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    left: calc(10px + env(safe-area-inset-left, 0px));
+    display: flex; flex-direction: column; gap: 8px;
+    width: min(290px, 58vw);
+  }
+  .chip {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 6px 12px; display: flex; gap: 12px; align-items: baseline; justify-content: space-between;
+  }
+  #money { font-family: var(--display); color: var(--signal); font-size: 20px; font-variant-numeric: tabular-nums; }
+  #clock { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 14px; }
+  #jobPanel {
+    background: var(--panel); border: 1px solid var(--line); border-left: 6px solid var(--job, var(--signal));
+    border-radius: 12px; padding: 10px 12px; font-size: 13px; display: grid; gap: 6px;
+  }
+  .jp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .jp-head b { font-family: var(--display); font-weight: 400; font-size: 15px; color: var(--job, var(--signal)); }
+  .jp-head span { color: var(--muted); font-variant-numeric: tabular-nums; }
+  #jpTask { line-height: 1.45; }
+  .jp-row { display: flex; justify-content: space-between; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .jp-row .late { color: var(--tomato); }
+  .meter { display: grid; grid-template-columns: 76px 1fr; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+  .meter i { display: block; height: 8px; border-radius: 4px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .meter b { display: block; height: 100%; width: 100%; background: var(--mint); border-radius: 4px; transition: width .2s; }
+
+  #minimap {
+    position: absolute;
+    top: calc(10px + env(safe-area-inset-top, 0px));
+    right: calc(10px + env(safe-area-inset-right, 0px));
+    width: 150px; height: 150px; border-radius: 16px;
+    border: 3px solid rgba(255,255,255,.85); box-shadow: 0 4px 16px rgba(0,0,0,.35);
+    background: #6fae58;
+  }
+  #prompt {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px));
+    background: var(--panel); border: 2px solid var(--signal); border-radius: 999px;
+    padding: 8px 18px 8px 8px; display: flex; gap: 10px; align-items: center;
+    pointer-events: auto; cursor: pointer; white-space: nowrap; font-size: 15px;
+  }
+  #prompt kbd {
+    background: var(--signal); color: var(--signal-ink); border-radius: 999px; min-width: 30px; height: 30px;
+    display: grid; place-items: center; font-family: var(--display); font-size: 14px; padding: 0 8px;
+  }
+  #hint {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: calc(205px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 91, 58, .92); color: #fff; border-radius: 10px; padding: 6px 14px; font-size: 14px; white-space: nowrap;
+  }
+  #speedo {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 4px 16px;
+    display: flex; align-items: baseline; gap: 6px;
+  }
+  #speedo b { font-family: var(--display); font-weight: 400; font-size: 30px; font-variant-numeric: tabular-nums; min-width: 2.2em; text-align: right; }
+  #speedo small { color: var(--muted); }
+  #joy {
+    position: absolute;
+    left: calc(22px + env(safe-area-inset-left, 0px));
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    width: 132px; height: 132px; border-radius: 50%;
+    background: rgba(15,22,38,.45); border: 2px solid rgba(255,255,255,.35);
+    pointer-events: auto; touch-action: none; display: none;
+  }
+  body.touch #joy { display: block; }
+  #joyKnob {
+    position: absolute; left: 50%; top: 50%; width: 58px; height: 58px; margin: -29px 0 0 -29px;
+    border-radius: 50%; background: rgba(255,255,255,.85); box-shadow: 0 3px 10px rgba(0,0,0,.3);
+  }
+  #btns {
+    position: absolute;
+    right: calc(16px + env(safe-area-inset-right, 0px));
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    display: grid; grid-template-columns: auto auto; gap: 10px; align-items: end; pointer-events: auto;
+  }
+  .rbtn {
+    border-radius: 50%; display: grid; place-items: center; text-align: center;
+    background: var(--panel); border: 2px solid var(--line); color: var(--text);
+    font-size: 12px; line-height: 1.15; touch-action: none; position: relative;
+  }
+  .rbtn small { display: block; font-size: 10px; color: var(--muted); }
+  #bAction { width: 86px; height: 86px; background: var(--signal); color: var(--signal-ink); border-color: #fff3b8; font-size: 14px; grid-column: 2; grid-row: 1 / span 2; }
+  #bAction small { color: rgba(29,26,16,.65); }
+  #bAction.dim { opacity: .55; }
+  #bBrake { width: 62px; height: 62px; }
+  #bPhone { width: 62px; height: 62px; }
+  body.touch .rbtn small.kb { display: none; }
+  #toasts {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    top: calc(14px + env(safe-area-inset-top, 0px));
+    display: flex; flex-direction: column; align-items: center; gap: 6px; width: min(420px, 50vw);
+  }
+  .toast {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 14px;
+    font-size: 14px; text-align: center; animation: tin .25s ease-out;
+  }
+  .toast.money { color: var(--signal); font-family: var(--display); font-weight: 400; font-size: 18px; }
+  .toast.big { font-family: var(--display); font-weight: 400; font-size: 20px; border-color: var(--signal); }
+  .toast.out { opacity: 0; transition: opacity .4s; }
+  @keyframes tin { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  @media (max-width: 640px) {
+    #minimap { width: 112px; height: 112px; }
+    #toasts { top: calc(130px + env(safe-area-inset-top, 0px)); width: 80vw; }
+  }
+  @media (max-height: 460px) {
+    #minimap { width: 104px; height: 104px; }
+    #prompt { bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
+    #hint { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
+    #joy { width: 112px; height: 112px; }
+  }
+
+  /* ---------- screens ---------- */
+  .screen {
+    position: fixed; inset: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(8, 12, 22, .55);
+    padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    touch-action: pan-y;
+  }
+  .card {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 18px;
+    width: min(640px, 100%); max-height: 100%; overflow: auto; padding: 20px;
+    display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+    touch-action: pan-y; -webkit-overflow-scrolling: touch;
+  }
+  .card h2 { font-family: var(--display); font-weight: 400; margin: 0; font-size: 22px; text-wrap: balance; }
+  .card h3 { margin: 0; font-size: 14px; color: var(--muted); letter-spacing: .08em; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    background: var(--panel-3); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px;
+    font-weight: 900; font-size: 15px;
+  }
+  .btn:hover { border-color: rgba(255,255,255,.4); }
+  .btn.primary { background: var(--signal); color: var(--signal-ink); border-color: #fff0a8; }
+  .btn.danger { background: transparent; border-color: var(--tomato); color: var(--tomato); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .muted { color: var(--muted); font-weight: 500; }
+
+  /* title */
+  #title { background: linear-gradient(180deg, rgba(8,12,22,.15), rgba(8,12,22,.7)); }
+  .title-card { width: min(560px, 100%); text-align: center; align-items: center; background: rgba(20, 28, 50, .9); }
+  .plate {
+    background: var(--signal); color: var(--signal-ink); border-radius: 18px; padding: 16px 22px 12px;
+    box-shadow: inset 0 0 0 4px var(--signal), inset 0 0 0 7px var(--signal-ink);
+    display: inline-flex; flex-direction: column; align-items: center; gap: 2px; transform: rotate(-2deg);
+  }
+  .plate h1 { margin: 0; font-family: var(--display); font-weight: 400; font-size: clamp(30px, 8vw, 46px); letter-spacing: .02em; line-height: 1.1; }
+  .plate h1 em { font-style: normal; background: var(--signal-ink); color: var(--signal); border-radius: 8px; padding: 0 8px; margin-left: 6px; font-size: .8em; }
+  .plate p { margin: 0; font-size: 13px; letter-spacing: .2em; }
+  .jobs-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; }
+  .jc { border-radius: 12px; padding: 10px 4px; font-size: 13px; background: var(--panel-3); border-top: 5px solid var(--c); }
+  .jc span { display: block; font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+  .controls { font-size: 13px; color: var(--muted); font-weight: 500; line-height: 1.7; text-align: left; width: 100%; display: grid; gap: 4px; }
+  .controls b { color: var(--text); }
+  @media (max-width: 420px) { .jobs-chips { grid-template-columns: repeat(2, 1fr); } }
+
+  /* phone / lists */
+  .lv-row { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 10px 12px; background: var(--panel-3); border-radius: 12px; border-left: 5px solid var(--c); }
+  .lv-top { display: flex; justify-content: space-between; align-items: baseline; }
+  .lv-top b { font-size: 15px; }
+  .lv-top span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .pips { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; }
+  .pip { height: 22px; border-radius: 6px; background: rgba(255,255,255,.08); font-size: 11px; display: grid; place-items: center; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .pip.on { background: var(--c); color: #10151f; }
+  .xpbar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.1); overflow: hidden; }
+  .xpbar b { display: block; height: 100%; background: var(--c); }
+  .list { display: grid; gap: 8px; }
+  .item { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--panel-3); border-radius: 12px; flex-wrap: wrap; }
+  .item .name { font-size: 15px; }
+  .item .sub { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .swatch { width: 26px; height: 26px; border-radius: 8px; border: 2px solid rgba(255,255,255,.4); flex: none; }
+  .stat-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; font-size: 12px; color: var(--muted); align-items: center; min-width: 160px; }
+  .stat-grid i { display: block; height: 6px; background: rgba(255,255,255,.1); border-radius: 3px; overflow: hidden; }
+  .stat-grid i b { display: block; height: 100%; background: var(--sky); }
+  .res-rows { display: grid; gap: 6px; font-size: 14px; }
+  .res-rows div { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+  .res-rows div span:last-child { font-variant-numeric: tabular-nums; }
+  .res-total { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--display); font-weight: 400; font-size: 22px; color: var(--signal); }
+
+  /* ---------- kitchen (chef) ---------- */
+  .full .card { width: min(1080px, 100%); height: 100%; max-height: 100%; }
+  .k-top { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .k-top h2 { color: var(--mint); }
+  .k-stats { display: flex; gap: 14px; font-variant-numeric: tabular-nums; }
+  .k-stats b { font-family: var(--display); font-weight: 400; font-size: 20px; color: var(--signal); }
+  .k-orders { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; min-height: 128px; }
+  .ticket {
+    background: var(--ticket); color: var(--ticket-ink); border-radius: 6px 6px 12px 12px; padding: 10px; display: grid; gap: 6px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.2); position: relative; min-width: 0;
+  }
+  .ticket.active { outline: 4px solid var(--mint); }
+  .ticket .t-name { font-family: var(--display); font-weight: 400; font-size: 15px; display: flex; align-items: center; gap: 6px; }
+  .ticket .t-name span { font-size: 24px; }
+  .ticket .t-steps { display: flex; flex-wrap: wrap; gap: 3px; }
+  .ticket .t-steps i { font-style: normal; font-size: 18px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 6px; background: rgba(58,44,28,.08); }
+  .ticket .t-steps i.done { background: #b9ecd2; }
+  .ticket .t-steps i.next { outline: 2px solid #e2a400; }
+  .ticket .t-bar { height: 6px; background: rgba(58,44,28,.15); border-radius: 3px; overflow: hidden; }
+  .ticket .t-bar b { display: block; height: 100%; background: #2fae73; }
+  .k-empty { grid-column: 1 / -1; display: grid; place-items: center; color: var(--muted); border: 2px dashed var(--line); border-radius: 12px; }
+  .k-mid { display: grid; grid-template-columns: 1fr; gap: 8px; place-items: center; flex: 1; min-height: 140px; position: relative; }
+  .plate-dish {
+    width: 200px; height: 120px; border-radius: 50%; background: radial-gradient(circle at 50% 45%, #ffffff 0 55%, #dfe4ea 56% 100%);
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0; padding: 18px 24px; font-size: 30px; line-height: 1;
+    box-shadow: 0 8px 0 rgba(0,0,0,.25);
+  }
+  .plate-dish.shake { animation: shake .3s; }
+  @keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+  #kMsg { min-height: 1.5em; font-size: 16px; color: var(--signal); text-align: center; }
+  .k-ingr { display: grid; grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); gap: 8px; }
+  .ing { background: var(--panel-3); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; display: grid; gap: 2px; justify-items: center; font-size: 12px; }
+  .ing span { font-size: 28px; line-height: 1.1; }
+  .ing small { font-size: 10px; color: var(--signal); }
+  .ing:active { transform: scale(.95); }
+  .k-cook {
+    position: absolute; inset: 0; display: grid; place-items: center; background: rgba(10,15,28,.75); border-radius: 14px; z-index: 2;
+  }
+  .k-cook > div { display: grid; gap: 12px; justify-items: center; width: min(420px, 90%); }
+  .k-bar { position: relative; width: 100%; height: 34px; border-radius: 10px; background: #5a2a22; overflow: hidden; }
+  .k-bar .z1 { position: absolute; top: 0; bottom: 0; left: 28%; width: 44%; background: #e2a400; }
+  .k-bar .z2 { position: absolute; top: 0; bottom: 0; left: 42%; width: 16%; background: var(--mint); }
+  #kNeedle { position: absolute; top: -4px; bottom: -4px; width: 6px; margin-left: -3px; background: #fff; border-radius: 3px; box-shadow: 0 0 8px #000; }
+
+  /* ---------- studio (game engineer) ---------- */
+  .st-top { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .st-top h2 { color: var(--sky); }
+  .tpl-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  @media (max-width: 640px) { .tpl-grid { grid-template-columns: 1fr; } }
+  .tpl { background: var(--panel-3); border: 2px solid var(--line); border-radius: 14px; padding: 10px; display: grid; gap: 6px; text-align: left; }
+  .tpl:hover { border-color: var(--sky); }
+  .tpl canvas { width: 100%; aspect-ratio: 480 / 280; border-radius: 8px; display: block; image-rendering: pixelated; }
+  .tpl b { font-size: 16px; }
+  .tpl span { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .ed { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; flex: 1; min-height: 0; }
+  @media (max-width: 820px) { .ed { grid-template-columns: 1fr; } }
+  .ed-left { display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .ed-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tool { border: 2px solid var(--line); background: var(--panel-3); border-radius: 10px; padding: 6px 10px; font-size: 13px; display: flex; gap: 6px; align-items: center; }
+  .tool.on { border-color: var(--sky); background: #1d3a5c; }
+  .tool i { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
+  .ed-canvas-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--line); background: #000; touch-action: pan-x; }
+  .ed-canvas-wrap canvas { display: block; image-rendering: pixelated; touch-action: none; }
+  .ed-right { display: grid; gap: 12px; align-content: start; background: var(--panel-3); border-radius: 14px; padding: 12px; }
+  .field { display: grid; gap: 4px; font-size: 13px; }
+  .field label { display: flex; justify-content: space-between; }
+  .field label b { color: var(--sky); font-variant-numeric: tabular-nums; }
+  .field input[type="text"] { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; color: var(--text); font: inherit; }
+  .field input[type="range"] { width: 100%; accent-color: var(--sky); }
+  .ticks { display: grid; grid-template-columns: repeat(10, 1fr); font-size: 10px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+  .colors { display: flex; gap: 10px; flex-wrap: wrap; }
+  .colors label { display: grid; gap: 2px; justify-items: center; font-size: 11px; color: var(--muted); }
+  .colors input { width: 44px; height: 32px; border: 0; padding: 0; background: none; }
+  .seg { display: flex; gap: 4px; flex-wrap: wrap; }
+  .seg button { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 12px; background: var(--panel-2); }
+  .seg button.on { background: var(--sky); color: #0d1b2a; }
+  .st-status { font-size: 13px; padding: 8px 12px; border-radius: 10px; background: rgba(255,201,40,.12); color: var(--signal); }
+  .st-status.ok { background: rgba(56,211,159,.14); color: var(--mint); }
+  .play-wrap { display: grid; gap: 10px; justify-items: center; flex: 1; align-content: center; }
+  #gcanvas { width: min(100%, calc((100dvh - 230px) * 480 / 280)); max-width: 960px; aspect-ratio: 480 / 280; border-radius: 10px; display: block; image-rendering: pixelated; background: #000; }
+  .pad { display: flex; justify-content: space-between; width: min(100%, 720px); gap: 12px; }
+  .pad > div { display: flex; gap: 8px; }
+  .pb { width: 62px; height: 56px; border-radius: 14px; background: var(--panel-3); border: 2px solid var(--line); font-size: 20px; touch-action: none; }
+  .pb.a { width: 76px; background: var(--sky); color: #0d1b2a; font-family: var(--display); }
+  .pb.on { filter: brightness(1.4); }
+  .keys-help { font-size: 12px; color: var(--muted); font-weight: 500; }
+  body.touch .keys-help { display: none; }
+
+  /* rest fade */
+  #rest { background: #05070d; transition: opacity .6s; }
+  #rest p { font-family: var(--display); font-size: 24px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast, .plate-dish.shake { animation: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" hidden>
+  <div class="tl">
+    <div class="chip"><span id="money">0円</span><span id="clock">1日目 08:00</span></div>
+    <div id="jobPanel" hidden>
+      <div class="jp-head"><b id="jpTitle"></b><span id="jpCount"></span></div>
+      <div id="jpTask"></div>
+      <div class="jp-row"><span id="jpTimer"></span><span id="jpDist"></span></div>
+      <div id="jpMeters"></div>
+    </div>
+  </div>
+  <canvas id="minimap" width="300" height="300" aria-label="まちの地図"></canvas>
+  <div id="toasts"></div>
+  <div id="hint" hidden></div>
+  <div id="prompt" hidden role="button" tabindex="0"><kbd>E</kbd><span id="promptText"></span></div>
+  <div id="speedo" hidden><b id="spd">0</b><small>km/h</small></div>
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="btns">
+    <button class="rbtn" id="bPhone" type="button">スマホ<small class="kb">M</small></button>
+    <button class="rbtn" id="bAction" type="button"><span id="bActionText">アクション</span><small class="kb">E</small></button>
+    <button class="rbtn" id="bBrake" type="button">ブレーキ<small class="kb">Space</small></button>
+  </div>
+</div>
+
+<!-- title -->
+<div id="title" class="screen">
+  <div class="card title-card">
+    <div class="plate"><h1>ドライブタウン<em>3D</em></h1><p>はたらく・はしる・くらす</p></div>
+    <p class="muted" style="margin:0">町で仕事をしてお金をかせごう。かせいだお金で新しい車も買えます。</p>
+    <div class="jobs-chips">
+      <div class="jc" style="--c:var(--tomato)">ピザ配達<span>あつあつのうちに届ける</span></div>
+      <div class="jc" style="--c:var(--signal)">タクシー<span>お客さんを目的地へ</span></div>
+      <div class="jc" style="--c:var(--mint)">シェフ<span>注文どおりに料理</span></div>
+      <div class="jc" style="--c:var(--sky)">ゲームエンジニア<span>ゲームを作って遊ぶ</span></div>
+    </div>
+    <div class="row" style="justify-content:center">
+      <button class="btn primary" id="btnStart" type="button" style="font-size:18px;padding:12px 30px">はじめる</button>
+      <button class="btn" id="btnNew" type="button" hidden>さいしょから</button>
+    </div>
+    <div class="controls">
+      <div><b>パソコン</b>：WASD / 矢印キーで歩く・運転、E で乗る／仕事をする、Space でブレーキ、M でスマホ、ドラッグでカメラを回す</div>
+      <div><b>スマホ</b>：左のスティックで移動、右のボタンで乗る・ブレーキ、画面をなぞるとカメラが回ります</div>
+    </div>
+    <p id="loadErr" class="muted" hidden style="color:var(--tomato);margin:0">3Dの部品を読み込めませんでした。インターネットにつながっているか確かめて、ページを読み込みなおしてください。</p>
+  </div>
+</div>
+
+<!-- phone -->
+<div id="phone" class="screen" hidden>
+  <div class="card" id="phoneBody"></div>
+</div>
+
+<!-- dealer -->
+<div id="dealer" class="screen" hidden>
+  <div class="card" id="dealerBody"></div>
+</div>
+
+<!-- result -->
+<div id="result" class="screen" hidden>
+  <div class="card" id="resultBody" style="width:min(460px,100%)"></div>
+</div>
+
+<!-- rest -->
+<div id="rest" class="screen" hidden><p>おやすみなさい…</p></div>
+
+<!-- chef -->
+<div id="chef" class="screen full" hidden>
+  <div class="card">
+    <div class="k-top">
+      <h2>こぐま亭のキッチン</h2>
+      <div class="k-stats"><span>のこり <b id="kTime">75</b>秒</span><span>売上 <b id="kEarn">0円</b></span></div>
+      <button class="btn danger" id="kQuit" type="button">やめる</button>
+    </div>
+    <div class="k-orders" id="kOrders"></div>
+    <div class="k-mid">
+      <div class="muted" id="kPlateName">いちばん左の注文から作ろう</div>
+      <div class="plate-dish" id="kPlate"></div>
+      <div id="kMsg"></div>
+      <div class="k-cook" id="kCook" hidden>
+        <div>
+          <div id="kCookName" style="font-size:18px"></div>
+          <div class="k-bar"><div class="z1"></div><div class="z2"></div><div id="kNeedle"></div></div>
+          <button class="btn primary" id="kStop" type="button" style="font-size:20px;padding:12px 40px">ストップ！</button>
+          <div class="muted" style="font-size:12px">緑で止めるとパーフェクト（Space でも止められます）</div>
+        </div>
+      </div>
+      <div class="k-cook" id="kIntro">
+        <div>
+          <div style="font-family:var(--display);font-size:20px">シェフの仕事</div>
+          <div class="muted" style="text-align:center;line-height:1.7">注文票の材料を順番どおりにタップしよう。<br>「焼く」「ゆでる」材料は、緑のところでストップ！<br>お客さんが待ちきれなくなる前に出してね。</div>
+          <button class="btn primary" id="kGo" type="button" style="font-size:18px;padding:12px 34px">開店する</button>
+        </div>
+      </div>
+    </div>
+    <div class="k-ingr" id="kIngr"></div>
+  </div>
+</div>
+
+<!-- studio -->
+<div id="studio" class="screen full" hidden>
+  <div class="card" id="studioBody"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* =========================================================
+   utilities
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const angDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
+const yen = n => Math.round(n).toLocaleString('ja-JP') + '円';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const setText = (el, v) => { v = String(v); if (el._t !== v) { el._t = v; el.textContent = v; } };
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const srnd = mulberry32(1021);
+const rs = (a, b) => a + srnd() * (b - a);
+function rrect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+
+/* =========================================================
+   save data
+   ========================================================= */
+const SAVE_KEY = 'drivetown3d-v1';
+const DEFAULT_STATE = () => ({
+  money: 500, day: 1, time: 8 * 60,
+  jobs: { pizza: { lv: 1, xp: 0 }, taxi: { lv: 1, xp: 0 }, chef: { lv: 1, xp: 0 }, engineer: { lv: 1, xp: 0 } },
+  cars: ['basic'], carSel: 'basic', games: [], pos: null,
+});
+let state = DEFAULT_STATE();
+let P = null;
+let hasSave = false;
+function loadSave() {
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (s && typeof s === 'object') {
+      const d = DEFAULT_STATE();
+      state = Object.assign(d, s);
+      state.jobs = Object.assign(DEFAULT_STATE().jobs, s.jobs || {});
+      return true;
+    }
+  } catch (e) { /* storage unavailable */ }
+  return false;
+}
+function save() {
+  try {
+    if (P) state.pos = { x: P.inCar ? P.inCar.x : P.x, z: P.inCar ? P.inCar.z : P.z };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+  } catch (e) { /* storage unavailable */ }
+}
+
+/* =========================================================
+   jobs & levels (レベルは 1 から 10 まで)
+   ========================================================= */
+const JOBS = {
+  pizza: { name: 'ピザ配達', color: '#ff5b3a' },
+  taxi: { name: 'タクシー', color: '#ffc928' },
+  chef: { name: 'シェフ', color: '#38d39f' },
+  engineer: { name: 'ゲームエンジニア', color: '#5fbfff' },
+};
+const MAX_LV = 10;
+const xpNeed = lv => 60 + lv * 40;
+const payMult = id => 1 + (state.jobs[id].lv - 1) * 0.15;
+function addMoney(n) { state.money += Math.round(n); }
+function addXP(id, xp) {
+  const j = state.jobs[id];
+  if (j.lv >= MAX_LV) return;
+  j.xp += Math.round(xp);
+  let up = false;
+  while (j.lv < MAX_LV && j.xp >= xpNeed(j.lv)) { j.xp -= xpNeed(j.lv); j.lv++; up = true; }
+  if (j.lv >= MAX_LV) j.xp = 0;
+  if (up) { toast(`${JOBS[id].name}がレベル${j.lv}になった！`, 'big'); sfx('lvl'); }
+}
+
+/* =========================================================
+   sound
+   ========================================================= */
+let actx = null;
+function initAudio() {
+  if (actx) return;
+  try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
+}
+const SFX = {
+  coin: [880, 1400, .12, 'square', .05], ok: [523, 1046, .3, 'triangle', .09], bad: [260, 110, .3, 'sawtooth', .06],
+  bump: [140, 50, .18, 'square', .08], lvl: [392, 1568, .6, 'triangle', .09], click: [700, 700, .05, 'square', .03],
+  jump: [380, 760, .12, 'square', .04], hit: [600, 200, .1, 'square', .04], boom: [200, 40, .3, 'sawtooth', .07],
+};
+function sfx(name) {
+  if (!actx) return;
+  const p = SFX[name]; if (!p) return;
+  const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+  o.type = p[3]; o.frequency.setValueAtTime(p[0], t); o.frequency.exponentialRampToValueAtTime(p[1], t + p[2]);
+  g.gain.setValueAtTime(p[4], t); g.gain.exponentialRampToValueAtTime(0.0001, t + p[2]);
+  o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + p[2] + .02);
+}
+
+/* =========================================================
+   toasts / hint
+   ========================================================= */
+function toast(msg, cls) {
+  const box = $('#toasts');
+  const el = document.createElement('div');
+  el.className = 'toast' + (cls ? ' ' + cls : '');
+  el.textContent = msg;
+  box.appendChild(el);
+  while (box.children.length > 4) box.firstChild.remove();
+  setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 450); }, cls === 'big' ? 2600 : 2000);
+}
+let hintT = 0;
+function hint(msg) { const h = $('#hint'); setText(h, msg); h.hidden = false; hintT = 1.2; }
+
+if (!window.THREE) {
+  $('#loadErr').hidden = false;
+  $('#btnStart').disabled = true;
+  return;
+}
+
+/* =========================================================
+   renderer & scene
+   ========================================================= */
+const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
+if (isTouch) document.body.classList.add('touch');
+const canvas = $('#c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isTouch, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isTouch ? 1.5 : 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, 1, 0.5, 700);
+scene.background = new THREE.Color(0x8fd3ff);
+scene.fog = new THREE.Fog(0x8fd3ff, 140, 420);
+const hemi = new THREE.HemisphereLight(0xe6f4ff, 0x5d6b48, 0.8);
+const sun = new THREE.DirectionalLight(0xfff0d8, 0.9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(isTouch ? 1024 : 2048, isTouch ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 1, far: 320 });
+sun.shadow.bias = -0.0006;
+scene.add(hemi, sun, sun.target);
+
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+const geoCache = {};
+const BX = (w, h, d) => geoCache[`b${w}_${h}_${d}`] || (geoCache[`b${w}_${h}_${d}`] = new THREE.BoxGeometry(w, h, d));
+const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o || {}));
+
+function textTexture(text, bg, fg, w = 512, h = 128, size = 60, border) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d');
+  g.fillStyle = bg; rrect(g, 4, 4, w - 8, h - 8, Math.min(28, h / 4)); g.fill();
+  if (border) { g.lineWidth = 8; g.strokeStyle = border; g.stroke(); }
+  let f = size;
+  const font = s => `${s}px "Mochiy Pop One", "Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif`;
+  g.font = font(f);
+  while (g.measureText(text).width > w - 48 && f > 18) { f -= 3; g.font = font(f); }
+  g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(text, w / 2, h / 2 + 3);
+  const t = new THREE.CanvasTexture(c);
+  t.anisotropy = 4;
+  return t;
+}
+function labelSprite(text, color) {
+  const t = textTexture(text, 'rgba(15,22,38,0.92)', '#ffffff', 512, 112, 54, color);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthWrite: false }));
+  s.scale.set(9, 2, 1);
+  return s;
+}
+
+/* =========================================================
+   world layout
+   ========================================================= */
+const ROADS = [-120, -60, 0, 60, 120];
+const BC = [-90, -30, 30, 90];
+const WORLD = 168;
+const boxes = [];     // building colliders {x0,x1,z0,z1,h}
+const circles = [];   // tree / prop colliders
+const addresses = []; // delivery & taxi spots
+const landmarks = [];
+const winMats = [];   // building materials that glow at night
+const cars = [];      // drivable cars
+const npcs = [];      // traffic
+const peds = [];      // pedestrians
+
+function addCollider(x, z, w, d, h) { boxes.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, h: h || 10 }); }
+const onBlock = (x, z) => BC.some(c => Math.abs(x - c) <= 24) && BC.some(c => Math.abs(z - c) <= 24);
+const surf = (x, z) => onBlock(x, z) ? 0.17 : 0.02;
+
+const BLOCK_KIND = {
+  '-90,-90': 'house', '-30,-90': 'mid', '30,-90': 'taxi', '90,-90': 'dealer',
+  '-90,-30': 'pizza', '-30,-30': 'tower', '30,-30': 'tower', '90,-30': 'mid',
+  '-90,30': 'house', '-30,30': 'tower', '30,30': 'park', '90,30': 'chef',
+  '-90,90': 'home', '-30,90': 'engineer', '30,90': 'mid', '90,90': 'house',
+};
+const PLACES = [
+  { id: 'pizza', name: 'ピザ屋 トマトーレ', short: 'ピ', bx: -90, bz: -30, face: [1, 0], color: '#e2462b', h: 8, label: 'ピザ配達の仕事', prompt: 'ピザ配達の仕事をする' },
+  { id: 'taxi', name: 'ひまわりタクシー', short: 'タ', bx: 30, bz: -90, face: [0, 1], color: '#f2b705', h: 10, label: 'タクシーの仕事', prompt: 'タクシーの仕事をする' },
+  { id: 'chef', name: 'レストラン こぐま亭', short: 'シ', bx: 90, bz: 30, face: [-1, 0], color: '#2f9e6e', h: 9, label: 'シェフの仕事', prompt: 'シェフの仕事をする' },
+  { id: 'engineer', name: 'ピクセルスタジオ', short: 'ゲ', bx: -30, bz: 90, face: [0, -1], color: '#3b7dd8', h: 28, label: 'ゲームを作る仕事', prompt: 'ゲームを作る' },
+  { id: 'dealer', name: 'カーショップ ブーン', short: '車', bx: 90, bz: -90, face: [-1, 0], color: '#8b5cf6', h: 8, label: '車を買う', prompt: '車を見る・買う' },
+  { id: 'home', name: 'わが家', short: '家', bx: -90, bz: 90, face: [1, 0], color: '#f3e3c3', h: 7, label: '家で休む', prompt: '休む（セーブして朝になる）' },
+];
+const SURNAMES = ['さとう', 'すずき', 'たかはし', 'たなか', 'いとう', 'わたなべ', 'やまもと', 'なかむら', 'こばやし', 'かとう', 'よしだ', 'やまだ', 'ささき', 'やまぐち', 'まつもと', 'いのうえ', 'きむら', 'はやし', 'しみず', 'やまざき', 'もり', 'いけだ', 'はしもと', 'あべ', 'いしかわ', 'おがわ', 'ふじた', 'おかだ'];
+const BLDG = ['ひかり', 'あおば', 'さくら', 'みなと', 'つばさ', 'ほしぞら', 'かぜ', 'みどり', 'にじいろ', 'そよかぜ', 'あさひ', 'うみかぜ', 'こもれび', 'しらかば', 'ゆうひ', 'はなみずき'];
+
+// facade textures: 4×4 window cells per tile, one tile = 16m
+function facadeTextures(kind) {
+  const N = 128, cell = 32;
+  const a = document.createElement('canvas'); a.width = a.height = N;
+  const b = document.createElement('canvas'); b.width = b.height = N;
+  const ga = a.getContext('2d'), gb = b.getContext('2d');
+  ga.fillStyle = '#ffffff'; ga.fillRect(0, 0, N, N);
+  gb.fillStyle = '#000000'; gb.fillRect(0, 0, N, N);
+  for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) {
+    const ox = x * cell, oy = y * cell;
+    const [wx, wy, ww, wh] = kind === 'office' ? [4, 6, 24, 20] : [9, 8, 14, 15];
+    ga.fillStyle = '#5c7896'; ga.fillRect(ox + wx, oy + wy, ww, wh);
+    ga.fillStyle = '#8fb3d1'; ga.fillRect(ox + wx, oy + wy, ww, 4);
+    if (kind !== 'office') { ga.fillStyle = '#ffffff'; ga.fillRect(ox + wx + ww / 2 - 1, oy + wy, 2, wh); }
+    if (srnd() < 0.62) { gb.fillStyle = srnd() < 0.5 ? '#ffd88a' : '#fff1c9'; gb.fillRect(ox + wx, oy + wy, ww, wh); }
+  }
+  const ta = new THREE.CanvasTexture(a), tb = new THREE.CanvasTexture(b);
+  for (const t of [ta, tb]) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; }
+  return [ta, tb];
+}
+function scaleUV(geo, w, h, d, s) {
+  const uv = geo.attributes.uv;
+  const dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
+  for (let f = 0; f < 6; f++) for (let i = 0; i < 4; i++) {
+    const k = f * 4 + i;
+    uv.setXY(k, uv.getX(k) * dims[f][0] / s, uv.getY(k) * dims[f][1] / s);
+  }
+  uv.needsUpdate = true;
+}
+
+let officeMats = [], houseMats = [];
+let lampMat, roofGeo;
+const treePts = [];
+function addTree(x, z, s = 1) { treePts.push([x, z, s]); circles.push({ x, z, r: 0.7 * s }); }
+
+function buildWorld() {
+  const [offA, offB] = facadeTextures('office');
+  const [houA, houB] = facadeTextures('house');
+  const roofMat = lam(0x6b7080);
+  const mkSide = (col, a, b) => { const m = lam(col, { map: a, emissiveMap: b, emissive: 0x000000 }); winMats.push(m); return m; };
+  officeMats = ['#d9d4c7', '#b8c6d1', '#e6cfae', '#9fb6cc', '#cbbbd9', '#e4e4e0', '#c7d6b8'].map(c => { const s = mkSide(new THREE.Color(c), offA, offB); return [s, s, roofMat, roofMat, s, s]; });
+  houseMats = ['#f4e6cf', '#f8d7c4', '#dfeacb', '#d9e6f2', '#f2e0ea', '#fff4d6'].map(c => { const s = mkSide(new THREE.Color(c), houA, houB); return [s, s, roofMat, roofMat, s, s]; });
+  const roofCols = [0xb5523b, 0x3f5f8a, 0x4f7a3a, 0x7a4b2a, 0x8a3b5c, 0x2f6f6a].map(c => lam(c));
+  roofGeo = new THREE.ConeGeometry(1, 1, 4); roofGeo.rotateY(Math.PI / 4); roofGeo.translate(0, 0.5, 0);
+
+  // ground, asphalt
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), lam(0x86c06a));
+  ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
+  const asph = new THREE.Mesh(new THREE.PlaneGeometry(252, 252), lam(0x3d4352));
+  asph.rotation.x = -Math.PI / 2; asph.position.y = 0.02; asph.receiveShadow = true; scene.add(asph);
+
+  // lane dashes & crosswalks
+  const o = new THREE.Object3D();
+  const dashGeo = new THREE.PlaneGeometry(0.3, 3); dashGeo.rotateX(-Math.PI / 2);
+  const dashes = [];
+  for (const r of ROADS) for (let t = -123; t <= 123; t += 6) {
+    if (ROADS.some(q => Math.abs(t - q) < 9)) continue;
+    dashes.push([r, t, 0], [t, r, 1]);
+  }
+  const dm = new THREE.InstancedMesh(dashGeo, new THREE.MeshBasicMaterial({ color: 0xf3e2a0 }), dashes.length);
+  dashes.forEach((d, i) => { o.position.set(d[0], 0.035, d[1]); o.rotation.set(0, d[2] ? Math.PI / 2 : 0, 0); o.updateMatrix(); dm.setMatrixAt(i, o.matrix); });
+  scene.add(dm);
+  const cw = [];
+  for (const cx of ROADS) for (const cz of ROADS) {
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const mx = cx + dx * 8, mz = cz + dz * 8;
+      if (Math.abs(mx) > 124 || Math.abs(mz) > 124) continue;
+      for (let k = -2; k <= 2; k++) cw.push([mx + (dz ? k * 2.2 : 0), mz + (dx ? k * 2.2 : 0), dx ? 1 : 0]);
+    }
+  }
+  const cwGeo = new THREE.PlaneGeometry(1.1, 3); cwGeo.rotateX(-Math.PI / 2);
+  const cm = new THREE.InstancedMesh(cwGeo, new THREE.MeshBasicMaterial({ color: 0xe9ecef }), cw.length);
+  cw.forEach((d, i) => { o.position.set(d[0], 0.034, d[1]); o.rotation.set(0, d[2] ? Math.PI / 2 : 0, 0); o.updateMatrix(); cm.setMatrixAt(i, o.matrix); });
+  scene.add(cm);
+
+  // blocks
+  const swGeo = new THREE.BoxGeometry(48, 0.15, 48), lotGeo = new THREE.BoxGeometry(42, 0.2, 42);
+  const swMat = lam(0xc3c6cc), lotMat = lam(0xd9d1bf), grassMat = lam(0x7dbb5e);
+  const lampPts = [];
+  BC.forEach((bz, iz) => BC.forEach((bx, ix) => {
+    const kind = BLOCK_KIND[`${bx},${bz}`];
+    const no = iz * 4 + ix + 1;
+    const sw = new THREE.Mesh(swGeo, swMat); sw.position.set(bx, 0.075, bz); sw.receiveShadow = true; scene.add(sw);
+    const lot = new THREE.Mesh(lotGeo, (kind === 'park' || kind === 'house' || kind === 'home') ? grassMat : lotMat);
+    lot.position.set(bx, 0.1, bz); lot.receiveShadow = true; scene.add(lot);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) lampPts.push([bx + sx * 23, bz + sz * 23]);
+    if (kind === 'park') buildPark(bx, bz, no);
+    else if (['house', 'mid', 'tower'].includes(kind)) fillBlock(bx, bz, kind, no, roofCols);
+  }));
+  PLACES.forEach(p => buildPlace(p, roofCols));
+
+  // lamps
+  lampMat = lam(0xfff6d0, { emissive: 0x000000 });
+  const poleGeo = new THREE.CylinderGeometry(0.1, 0.13, 5.6, 6);
+  const headGeo = new THREE.BoxGeometry(0.7, 0.25, 0.7);
+  const pm = new THREE.InstancedMesh(poleGeo, lam(0x4a5060), lampPts.length);
+  const hm = new THREE.InstancedMesh(headGeo, lampMat, lampPts.length);
+  lampPts.forEach((p, i) => {
+    o.rotation.set(0, 0, 0);
+    o.position.set(p[0], 2.95, p[1]); o.updateMatrix(); pm.setMatrixAt(i, o.matrix);
+    o.position.set(p[0], 5.8, p[1]); o.updateMatrix(); hm.setMatrixAt(i, o.matrix);
+  });
+  pm.castShadow = true; scene.add(pm, hm);
+
+  // outer forest ring
+  for (let i = 0; i < 150; i++) {
+    const a = rs(0, Math.PI * 2), r = rs(138, 200);
+    const x = Math.cos(a) * r, z = Math.sin(a) * r;
+    if (Math.abs(x) < 132 && Math.abs(z) < 132) continue;
+    addTree(x, z, rs(0.9, 1.6));
+  }
+  // trees
+  const trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 2.2, 6); trunkGeo.translate(0, 1.1, 0);
+  const crownGeo = new THREE.IcosahedronGeometry(1.9, 0); crownGeo.translate(0, 3.4, 0);
+  const tm = new THREE.InstancedMesh(trunkGeo, lam(0x7a5236), treePts.length);
+  const crm = new THREE.InstancedMesh(crownGeo, lam(0xffffff), treePts.length);
+  const greens = [0x4f9a45, 0x5fae4e, 0x3f8a48, 0x6cb85a, 0x87b84a].map(c => new THREE.Color(c));
+  treePts.forEach((t, i) => {
+    o.position.set(t[0], 0.15, t[1]); o.rotation.set(0, srnd() * 6, 0); o.scale.setScalar(t[2]); o.updateMatrix();
+    tm.setMatrixAt(i, o.matrix); crm.setMatrixAt(i, o.matrix); crm.setColorAt(i, greens[i % greens.length]);
+  });
+  o.scale.setScalar(1);
+  tm.castShadow = crm.castShadow = true;
+  scene.add(tm, crm);
+
+  // mountains & clouds
+  const mtnGeo = new THREE.ConeGeometry(1, 1, 7);
+  for (let i = 0; i < 16; i++) {
+    const a = i / 16 * Math.PI * 2 + rs(-.1, .1), r = rs(330, 420), h = rs(50, 110);
+    const m = new THREE.Mesh(mtnGeo, lam([0x5d8f61, 0x6f9c6a, 0x4f7f5f][i % 3]));
+    m.scale.set(rs(60, 100), h, rs(60, 100)); m.position.set(Math.cos(a) * r, h / 2 - 2, Math.sin(a) * r); scene.add(m);
+  }
+  const cloudMat = lam(0xffffff, { emissive: 0x777777 });
+  const cloudGeo = new THREE.IcosahedronGeometry(1, 1);
+  clouds = [];
+  for (let i = 0; i < 10; i++) {
+    const g = new THREE.Group();
+    for (let k = 0; k < 4; k++) { const p = new THREE.Mesh(cloudGeo, cloudMat); p.position.set(k * 5 - 8, rs(-1, 1.5), rs(-2, 2)); p.scale.set(rs(5, 8), rs(2.5, 4), rs(4, 6)); g.add(p); }
+    g.position.set(rs(-250, 250), rs(70, 95), rs(-250, 250)); scene.add(g); clouds.push(g);
+  }
+}
+let clouds = [];
+
+function addOffice(x, z, w, d, h, mats) {
+  const geo = new THREE.BoxGeometry(w, h, d); scaleUV(geo, w, h, d, 16);
+  const m = new THREE.Mesh(geo, mats); m.position.set(x, 0.2 + h / 2, z); m.castShadow = m.receiveShadow = true; scene.add(m);
+  const top = new THREE.Mesh(BX(3, 1.6, 3), lam(0x9aa0aa)); top.position.set(x + rs(-w / 4, w / 4), 0.2 + h + 0.8, z + rs(-d / 4, d / 4)); top.castShadow = true; scene.add(top);
+  addCollider(x, z, w, d, h);
+  return m;
+}
+function addHouse(x, z, w, d, h, mats, roofMat) {
+  const geo = new THREE.BoxGeometry(w, h, d); scaleUV(geo, w, h, d, 16);
+  const m = new THREE.Mesh(geo, mats); m.position.set(x, 0.2 + h / 2, z); m.castShadow = m.receiveShadow = true; scene.add(m);
+  const r = new THREE.Mesh(roofGeo, roofMat);
+  r.scale.set((w / 2 + 0.6) / 0.7071, h * 0.55, (d / 2 + 0.6) / 0.7071); r.position.set(x, 0.2 + h, z); r.castShadow = true; scene.add(r);
+  addCollider(x, z, w, d, h * 1.5);
+  return m;
+}
+
+function fillBlock(bx, bz, kind, no, roofCols) {
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const cx = bx + sx * 10.5, cz = bz + sz * 10.5;
+    let label;
+    if (kind === 'mid' && srnd() < 0.22) {
+      for (let k = 0; k < 3; k++) addTree(cx + rs(-6, 6), cz + rs(-6, 6), rs(0.9, 1.2));
+      continue;
+    }
+    if (kind === 'house') {
+      const w = rs(9, 13), d = rs(9, 13), h = rs(4.5, 6.5);
+      addHouse(cx, cz, w, d, h, houseMats[Math.floor(srnd() * houseMats.length)], roofCols[Math.floor(srnd() * roofCols.length)]);
+      addTree(cx + sx * 8, cz - sz * 7, 0.9);
+      label = SURNAMES[Math.floor(srnd() * SURNAMES.length)] + 'さんの家';
+    } else {
+      const w = rs(12, 16), d = rs(12, 16);
+      const h = kind === 'tower' ? rs(22, 50) : rs(9, 20);
+      addOffice(cx, cz, w, d, h, officeMats[Math.floor(srnd() * officeMats.length)]);
+      label = BLDG[Math.floor(srnd() * BLDG.length)] + (kind === 'tower' ? 'タワー' : 'ビル');
+    }
+    const name = `${no}丁目 ${label}`;
+    addresses.push({ x: bx + sx * 22.2, z: cz, nx: sx, nz: 0, name, gx: bx + sx * 25.8, gz: cz });
+    addresses.push({ x: cx, z: bz + sz * 22.2, nx: 0, nz: sz, name, gx: cx, gz: bz + sz * 25.8 });
+  }
+}
+
+function buildPark(bx, bz, no) {
+  const pathMat = lam(0xe8dcc0);
+  const p1 = new THREE.Mesh(BX(42, 0.05, 4), pathMat); p1.position.set(bx, 0.22, bz); p1.receiveShadow = true; scene.add(p1);
+  const p2 = new THREE.Mesh(BX(4, 0.05, 42), pathMat); p2.position.set(bx, 0.22, bz); p2.receiveShadow = true; scene.add(p2);
+  const basin = new THREE.Mesh(new THREE.CylinderGeometry(5, 5.4, 0.8, 24), lam(0xbfc3c9)); basin.position.set(bx, 0.6, bz); basin.castShadow = basin.receiveShadow = true; scene.add(basin);
+  const water = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 0.1, 24), lam(0x4fb3e8, { emissive: 0x0b3a55 })); water.position.set(bx, 1.0, bz); scene.add(water);
+  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.8, 2.6, 10), lam(0xd5d8dd)); spout.position.set(bx, 1.9, bz); spout.castShadow = true; scene.add(spout);
+  circles.push({ x: bx, z: bz, r: 5.4 });
+  for (let i = 0; i < 26; i++) {
+    const x = bx + rs(-19, 19), z = bz + rs(-19, 19);
+    if (Math.abs(x - bx) < 4 || Math.abs(z - bz) < 4) continue;
+    addTree(x, z, rs(0.9, 1.3));
+  }
+  const benchMat = lam(0x8a5a36);
+  for (const [dx, dz, r] of [[7, 3.3, 0], [-7, -3.3, 0], [3.3, -8, Math.PI / 2], [-3.3, 8, Math.PI / 2]]) {
+    const b = new THREE.Mesh(BX(3, 0.5, 0.9), benchMat); b.position.set(bx + dx, 0.6, bz + dz); b.rotation.y = r; b.castShadow = true; scene.add(b);
+  }
+  const lm = { x: bx + 22.2, z: bz, nx: 1, nz: 0, name: '中央公園', gx: bx + 25.8, gz: bz };
+  landmarks.push(lm);
+}
+
+const markers = [];
+function makeMarker(color, text) {
+  const g = new THREE.Group();
+  const ring = new THREE.Mesh(new THREE.RingGeometry(2.3, 3, 40), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .95, side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = 0.26;
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 5, 32, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: .12, side: THREE.DoubleSide, depthWrite: false }));
+  beam.position.y = 2.6;
+  g.add(ring, beam);
+  if (text) { const s = labelSprite(text, color); s.position.y = 7; g.add(s); g.userData.sprite = s; }
+  g.userData.ring = ring;
+  scene.add(g);
+  return g;
+}
+
+function buildPlace(p, roofCols) {
+  const [fx, fz] = p.face;
+  const rotY = Math.atan2(fx, fz);
+  const cx = p.bx - fx * 2, cz = p.bz - fz * 2;
+  p.mx = p.bx + fx * 16; p.mz = p.bz + fz * 16;
+  p.sx = p.mx - fz * 9; p.sz = p.mz + fx * 9; p.sh = rotY;
+  const col = new THREE.Color(p.color);
+  if (p.id === 'home') {
+    const [hA, hB] = facadeTextures('house');
+    const side = lam(col, { map: hA, emissiveMap: hB, emissive: 0 }); winMats.push(side);
+    const roof = lam(0x6b7080);
+    addHouse(cx, cz, 18, 16, 7, [side, side, roof, roof, side, side], lam(0xc0533a));
+  } else {
+    const [oA, oB] = facadeTextures('office');
+    const side = lam(col, { map: oA, emissiveMap: oB, emissive: 0 }); winMats.push(side);
+    const roof = lam(0x6b7080);
+    const w = 20, d = 20, h = p.h;
+    const geo = new THREE.BoxGeometry(w, h, d); scaleUV(geo, w, h, d, 16);
+    const m = new THREE.Mesh(geo, [side, side, roof, roof, side, side]); m.position.set(cx, 0.2 + h / 2, cz); m.castShadow = m.receiveShadow = true; scene.add(m);
+    addCollider(cx, cz, w, d, h);
+    if (p.id !== 'engineer') {
+      const aw = new THREE.Mesh(fx ? BX(3, 0.4, 14) : BX(14, 0.4, 3), lam(col.clone().offsetHSL(0, 0, -0.12)));
+      aw.position.set(cx + fx * 11.5, 3.6, cz + fz * 11.5); aw.castShadow = true; scene.add(aw);
+    } else {
+      const ant = new THREE.Mesh(BX(0.4, 8, 0.4), lam(0xdfe6ee)); ant.position.set(cx, h + 4.2, cz); scene.add(ant);
+    }
+  }
+  // sign board
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(14, 3.2), new THREE.MeshBasicMaterial({ map: textTexture(p.name, p.color, p.id === 'home' || p.id === 'taxi' ? '#1d1a10' : '#ffffff', 640, 146, 64, '#ffffff') }));
+  const sy = p.id === 'home' ? 5.2 : Math.min(p.h - 1.8, 7);
+  sign.position.set(cx + fx * (p.id === 'home' ? 8.06 : 10.06), sy, cz + fz * (p.id === 'home' ? 8.06 : 10.06));
+  sign.rotation.y = rotY;
+  scene.add(sign);
+  // marker
+  p.marker = makeMarker(new THREE.Color(p.color), p.label);
+  p.marker.position.set(p.mx, 0, p.mz);
+  markers.push(p.marker);
+  // trees at the back corners
+  for (const s of [-1, 1]) addTree(p.bx - fx * 18 + (fz ? s * 18 : 0), p.bz - fz * 18 + (fx ? s * 18 : 0), 1.1);
+  if (p.id === 'dealer') {
+    ['suv', 'sports', 'super'].forEach((t, i) => {
+      const k = (i - 1) * 7;
+      const cm = makeCarMesh(t);
+      const x = p.mx - fx * 2 + fz * 0 + (fz ? 0 : 0) + (-fz) * 0, z = p.mz;
+      const dx = fz ? k : 0, dz = fx ? k : 0;
+      cm.g.position.set(p.bx + fx * 13 + dx * 0 + (fx ? 0 : k), 0.2, p.bz + fz * 13 + (fz ? 0 : k));
+      cm.g.rotation.y = rotY + 0.6;
+      scene.add(cm.g);
+      circles.push({ x: cm.g.position.x, z: cm.g.position.z, r: 2 });
+      void x; void z; void dx; void dz;
+    });
+  }
+  if (p.id !== 'home' && p.id !== 'dealer') landmarks.push({ x: p.bx + fx * 22.2, z: p.bz + fz * 22.2, nx: fx, nz: fz, name: p.name, gx: p.bx + fx * 25.8, gz: p.bz + fz * 25.8 });
+}
+
+/* =========================================================
+   characters & cars
+   ========================================================= */
+function makePerson(c = {}) {
+  const g = new THREE.Group();
+  const skin = lam(c.skin || 0xf2c9a0), shirt = lam(c.shirt || 0x3c78d8), pants = lam(c.pants || 0x2d3142), hair = lam(c.hair || 0x3a2a1e);
+  const torso = new THREE.Mesh(BX(0.7, 0.8, 0.42), shirt); torso.position.y = 1.3;
+  const head = new THREE.Mesh(BX(0.54, 0.52, 0.5), skin); head.position.y = 1.98;
+  const hairM = new THREE.Mesh(BX(0.58, 0.18, 0.54), hair); hairM.position.y = 2.26;
+  const eyeMat = lam(0x1d1d24);
+  const e1 = new THREE.Mesh(BX(0.08, 0.1, 0.02), eyeMat); e1.position.set(-0.12, 2.0, 0.26);
+  const e2 = e1.clone(); e2.position.x = 0.12;
+  g.add(torso, head, hairM, e1, e2);
+  if (c.hat) { const h = new THREE.Mesh(BX(0.62, 0.16, 0.62), lam(c.hat)); h.position.y = 2.36; const brim = new THREE.Mesh(BX(0.6, 0.06, 0.3), lam(c.hat)); brim.position.set(0, 2.3, 0.4); g.add(h, brim); }
+  const limb = (w, h, mat, x, y) => { const piv = new THREE.Group(); piv.position.set(x, y, 0); const m = new THREE.Mesh(BX(w, h, w), mat); m.position.y = -h / 2; m.castShadow = true; piv.add(m); g.add(piv); return piv; };
+  const legL = limb(0.28, 0.9, pants, -0.18, 0.9), legR = limb(0.28, 0.9, pants, 0.18, 0.9);
+  const armL = limb(0.2, 0.75, shirt, -0.47, 1.68), armR = limb(0.2, 0.75, shirt, 0.47, 1.68);
+  torso.castShadow = head.castShadow = true;
+  return { g, legL, legR, armL, armR };
+}
+function animPerson(p, t, amt) {
+  const s = Math.sin(t) * 0.75 * amt;
+  p.legL.rotation.x = s; p.legR.rotation.x = -s; p.armL.rotation.x = -s; p.armR.rotation.x = s;
+  p.armR.rotation.z = 0;
+}
+function wavePerson(p, t) { p.armR.rotation.x = 0; p.armR.rotation.z = Math.PI - 0.4 + Math.sin(t * 8) * 0.35; }
+
+const CAR_TYPES = {
+  basic: { name: 'コンパクトカー', price: 0, color: 0x4b8df8, max: 26, acc: 11, turn: 1.9, desc: 'はじめての車。運転しやすい' },
+  suv: { name: 'アウトドアSUV', price: 2500, color: 0x2f8f5b, max: 29, acc: 12, turn: 1.75, tall: true, desc: '大きくてがっしり。ぶつかってもへっちゃら' },
+  sports: { name: 'スポーツカー', price: 6000, color: 0xe63946, max: 38, acc: 17, turn: 2.1, low: true, desc: '加速がはやい。カーブもきびきび' },
+  super: { name: 'スーパーカー', price: 15000, color: 0xf2c14e, max: 48, acc: 23, turn: 2.2, low: true, desc: '町でいちばん速い車' },
+  taxi: { name: 'タクシー', job: true, color: 0xffc928, max: 28, acc: 12, turn: 1.9 },
+  pizza: { name: 'デリバリーカー', job: true, color: 0xff5b3a, max: 27, acc: 13, turn: 2.1 },
+};
+const MY_CARS = ['basic', 'suv', 'sports', 'super'];
+const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.34, 14); wheelGeo.rotateZ(Math.PI / 2);
+const wheelMat = lam(0x1b1c20), glassMat = lam(0x24374f), darkMat = lam(0x23272f);
+const headMat = new THREE.MeshBasicMaterial({ color: 0xfff3c4 }), tailMat = new THREE.MeshBasicMaterial({ color: 0xff3b3b });
+let taxiSignTex = null, pizzaSignTex = null;
+function makeCarMesh(type, colorOverride) {
+  const def = CAR_TYPES[type];
+  const g = new THREE.Group();
+  const body = lam(colorOverride != null ? colorOverride : def.color);
+  const L = 4.2, W = 2.0;
+  const low = def.low ? -0.14 : 0, tall = def.tall ? 0.2 : 0;
+  const b = new THREE.Mesh(BX(W, 0.72 + tall, L), body); b.position.y = 0.78 + low + tall / 2; b.castShadow = true;
+  const cabL = def.low ? L * 0.42 : L * 0.54;
+  const cab = new THREE.Mesh(BX(W * 0.84, 0.62, cabL), glassMat); cab.position.set(0, 1.42 + low * 1.4 + tall, def.low ? -0.25 : -0.15); cab.castShadow = true;
+  const roof = new THREE.Mesh(BX(W * 0.86, 0.1, cabL * 0.95), body); roof.position.set(0, 1.77 + low * 1.4 + tall, cab.position.z);
+  const bf = new THREE.Mesh(BX(W * 1.02, 0.25, 0.2), darkMat); bf.position.set(0, 0.55 + low, L / 2);
+  const bb = bf.clone(); bb.position.z = -L / 2;
+  const h1 = new THREE.Mesh(BX(0.42, 0.18, 0.06), headMat); h1.position.set(-0.62, 0.92 + low + tall, L / 2 + 0.01);
+  const h2 = h1.clone(); h2.position.x = 0.62;
+  const t1 = new THREE.Mesh(BX(0.42, 0.16, 0.06), tailMat); t1.position.set(-0.62, 0.92 + low + tall, -L / 2 - 0.01);
+  const t2 = t1.clone(); t2.position.x = 0.62;
+  g.add(b, cab, roof, bf, bb, h1, h2, t1, t2);
+  const wheels = [], front = [];
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const piv = new THREE.Group(); piv.position.set(sx * (W / 2 - 0.02), 0.42, sz * L * 0.31);
+    const w = new THREE.Mesh(wheelGeo, wheelMat); w.castShadow = true; piv.add(w); g.add(piv);
+    wheels.push(w); if (sz > 0) front.push(piv);
+  }
+  if (type === 'taxi') {
+    taxiSignTex = taxiSignTex || textTexture('TAXI', '#1d1a10', '#ffc928', 256, 96, 56);
+    const s = new THREE.Mesh(BX(0.9, 0.36, 0.45), [lam(0xffc928), lam(0xffc928), lam(0xffe9a0), lam(0xffc928), new THREE.MeshBasicMaterial({ map: taxiSignTex }), new THREE.MeshBasicMaterial({ map: taxiSignTex })]);
+    s.position.set(0, 2.0, cab.position.z); g.add(s);
+    const stripe = new THREE.Mesh(BX(W + 0.02, 0.14, L * 0.7), darkMat); stripe.position.set(0, 0.95, 0); g.add(stripe);
+  }
+  if (type === 'pizza') {
+    pizzaSignTex = pizzaSignTex || textTexture('PIZZA', '#ffffff', '#e2462b', 256, 96, 52);
+    const s = new THREE.Mesh(BX(1.5, 0.5, 0.2), [lam(0xffffff), lam(0xffffff), lam(0xffffff), lam(0xffffff), new THREE.MeshBasicMaterial({ map: pizzaSignTex }), new THREE.MeshBasicMaterial({ map: pizzaSignTex })]);
+    s.position.set(0, 2.1, cab.position.z); g.add(s);
+    const box = new THREE.Mesh(BX(1.4, 0.3, 1.4), lam(0xf4e1c1)); box.position.set(0, 0.85, -L / 2 + 0.2); g.add(box);
+  }
+  if (type === 'sports' || type === 'super') {
+    const sp = new THREE.Mesh(BX(W * 0.9, 0.08, 0.5), darkMat); sp.position.set(0, 1.35 + low, -L / 2 + 0.3); g.add(sp);
+    const l1 = new THREE.Mesh(BX(0.1, 0.4, 0.1), darkMat); l1.position.set(-0.6, 1.15 + low, -L / 2 + 0.3);
+    const l2 = l1.clone(); l2.position.x = 0.6; g.add(l1, l2);
+  }
+  if (type === 'suv') {
+    const rack = new THREE.Mesh(BX(W * 0.7, 0.12, cabL * 0.7), darkMat); rack.position.set(0, 1.95 + tall, cab.position.z); g.add(rack);
+  }
+  return { g, wheels, front };
+}
+
+class Car {
+  constructor(type, x, z, h, color) {
+    this.type = type; this.def = CAR_TYPES[type];
+    const m = makeCarMesh(type, color);
+    this.mesh = m.g; this.wheels = m.wheels; this.front = m.front;
+    this.x = x; this.z = z; this.h = h; this.speed = 0; this.steer = 0; this.bumpCd = 0;
+    scene.add(this.mesh); cars.push(this); this.sync();
+  }
+  sync() { this.mesh.position.set(this.x, surf(this.x, this.z), this.z); this.mesh.rotation.y = this.h; }
+  drive(dt, inp) {
+    const d = this.def;
+    if (inp.brake) {
+      this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), 32 * dt);
+    } else if (inp.y > 0.05) {
+      if (this.speed < -0.3) this.speed += 26 * dt * inp.y;
+      else this.speed += d.acc * inp.y * dt * Math.max(0, 1 - (this.speed / d.max) ** 2);
+    } else if (inp.y < -0.05) {
+      if (this.speed > 0.3) this.speed += 26 * dt * inp.y;
+      else this.speed = Math.max(-9, this.speed + d.acc * 0.6 * inp.y * dt);
+    } else {
+      this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), (2.2 + Math.abs(this.speed) * 0.12) * dt);
+    }
+    this.steer = lerp(this.steer, inp.x, Math.min(1, dt * 7));
+    const sp = Math.abs(this.speed);
+    const tr = d.turn * this.steer * clamp(sp / 5, 0, 1) * (1 - 0.45 * clamp(sp / d.max, 0, 1));
+    this.h -= tr * dt * (this.speed < 0 ? -1 : 1);
+    const nx = this.x + Math.sin(this.h) * this.speed * dt, nz = this.z + Math.cos(this.h) * this.speed * dt;
+    const r = resolve(nx, nz, 1.7, this);
+    if (r.hit) {
+      const nl = Math.hypot(r.nx, r.nz) || 1;
+      const vn = (Math.sin(this.h) * r.nx + Math.cos(this.h) * r.nz) / nl * this.speed;
+      const impact = -vn;
+      if (impact > 3) {
+        this.speed *= 0.3;
+        if (this.bumpCd <= 0) { onBump(impact, this); this.bumpCd = 0.6; }
+      } else this.speed *= 0.985;
+    }
+    this.bumpCd -= dt;
+    this.x = r.x; this.z = r.z;
+    for (const w of this.wheels) w.rotation.x += this.speed * dt / 0.42;
+    for (const f of this.front) f.rotation.y = this.steer * 0.45;
+    this.sync();
+    this.mesh.rotation.z = this.steer * clamp(sp / d.max, 0, 1) * 0.06;
+  }
+  remove() { scene.remove(this.mesh); const i = cars.indexOf(this); if (i >= 0) cars.splice(i, 1); }
+}
+
+/* =========================================================
+   collision
+   ========================================================= */
+function resolve(x, z, r, self) {
+  let hit = false, nx = 0, nz = 0;
+  for (const b of boxes) {
+    if (x + r < b.x0 || x - r > b.x1 || z + r < b.z0 || z - r > b.z1) continue;
+    const cx = clamp(x, b.x0, b.x1), cz = clamp(z, b.z0, b.z1);
+    const dx = x - cx, dz = z - cz;
+    const d = Math.hypot(dx, dz);
+    if (d < 1e-4) {
+      const pl = x - b.x0, pr = b.x1 - x, pb = z - b.z0, pf = b.z1 - z;
+      const m = Math.min(pl, pr, pb, pf);
+      if (m === pl) { x = b.x0 - r; nx -= 1; } else if (m === pr) { x = b.x1 + r; nx += 1; } else if (m === pb) { z = b.z0 - r; nz -= 1; } else { z = b.z1 + r; nz += 1; }
+      hit = true; continue;
+    }
+    if (d < r) { const p = (r - d) / d; x += dx * p; z += dz * p; nx += dx / d; nz += dz / d; hit = true; }
+  }
+  const circ = (cx, cz, cr) => {
+    const dx = x - cx, dz = z - cz, rr = r + cr;
+    if (Math.abs(dx) > rr || Math.abs(dz) > rr) return;
+    const d = Math.hypot(dx, dz);
+    if (d < rr && d > 1e-4) { const p = (rr - d) / d; x += dx * p; z += dz * p; nx += dx / d; nz += dz / d; hit = true; }
+  };
+  for (const c of circles) circ(c.x, c.z, c.r);
+  for (const c of cars) if (c !== self && !(self === P && P.inCar === c)) circ(c.x, c.z, 1.7);
+  for (const n of npcs) circ(n.x, n.z, 1.7);
+  if (x < -WORLD) { x = -WORLD; nx += 1; hit = true; }
+  if (x > WORLD) { x = WORLD; nx -= 1; hit = true; }
+  if (z < -WORLD) { z = -WORLD; nz += 1; hit = true; }
+  if (z > WORLD) { z = WORLD; nz -= 1; hit = true; }
+  return { x, z, hit, nx, nz };
+}
+function insideBuilding(x, y, z) {
+  for (const b of boxes) if (x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && y < b.h + 0.5) return true;
+  return false;
+}
+
+/* =========================================================
+   traffic & pedestrians
+   ========================================================= */
+const LOOPS = [
+  [[-120, -120], [120, -120], [120, 120], [-120, 120]],
+  [[-60, -60], [-60, 60], [60, 60], [60, -60]],
+  [[-120, -60], [0, -60], [0, 60], [-120, 60]],
+  [[0, 0], [120, 0], [120, -120], [0, -120]],
+  [[60, 120], [60, 0], [-60, 0], [-60, 120]],
+];
+const NPC_COLORS = [0xe9ecef, 0x2b2d42, 0x8d99ae, 0xd62828, 0x3a86ff, 0x6a994e, 0xffb703, 0x9b5de5, 0xf15bb5, 0x00b4d8];
+function lanePath(pts) {
+  const n = pts.length, out = [];
+  for (let i = 0; i < n; i++) {
+    const p = pts[i], a = pts[(i - 1 + n) % n], b = pts[(i + 1) % n];
+    let ix = p[0] - a[0], iz = p[1] - a[1]; let l = Math.hypot(ix, iz); ix /= l; iz /= l;
+    let ox = b[0] - p[0], oz = b[1] - p[1]; l = Math.hypot(ox, oz); ox /= l; oz /= l;
+    out.push([p[0] + (iz + oz) * 3, p[1] + (-ix - ox) * 3]);
+  }
+  return out;
+}
+function buildTraffic() {
+  LOOPS.forEach((pts, li) => {
+    const lane = lanePath(pts);
+    const segs = []; let total = 0;
+    for (let i = 0; i < lane.length; i++) {
+      const a = lane[i], b = lane[(i + 1) % lane.length];
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      segs.push({ a, b, len, start: total, h: Math.atan2(b[0] - a[0], b[1] - a[1]) }); total += len;
+    }
+    for (let k = 0; k < 2; k++) {
+      const m = makeCarMesh('basic', NPC_COLORS[(li * 2 + k) % NPC_COLORS.length]);
+      scene.add(m.g);
+      const n = { segs, total, s: (total * (k / 2 + li * 0.17)) % total, v: 0, max: rnd(9, 12.5), mesh: m.g, wheels: m.wheels, x: 0, z: 0, h: 0, stuck: 0, ghost: 0 };
+      placeNpc(n, true);
+      npcs.push(n);
+    }
+  });
+}
+function placeNpc(n, snap) {
+  let s = n.s, seg = n.segs[0];
+  for (const sg of n.segs) if (s >= sg.start && s < sg.start + sg.len) { seg = sg; break; }
+  const t = (s - seg.start) / seg.len;
+  n.x = lerp(seg.a[0], seg.b[0], t); n.z = lerp(seg.a[1], seg.b[1], t);
+  if (snap) n.h = seg.h; else n.h += angDiff(n.h, seg.h) * Math.min(1, 0.12 * n.v);
+}
+function updateNpcs(dt) {
+  const px = P.inCar ? P.inCar.x : P.x, pz = P.inCar ? P.inCar.z : P.z;
+  for (const n of npcs) {
+    const fx = Math.sin(n.h), fz = Math.cos(n.h);
+    const ahead = (ox, oz, dist) => { const dx = ox - n.x, dz = oz - n.z; const a = dx * fx + dz * fz; return a > 0 && a < dist && Math.abs(dx * fz - dz * fx) < 2.6; };
+    let blocked = ahead(px, pz, 10);
+    if (!blocked) for (const c of cars) if (ahead(c.x, c.z, 9)) { blocked = true; break; }
+    if (!blocked && n.ghost <= 0) for (const o of npcs) if (o !== n && ahead(o.x, o.z, 8)) { blocked = true; break; }
+    n.ghost -= dt;
+    if (blocked && n.v < 0.5) { n.stuck += dt; if (n.stuck > 3) { n.ghost = 2.5; n.stuck = 0; } } else n.stuck = 0;
+    n.v = lerp(n.v, blocked ? 0 : n.max, Math.min(1, dt * (blocked ? 5 : 0.8)));
+    n.s = (n.s + n.v * dt) % n.total;
+    placeNpc(n, false);
+    n.mesh.position.set(n.x, 0.02, n.z); n.mesh.rotation.y = n.h;
+    for (const w of n.wheels) w.rotation.x += n.v * dt / 0.42;
+  }
+}
+function buildPeds() {
+  const genericBlocks = Object.entries(BLOCK_KIND).filter(([, k]) => k !== 'park').map(([k]) => k.split(',').map(Number));
+  for (let i = 0; i < 16; i++) {
+    const [bx, bz] = genericBlocks[i % genericBlocks.length];
+    const p = makePerson({ shirt: pick([0xe76f51, 0x2a9d8f, 0xe9c46a, 0x8ecae6, 0xcdb4db, 0x90be6d, 0xf28482]), pants: pick([0x264653, 0x3d405b, 0x6d597a, 0x2b2d42]), hair: pick([0x3a2a1e, 0x1d1d1d, 0x8a5a2b, 0xd4a373]) });
+    scene.add(p.g);
+    peds.push({ p, bx, bz, s: rnd(0, 180), v: rnd(1.2, 1.8) * (Math.random() < .5 ? 1 : -1), t: rnd(0, 10) });
+  }
+}
+function updatePeds(dt) {
+  for (const d of peds) {
+    d.s = ((d.s + d.v * dt) % 180 + 180) % 180; d.t += dt * 7;
+    const side = Math.floor(d.s / 45), f = (d.s % 45) / 45, A = 22.5;
+    const corners = [[-A, -A], [A, -A], [A, A], [-A, A]];
+    const a = corners[side], b = corners[(side + 1) % 4];
+    const x = d.bx + lerp(a[0], b[0], f), z = d.bz + lerp(a[1], b[1], f);
+    let h = Math.atan2(b[0] - a[0], b[1] - a[1]); if (d.v < 0) h += Math.PI;
+    d.p.g.position.set(x, 0.15, z); d.p.g.rotation.y = h;
+    animPerson(d.p, d.t, 1);
+  }
+}
+
+/* =========================================================
+   player
+   ========================================================= */
+let myCar = null;
+function spawnPlayer() {
+  const home = PLACES.find(p => p.id === 'home');
+  const person = makePerson({ shirt: 0xffc928, pants: 0x2b3a67, hair: 0x2a1d14, hat: 0xff5b3a });
+  scene.add(person.g);
+  P = { x: 0, z: 0, h: home.sh, inCar: null, person, t: 0 };
+  placeAtHome();
+  if (state.pos && Math.abs(state.pos.x) < WORLD && Math.abs(state.pos.z) < WORLD) {
+    const r = resolve(state.pos.x, state.pos.z, 0.5, P); P.x = r.x; P.z = r.z;
+  }
+  myCar = new Car(state.carSel, home.sx, home.sz, home.sh);
+  cam.yaw = P.h;
+}
+function placeAtHome() {
+  const home = PLACES.find(p => p.id === 'home');
+  P.x = home.mx - home.face[1] * 6; P.z = home.mz + home.face[0] * 6; P.h = home.sh;
+}
+function enterCar(c) {
+  P.inCar = c; P.person.g.visible = false;
+  sfx('click');
+}
+function exitCar(silent) {
+  const c = P.inCar; if (!c) return;
+  const rx = -Math.cos(c.h), rz = Math.sin(c.h);
+  let r = resolve(c.x + rx * 2.6, c.z + rz * 2.6, 0.45, P);
+  if (Math.hypot(r.x - c.x, r.z - c.z) < 2) r = resolve(c.x - rx * 2.6, c.z - rz * 2.6, 0.45, P);
+  P.inCar = null; c.speed = 0;
+  P.x = r.x; P.z = r.z; P.h = c.h; P.person.g.visible = true;
+  if (!silent) sfx('click');
+}
+function summonCar(type) {
+  if (myCar && P.inCar === myCar) exitCar(true);
+  if (myCar) myCar.remove();
+  state.carSel = type;
+  const px = P.inCar ? P.inCar.x : P.x, pz = P.inCar ? P.inCar.z : P.z;
+  const yaw = cam.yaw;
+  let r = resolve(px + Math.sin(yaw) * 5, pz + Math.cos(yaw) * 5, 2, null);
+  myCar = new Car(type, r.x, r.z, yaw);
+  toast(`${CAR_TYPES[type].name}をよびました`);
+  save();
+}
+
+/* =========================================================
+   input
+   ========================================================= */
+const keys = {};
+const touch = { brake: false };
+const joy = { id: null, x: 0, y: 0, cx: 0, cy: 0, R: 60 };
+const pad = { left: false, right: false, up: false, down: false, a: false };
+let mini = null;
+let openScreen = null;
+let running = false;
+
+addEventListener('keydown', e => {
+  const tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  const k = e.key.toLowerCase();
+  if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'tab'].includes(k)) e.preventDefault();
+  initAudio();
+  if (!keys[k]) onKeyPress(k);
+  keys[k] = true;
+});
+addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+function onKeyPress(k) {
+  if (mini && mini.key) { mini.key(k); return; }
+  if (!running) return;
+  if (openScreen) { if (k === 'escape' && ['phone', 'dealer', 'result'].includes(openScreen)) closeScreen(); return; }
+  if (k === 'e' || k === 'enter') doAction();
+  if (k === 'm' || k === 'tab') openPhone();
+}
+function readMove() {
+  let x = 0, y = 0;
+  if (keys.a || keys.arrowleft) x -= 1;
+  if (keys.d || keys.arrowright) x += 1;
+  if (keys.w || keys.arrowup) y += 1;
+  if (keys.s || keys.arrowdown) y -= 1;
+  x += joy.x; y += joy.y;
+  const l = Math.hypot(x, y); if (l > 1) { x /= l; y /= l; }
+  return { x, y, brake: !!keys[' '] || touch.brake };
+}
+// joystick
+const joyEl = $('#joy'), knob = $('#joyKnob');
+joyEl.addEventListener('pointerdown', e => {
+  initAudio();
+  joy.id = e.pointerId; joyEl.setPointerCapture(e.pointerId);
+  const r = joyEl.getBoundingClientRect(); joy.cx = r.left + r.width / 2; joy.cy = r.top + r.height / 2; joy.R = r.width / 2;
+  moveJoy(e); e.preventDefault();
+});
+joyEl.addEventListener('pointermove', e => { if (e.pointerId === joy.id) moveJoy(e); });
+const endJoy = e => { if (e.pointerId !== joy.id) return; joy.id = null; joy.x = joy.y = 0; knob.style.transform = ''; };
+joyEl.addEventListener('pointerup', endJoy); joyEl.addEventListener('pointercancel', endJoy);
+function moveJoy(e) {
+  let dx = e.clientX - joy.cx, dy = e.clientY - joy.cy;
+  const l = Math.hypot(dx, dy), R = joy.R;
+  if (l > R) { dx = dx / l * R; dy = dy / l * R; }
+  joy.x = dx / R; joy.y = -dy / R;
+  knob.style.transform = `translate(${dx}px, ${dy}px)`;
+}
+// buttons
+const holdBtn = (el, on, off) => {
+  el.addEventListener('pointerdown', e => { initAudio(); el.setPointerCapture(e.pointerId); on(); e.preventDefault(); });
+  el.addEventListener('pointerup', off); el.addEventListener('pointercancel', off); el.addEventListener('lostpointercapture', off);
+};
+holdBtn($('#bBrake'), () => { touch.brake = true; }, () => { touch.brake = false; });
+$('#bAction').addEventListener('click', () => { initAudio(); if (!openScreen) doAction(); });
+$('#bPhone').addEventListener('click', () => { initAudio(); if (!openScreen) openPhone(); });
+$('#prompt').addEventListener('click', () => { if (!openScreen) doAction(); });
+// camera drag
+const cam = { yaw: 0, pitch: 0.32, dragT: 0, shake: 0, drag: null, lx: 0, ly: 0 };
+canvas.addEventListener('pointerdown', e => {
+  initAudio();
+  if (cam.drag !== null) return;
+  cam.drag = e.pointerId; cam.lx = e.clientX; cam.ly = e.clientY;
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerId !== cam.drag) return;
+  const dx = e.clientX - cam.lx, dy = e.clientY - cam.ly; cam.lx = e.clientX; cam.ly = e.clientY;
+  cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.05, 1.2); cam.dragT = 1.6;
+});
+const endDrag = e => { if (e.pointerId === cam.drag) cam.drag = null; };
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+
+/* =========================================================
+   interactions
+   ========================================================= */
+function playerPos() { return P.inCar ? { x: P.inCar.x, z: P.inCar.z } : { x: P.x, z: P.z }; }
+function getInteraction() {
+  const { x, z } = playerPos();
+  for (const p of PLACES) {
+    const r = P.inCar ? 4.8 : 3.3;
+    if ((x - p.mx) ** 2 + (z - p.mz) ** 2 < r * r) {
+      if (job && (p.id === 'pizza' || p.id === 'taxi' || p.id === 'chef' || p.id === 'engineer')) {
+        if (P.inCar && Math.abs(P.inCar.speed) < 3) return { label: '車をおりる', fn: () => exitCar() };
+        return null;
+      }
+      return { label: p.prompt, fn: () => usePlace(p) };
+    }
+  }
+  if (P.inCar) return Math.abs(P.inCar.speed) < 3 ? { label: '車をおりる', fn: () => exitCar() } : null;
+  let best = null, bd = 3.8 * 3.8;
+  for (const c of cars) { const d = (c.x - x) ** 2 + (c.z - z) ** 2; if (d < bd) { bd = d; best = c; } }
+  if (best) return { label: best.type === 'taxi' ? 'タクシーに乗る' : best.type === 'pizza' ? 'デリバリーカーに乗る' : '車に乗る', fn: () => enterCar(best) };
+  return null;
+}
+function doAction() { const it = getInteraction(); if (it) it.fn(); }
+function usePlace(p) {
+  initAudio();
+  if (p.id === 'pizza' || p.id === 'taxi') startDriveJob(p.id);
+  else if (p.id === 'chef') openChef();
+  else if (p.id === 'engineer') openStudio();
+  else if (p.id === 'dealer') openDealer();
+  else if (p.id === 'home') rest();
+}
+
+/* =========================================================
+   goal marker & arrow
+   ========================================================= */
+const goal = { active: false, x: 0, z: 0 };
+const goalGroup = new THREE.Group();
+const goalRingMat = new THREE.MeshBasicMaterial({ color: 0xffc928, transparent: true, opacity: .95, side: THREE.DoubleSide });
+const goalBeamMat = new THREE.MeshBasicMaterial({ color: 0xffc928, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false });
+const goalRing = new THREE.Mesh(new THREE.RingGeometry(3.6, 4.6, 48), goalRingMat); goalRing.rotation.x = -Math.PI / 2; goalRing.position.y = 0.3;
+const goalBeam = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 70, 32, 1, true), goalBeamMat); goalBeam.position.y = 35;
+goalGroup.add(goalRing, goalBeam); goalGroup.visible = false; scene.add(goalGroup);
+const arrowGeo = new THREE.ConeGeometry(0.55, 1.6, 4); arrowGeo.rotateX(Math.PI / 2);
+const arrow = new THREE.Mesh(arrowGeo, new THREE.MeshBasicMaterial({ color: 0xffc928 }));
+arrow.visible = false; scene.add(arrow);
+function setGoal(x, z, color) {
+  goal.active = true; goal.x = x; goal.z = z;
+  goalRingMat.color.set(color); goalBeamMat.color.set(color); arrow.material.color.set(color);
+  goalGroup.position.set(x, 0, z); goalGroup.visible = true; arrow.visible = true;
+}
+function clearGoal() { goal.active = false; goalGroup.visible = false; arrow.visible = false; }
+const customer = makePerson({ shirt: 0x9b5de5, pants: 0x2b2d42 });
+customer.g.visible = false; scene.add(customer.g);
+function placeCustomer(a, colors) {
+  customer.g.traverse(o => { if (o.isMesh && colors && o.material && o.parent && o.parent.type === 'Group' && o.material.userData.shirt) o.material.color.set(colors); });
+  customer.g.position.set(a.x - a.nx * 0.3, 0.15, a.z - a.nz * 0.3);
+  customer.g.rotation.y = Math.atan2(a.nx, a.nz);
+  customer.g.visible = true; customer.wave = 0;
+}
+
+/* =========================================================
+   drive jobs: pizza & taxi
+   ========================================================= */
+let job = null;
+const PASSENGERS = [
+  { name: 'ビジネスマン', mood: 'rush', line: d => `${d}まで急いで！会議におくれそうなんです` },
+  { name: 'おばあちゃん', mood: 'safe', line: d => `${d}まで、ゆっくり安全運転でお願いね` },
+  { name: '観光客', mood: 'normal', line: d => `${d}に行きたいです。よろしく！` },
+  { name: '学生', mood: 'rush', line: d => `${d}まで！テストが始まっちゃう！` },
+  { name: 'お医者さん', mood: 'safe', line: d => `${d}までお願いします。荷物がこわれやすいので丁寧に` },
+  { name: '子ども連れ', mood: 'normal', line: d => `${d}までお願いします` },
+];
+function pickAddress(from, minD, withLandmarks) {
+  const pool = withLandmarks ? addresses.concat(landmarks) : addresses;
+  const ok = pool.filter(a => { const d = Math.hypot(a.gx - from.x, a.gz - from.z); return d > minD && d < 230; });
+  return pick(ok.length ? ok : pool);
+}
+function startDriveJob(id) {
+  if (job) { toast('いまは別の仕事中です。スマホからやめられます'); return; }
+  const pl = PLACES.find(p => p.id === id);
+  for (const c of [...cars]) if (c.jobCar && c !== P.inCar) c.remove();
+  if (P.inCar) exitCar(true);
+  const car = new Car(id, pl.sx, pl.sz, pl.sh); car.jobCar = true;
+  enterCar(car);
+  cam.yaw = pl.sh;
+  const lv = state.jobs[id].lv;
+  job = { id, n: 0, total: 3 + (lv >= 4 ? 1 : 0) + (lv >= 8 ? 1 : 0), earn: 0, xp: 0, log: [] };
+  toast(id === 'pizza' ? 'ピザ配達スタート！あつあつのうちに届けよう' : 'タクシー営業スタート！お客さんを迎えに行こう', 'big');
+  sfx('ok');
+  nextTask();
+  buildJobPanel();
+}
+function nextTask() {
+  const from = playerPos();
+  if (job.id === 'pizza') {
+    const a = pickAddress(from, 70, false);
+    const dist = Math.hypot(a.gx - from.x, a.gz - from.z);
+    Object.assign(job, { stage: 'go', dest: a, t: 0, limit: Math.round(dist / 8.5 + 20), heat: 100, cond: 100, dist });
+    setGoal(a.gx, a.gz, 0xff5b3a); placeCustomer(a);
+  } else {
+    const a = pickAddress(from, 45, true);
+    Object.assign(job, { stage: 'pickup', pick: a, pax: pick(PASSENGERS), t: 0, sat: 100 });
+    setGoal(a.gx, a.gz, 0xffc928); placeCustomer(a);
+  }
+  buildJobPanel();
+}
+function buildJobPanel() {
+  const panel = $('#jobPanel');
+  if (!job || job.id === 'chef' || job.id === 'engineer') { panel.hidden = true; return; }
+  panel.hidden = false;
+  panel.style.setProperty('--job', JOBS[job.id].color);
+  setText($('#jpTitle'), JOBS[job.id].name);
+  const m = $('#jpMeters');
+  if (job.id === 'pizza') m.innerHTML = '<div class="meter"><span>あつあつ度</span><i><b id="m1"></b></i></div><div class="meter"><span>ピザの形</span><i><b id="m2"></b></i></div>';
+  else if (job.stage === 'ride') m.innerHTML = '<div class="meter"><span>満足度</span><i><b id="m1"></b></i></div>';
+  else m.innerHTML = '';
+}
+function updateJobPanel() {
+  if (!job || job.id === 'chef' || job.id === 'engineer') return;
+  const { x, z } = playerPos();
+  const d = Math.round(Math.hypot(goal.x - x, goal.z - z));
+  setText($('#jpCount'), `${job.n + 1}件目 / ${job.total}件`);
+  setText($('#jpDist'), `あと ${d}m`);
+  const timer = $('#jpTimer');
+  if (job.id === 'pizza') {
+    setText($('#jpTask'), `届け先：${job.dest.name}`);
+    const left = Math.ceil(job.limit - job.t);
+    setText(timer, left >= 0 ? `のこり ${left}秒` : `${-left}秒おくれ`);
+    timer.className = left < 10 ? 'late' : '';
+    const m1 = $('#m1'), m2 = $('#m2');
+    if (m1) { m1.style.width = job.heat + '%'; m1.style.background = job.heat > 50 ? 'var(--tomato)' : '#9aa5b8'; }
+    if (m2) { m2.style.width = job.cond + '%'; m2.style.background = job.cond > 50 ? 'var(--mint)' : 'var(--signal)'; }
+  } else if (job.stage === 'pickup') {
+    setText($('#jpTask'), `お客さんを迎えに行こう：${job.pick.name}`);
+    setText(timer, ''); timer.className = '';
+  } else {
+    setText($('#jpTask'), `行き先：${job.dest.name}（${job.pax.name}）`);
+    const left = Math.ceil(job.limit - job.t);
+    setText(timer, left >= 0 ? `目安まで ${left}秒` : `目安を${-left}秒オーバー`);
+    timer.className = left < 0 ? 'late' : '';
+    const m1 = $('#m1'); if (m1) { m1.style.width = job.sat + '%'; m1.style.background = job.sat > 60 ? 'var(--mint)' : job.sat > 30 ? 'var(--signal)' : 'var(--tomato)'; }
+  }
+}
+function onBump(impact, car) {
+  if (car !== P.inCar) return;
+  sfx('bump'); cam.shake = Math.min(0.6, impact * 0.04);
+  if (!job) return;
+  if (job.id === 'pizza' && job.stage === 'go') {
+    job.cond = Math.max(0, job.cond - clamp(impact * 2.2, 6, 30));
+    hint('ドン！ピザがくずれちゃう');
+  }
+  if (job.id === 'taxi' && job.stage === 'ride') {
+    const k = job.pax.mood === 'safe' ? 1.6 : 1;
+    job.sat = Math.max(0, job.sat - clamp(impact * 1.8, 6, 28) * k);
+    hint(job.pax.mood === 'safe' ? '「きゃっ！こわいわ…」' : '「いたた…気をつけて！」');
+  }
+}
+function updateDriveJob(dt) {
+  if (!job || (job.id !== 'pizza' && job.id !== 'taxi')) return;
+  const { x, z } = playerPos();
+  const d = Math.hypot(goal.x - x, goal.z - z);
+  const speed = P.inCar ? Math.abs(P.inCar.speed) : 0;
+  const m = payMult(job.id);
+  if (job.id === 'pizza') {
+    job.t += dt;
+    job.heat = clamp(100 - job.t / job.limit * 50 - Math.max(0, job.t - job.limit) * 2.5, 0, 100);
+    if (d < 5.5) {
+      if (speed > 5) { hint('スピードを落として届けよう'); return; }
+      const q = (0.35 + 0.65 * job.cond / 100) * (0.4 + 0.6 * job.heat / 100);
+      const pay = (60 + job.dist * 0.8) * q * m;
+      const tip = job.t < job.limit ? (job.limit - job.t) * 3 * m : 0;
+      const total = Math.round(pay + tip);
+      addMoney(total); job.earn += total; job.xp += 22;
+      job.log.push([`${job.n + 1}件目 ${job.dest.name}`, yen(total)]);
+      toast(`+${yen(total)}${tip > 0 ? '（はやい！チップ込み）' : ''}`, 'money');
+      toast(job.heat > 60 && job.cond > 60 ? '「あつあつでおいしそう！ありがとう！」' : job.cond < 40 ? '「ピザがぐちゃぐちゃ…」' : '「ありがとう！」');
+      sfx('coin'); customer.wave = 2;
+      job.n++;
+      if (job.n >= job.total) finishDriveJob(); else nextTask();
+    }
+  } else if (job.stage === 'pickup') {
+    if (d < 5.5) {
+      if (!P.inCar || P.inCar.type !== 'taxi') { hint('タクシーに乗って迎えに行こう'); return; }
+      if (speed > 2.5) { hint('止まってお客さんを乗せよう'); return; }
+      customer.g.visible = false;
+      const a = pickAddress({ x, z }, 70, true);
+      const dist = Math.hypot(a.gx - x, a.gz - z);
+      Object.assign(job, { stage: 'ride', dest: a, t: 0, limit: Math.round(dist / 9 + 18), dist, sat: 100 });
+      setGoal(a.gx, a.gz, 0xffc928);
+      toast(`「${job.pax.line(a.name)}」`, 'big');
+      sfx('click');
+      buildJobPanel();
+    }
+  } else {
+    job.t += dt;
+    const kmh = speed * 3.6;
+    if (kmh > 75) { job.sat = Math.max(0, job.sat - dt * (job.pax.mood === 'safe' ? 12 : job.pax.mood === 'rush' ? 2 : 6)); if (job.pax.mood !== 'rush') hint('「スピード出しすぎ…」'); }
+    if (job.t > job.limit && job.pax.mood === 'rush') job.sat = Math.max(0, job.sat - dt * 3);
+    if (d < 5.5 && P.inCar && P.inCar.type === 'taxi') {
+      if (speed > 2.5) { hint('止まってお客さんをおろそう'); return; }
+      const fare = (110 + job.dist * 1.1) * m;
+      let tip = 0;
+      if (job.sat >= 80) tip += fare * 0.2;
+      if (job.pax.mood === 'rush' && job.t < job.limit) tip += (job.limit - job.t) * 4 * m;
+      const total = Math.round(fare * (0.3 + 0.7 * job.sat / 100) + tip);
+      addMoney(total); job.earn += total; job.xp += 24;
+      job.log.push([`${job.n + 1}人目 ${job.pax.name}（満足度${Math.round(job.sat)}）`, yen(total)]);
+      toast(`+${yen(total)}`, 'money');
+      toast(job.sat >= 80 ? '「最高の運転でした！」' : job.sat >= 40 ? '「ありがとう」' : '「もう乗りたくない…」');
+      sfx('coin');
+      customer.g.visible = true; placeCustomer(job.dest); customer.wave = 2;
+      job.n++;
+      if (job.n >= job.total) finishDriveJob(); else nextTask();
+    }
+  }
+}
+function finishDriveJob() {
+  const j = job;
+  clearGoal();
+  addXP(j.id, j.xp);
+  job = null; $('#jobPanel').hidden = true;
+  showResult(`${JOBS[j.id].name} おつかれさま！`, j.log, j.earn, j.id);
+  save();
+}
+function quitJob() {
+  if (!job) return;
+  clearGoal(); customer.g.visible = false;
+  if (job.earn) addXP(job.id, job.xp * 0.5);
+  job = null; $('#jobPanel').hidden = true;
+  toast('仕事をやめました');
+}
+
+/* =========================================================
+   screens
+   ========================================================= */
+const SCREENS = ['title', 'phone', 'dealer', 'result', 'chef', 'studio', 'rest'];
+function showScreen(id) {
+  for (const s of SCREENS) $('#' + s).hidden = s !== id;
+  openScreen = id;
+  joy.x = joy.y = 0; touch.brake = false;
+}
+function closeScreen() {
+  if (openScreen) $('#' + openScreen).hidden = true;
+  openScreen = null; mini = null;
+}
+function levelBlock(id) {
+  const j = state.jobs[id];
+  const pips = Array.from({ length: MAX_LV }, (_, i) => `<div class="pip${i < j.lv ? ' on' : ''}">${i + 1}</div>`).join('');
+  const prog = j.lv >= MAX_LV ? 100 : Math.round(j.xp / xpNeed(j.lv) * 100);
+  return `<div class="lv-row" style="--c:${JOBS[id].color}">
+    <div class="lv-top"><b>${JOBS[id].name}</b><span>レベル ${j.lv} / ${MAX_LV}${j.lv < MAX_LV ? `　つぎまで ${xpNeed(j.lv) - j.xp}` : '　マスター！'}</span></div>
+    <div class="pips">${pips}</div>
+    <div class="xpbar"><b style="width:${prog}%"></b></div></div>`;
+}
+function showResult(title, rows, total, jobId, after) {
+  const body = $('#resultBody');
+  body.innerHTML = `<h2>${esc(title)}</h2>
+    <div class="res-rows">${rows.map(r => `<div><span>${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join('') || '<div><span class="muted">記録なし</span><span></span></div>'}</div>
+    <div class="res-total"><span>合計</span><span>${yen(total)}</span></div>
+    ${jobId ? levelBlock(jobId) : ''}
+    <button class="btn primary" id="resOk" type="button">OK</button>`;
+  showScreen('result');
+  $('#resOk').onclick = () => { closeScreen(); if (after) after(); };
+  $('#resOk').focus();
+}
+function openPhone() {
+  const body = $('#phoneBody');
+  const gamesHtml = state.games.length ? state.games.map((g, i) => `<div class="item"><div><div class="name">${esc(g.title)}</div><div class="sub">${TPL[g.type].name}・${'★'.repeat(g.stars)}${'☆'.repeat(5 - g.stars)}</div></div><button class="btn" data-play="${i}" type="button">あそぶ</button></div>`).join('') : '<div class="muted">まだありません。ピクセルスタジオでゲームを作って発売しよう。</div>';
+  body.innerHTML = `
+    <div class="row" style="justify-content:space-between"><h2>スマホ</h2><button class="btn" id="phClose" type="button">とじる</button></div>
+    <div class="row" style="justify-content:space-between"><span style="font-family:var(--display);font-size:24px;color:var(--signal)">${yen(state.money)}</span><span class="muted">${state.day}日目 ${clockStr()}</span></div>
+    ${job ? `<div class="item"><div><div class="name">いまの仕事：${JOBS[job.id].name}</div><div class="sub">${job.n}件 / ${job.total}件 終わった</div></div><button class="btn danger" id="phQuit" type="button">仕事をやめる</button></div>` : ''}
+    <h3>仕事のレベル（1から10まで）</h3>
+    ${Object.keys(JOBS).map(levelBlock).join('')}
+    <h3>マイカー</h3>
+    <div class="list">${state.cars.map(t => `<div class="item"><div class="row"><span class="swatch" style="background:#${CAR_TYPES[t].color.toString(16).padStart(6, '0')}"></span><div><div class="name">${CAR_TYPES[t].name}</div><div class="sub">${CAR_TYPES[t].desc}</div></div></div><button class="btn" data-car="${t}" type="button">ここによぶ</button></div>`).join('')}</div>
+    <h3>マイゲーム</h3>
+    <div class="list">${gamesHtml}</div>
+    <h3>ヒント</h3>
+    <div class="muted" style="line-height:1.7">光る輪に入ると仕事ができます。地図の「ピ」「タ」「シ」「ゲ」が仕事場、「車」がカーショップ、「家」がわが家です。仕事のレベルが上がると、もらえるお金がふえます。</div>
+    <div class="row"><button class="btn" id="phSave" type="button">セーブする</button><button class="btn danger" id="phReset" type="button">データを消す</button></div>`;
+  showScreen('phone');
+  $('#phClose').onclick = closeScreen;
+  $('#phSave').onclick = () => { save(); toast('セーブしました'); };
+  $('#phReset').onclick = e => {
+    const b = e.currentTarget;
+    if (b.dataset.sure) { try { localStorage.removeItem(SAVE_KEY); } catch (er) { /* ignore */ } location.reload(); }
+    else { b.dataset.sure = '1'; b.textContent = 'もう一度押すと全部消えます'; }
+  };
+  if ($('#phQuit')) $('#phQuit').onclick = () => { quitJob(); closeScreen(); };
+  body.querySelectorAll('[data-car]').forEach(b => b.onclick = () => { closeScreen(); summonCar(b.dataset.car); });
+  body.querySelectorAll('[data-play]').forEach(b => b.onclick = () => { const g = state.games[+b.dataset.play]; openStudio(); openPlay(g, false); });
+}
+function openDealer() {
+  const body = $('#dealerBody');
+  const bar = (v, max) => `<i><b style="width:${Math.round(v / max * 100)}%"></b></i>`;
+  body.innerHTML = `
+    <div class="row" style="justify-content:space-between"><h2>カーショップ ブーン</h2><button class="btn" id="dlClose" type="button">とじる</button></div>
+    <div class="muted">もっているお金：<b style="color:var(--signal)">${yen(state.money)}</b></div>
+    <div class="list">${MY_CARS.map(t => {
+      const c = CAR_TYPES[t], owned = state.cars.includes(t);
+      return `<div class="item"><div class="row"><span class="swatch" style="background:#${c.color.toString(16).padStart(6, '0')}"></span><div><div class="name">${c.name}</div><div class="sub">${c.desc}</div></div></div>
+        <div class="stat-grid"><span>最高速度</span>${bar(c.max, 48)}<span>加速</span>${bar(c.acc, 23)}</div>
+        ${owned ? `<button class="btn" data-ride="${t}" type="button">乗る</button>` : `<button class="btn primary" data-buy="${t}" type="button" ${state.money < c.price ? 'disabled' : ''}>${yen(c.price)}で買う</button>`}</div>`;
+    }).join('')}</div>`;
+  showScreen('dealer');
+  $('#dlClose').onclick = closeScreen;
+  body.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
+    const t = b.dataset.buy, c = CAR_TYPES[t];
+    if (state.money < c.price) return;
+    state.money -= c.price; state.cars.push(t); sfx('lvl');
+    toast(`${c.name}を買った！`, 'big');
+    closeScreen(); summonCar(t);
+  });
+  body.querySelectorAll('[data-ride]').forEach(b => b.onclick = () => { closeScreen(); summonCar(b.dataset.ride); if (myCar) enterCar(myCar); });
+}
+function rest() {
+  if (job) { toast('仕事中は休めません'); return; }
+  showScreen('rest');
+  setTimeout(() => {
+    state.day++; state.time = 8 * 60;
+    let income = 0;
+    for (const g of state.games) income += g.stars * 30;
+    closeScreen();
+    toast(`${state.day}日目の朝です。セーブしました`, 'big');
+    if (income) { addMoney(income); toast(`ゲームの売上 +${yen(income)}`, 'money'); }
+    save();
+  }, 1300);
+}
+function clockStr() { const t = Math.floor(state.time); return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; }
+
+/* =========================================================
+   chef mini game
+   ========================================================= */
+const ING = {
+  bun: ['バンズ', '🍞'], patty: ['パティ', '🥩', '焼く'], cheese: ['チーズ', '🧀'], lettuce: ['レタス', '🥬'], tomato: ['トマト', '🍅'],
+  soup: ['スープ', '🥣'], noodle: ['めん', '🍝', 'ゆでる'], pork: ['チャーシュー', '🍖'], negi: ['ねぎ', '🌱'],
+  rice: ['ごはん', '🍚'], ketchup: ['ケチャップ', '🥫'], egg: ['たまご', '🥚', '焼く'], dress: ['ドレッシング', '🧂'],
+};
+const DISHES = [
+  { n: 'ハンバーガー', e: '🍔', steps: ['bun', 'patty', 'cheese', 'lettuce', 'bun'], price: 130, lv: 1 },
+  { n: 'サラダ', e: '🥗', steps: ['lettuce', 'tomato', 'dress'], price: 80, lv: 1 },
+  { n: 'ラーメン', e: '🍜', steps: ['soup', 'noodle', 'pork', 'negi'], price: 140, lv: 1 },
+  { n: 'オムライス', e: '🍳', steps: ['rice', 'ketchup', 'egg'], price: 120, lv: 3 },
+  { n: 'とくせいバーガー', e: '🍔', steps: ['bun', 'patty', 'cheese', 'tomato', 'lettuce', 'patty', 'bun'], price: 220, lv: 5 },
+];
+const chef = { on: false };
+function openChef() {
+  if (job) { toast('いまは別の仕事中です'); return; }
+  if (P.inCar) exitCar(true);
+  const lv = state.jobs.chef.lv;
+  Object.assign(chef, { on: false, t: 75, orders: [], plate: [], quals: [], earn: 0, served: 0, missed: 0, mist: 0, spawnT: 0, cooking: null, msgT: 0, log: [], lv });
+  job = { id: 'chef' };
+  showScreen('chef');
+  $('#kIntro').hidden = false; $('#kCook').hidden = true;
+  $('#kIngr').innerHTML = Object.entries(ING).map(([k, v]) => `<button class="ing" data-ing="${k}" type="button"><span>${v[1]}</span>${v[0]}${v[2] ? `<small>${v[2]}</small>` : ''}</button>`).join('');
+  $('#kIngr').querySelectorAll('[data-ing]').forEach(b => b.onclick = () => chefPress(b.dataset.ing));
+  renderOrders(); renderPlate(); setText($('#kMsg'), ''); setText($('#kEarn'), yen(0)); setText($('#kTime'), 75);
+  $('#kGo').onclick = () => { $('#kIntro').hidden = true; chef.on = true; spawnOrder(); sfx('ok'); };
+  $('#kQuit').onclick = () => endChef(true);
+  $('#kStop').onclick = cookStop;
+  mini = { update: chefUpdate, key: k => { if (k === ' ' && chef.cooking) cookStop(); if (k === 'escape') endChef(true); } };
+}
+function spawnOrder() {
+  const avail = DISHES.filter(d => d.lv <= chef.lv);
+  const dish = pick(avail);
+  const pat = Math.max(20, 34 - chef.lv) + dish.steps.length * 2;
+  chef.orders.push({ dish, pat, max: pat, id: Math.random() });
+  renderOrders();
+}
+function renderOrders() {
+  const box = $('#kOrders');
+  if (!chef.orders.length) { box.innerHTML = `<div class="k-empty">${chef.on ? 'つぎのお客さんを待っています…' : 'お店を開けると注文がきます'}</div>`; return; }
+  box.innerHTML = chef.orders.map((o, i) => `<div class="ticket${i === 0 ? ' active' : ''}">
+    <div class="t-name"><span>${o.dish.e}</span>${o.dish.n}</div>
+    <div class="t-steps">${o.dish.steps.map((s, k) => `<i class="${i === 0 && k < chef.plate.length ? 'done' : i === 0 && k === chef.plate.length ? 'next' : ''}" title="${ING[s][0]}">${ING[s][1]}</i>`).join('')}</div>
+    <div class="t-bar"><b data-pat="${i}"></b></div></div>`).join('');
+}
+function renderPlate() {
+  $('#kPlate').innerHTML = chef.plate.map(k => `<span>${ING[k][1]}</span>`).join('');
+  const o = chef.orders[0];
+  setText($('#kPlateName'), o ? `いま作っているもの：${o.dish.n}` : 'いちばん左の注文から作ろう');
+}
+function chefMsg(m) { setText($('#kMsg'), m); chef.msgT = 1.6; }
+function chefPress(k) {
+  if (!chef.on || chef.cooking) return;
+  const o = chef.orders[0];
+  if (!o) { chefMsg('まだ注文がありません'); return; }
+  const need = o.dish.steps[chef.plate.length];
+  if (k !== need) {
+    chef.mist++; o.pat = Math.max(1, o.pat - 3); sfx('bad');
+    chefMsg(`ちがうよ！つぎは「${ING[need][0]}」`);
+    const pl = $('#kPlate'); pl.classList.remove('shake'); void pl.offsetWidth; pl.classList.add('shake');
+    return;
+  }
+  if (ING[k][2]) { chef.cooking = { k, p: 0, dir: 1, sp: 1.1 + chef.lv * 0.08 }; setText($('#kCookName'), `${ING[k][1]} ${ING[k][0]}を${ING[k][2]}！`); $('#kCook').hidden = false; return; }
+  addToPlate(k, 1); sfx('click');
+}
+function cookStop() {
+  const c = chef.cooking; if (!c) return;
+  const p = c.p;
+  let q, msg;
+  if (p >= 0.42 && p <= 0.58) { q = 1.25; msg = 'パーフェクト！'; sfx('coin'); }
+  else if (p >= 0.28 && p <= 0.72) { q = 1; msg = 'いい感じ！'; sfx('click'); }
+  else { q = 0.6; msg = p < 0.28 ? 'ちょっと生焼け…' : 'こげちゃった…'; sfx('bad'); }
+  chef.cooking = null; $('#kCook').hidden = true;
+  chefMsg(msg);
+  addToPlate(c.k, q);
+}
+function addToPlate(k, q) {
+  chef.plate.push(k); chef.quals.push(q);
+  const o = chef.orders[0];
+  if (chef.plate.length >= o.dish.steps.length) {
+    const avg = chef.quals.reduce((a, b) => a + b, 0) / chef.quals.length;
+    const pay = Math.round(o.dish.price * avg * (0.7 + 0.3 * o.pat / o.max) * payMult('chef'));
+    chef.earn += pay; chef.served++; addMoney(pay);
+    chef.log.push([`${o.dish.n}${avg > 1.1 ? '（最高のできばえ）' : ''}`, yen(pay)]);
+    chefMsg(`${o.dish.e} できあがり！ +${yen(pay)}`); sfx('ok');
+    chef.orders.shift(); chef.plate = []; chef.quals = [];
+    setText($('#kEarn'), yen(chef.earn));
+    if (chef.orders.length === 0) chef.spawnT = Math.min(chef.spawnT, 0.8);
+  }
+  renderOrders(); renderPlate();
+}
+function chefUpdate(dt) {
+  if (!chef.on) return;
+  chef.t -= dt;
+  setText($('#kTime'), Math.max(0, Math.ceil(chef.t)));
+  if (chef.msgT > 0) { chef.msgT -= dt; if (chef.msgT <= 0) setText($('#kMsg'), ''); }
+  if (chef.cooking) {
+    const c = chef.cooking;
+    c.p += c.dir * c.sp * dt;
+    if (c.p > 1) { c.p = 1; c.dir = -1; } if (c.p < 0) { c.p = 0; c.dir = 1; }
+    $('#kNeedle').style.left = (c.p * 100) + '%';
+    return;
+  }
+  chef.spawnT -= dt;
+  if (chef.spawnT <= 0 && chef.orders.length < 3) { spawnOrder(); chef.spawnT = Math.max(5, 10 - chef.lv * 0.5); }
+  let changed = false;
+  chef.orders.forEach((o, i) => {
+    o.pat -= dt;
+    const b = document.querySelector(`[data-pat="${i}"]`);
+    if (b) { b.style.width = clamp(o.pat / o.max * 100, 0, 100) + '%'; b.style.background = o.pat / o.max < 0.3 ? '#e2462b' : '#2fae73'; }
+  });
+  while (chef.orders.length && chef.orders.some(o => o.pat <= 0)) {
+    const i = chef.orders.findIndex(o => o.pat <= 0);
+    if (i === 0) { chef.plate = []; chef.quals = []; }
+    chef.orders.splice(i, 1); chef.missed++; changed = true;
+    chefMsg('お客さんが帰ってしまった…'); sfx('bad');
+  }
+  if (changed) { renderOrders(); renderPlate(); }
+  if (chef.t <= 0) endChef(false);
+}
+function endChef(quit) {
+  chef.on = false; chef.cooking = null;
+  const xp = chef.served * 14 + (quit ? 0 : 10);
+  addXP('chef', xp);
+  job = null; mini = null;
+  const rows = chef.log.slice();
+  if (chef.missed) rows.push([`帰ってしまったお客さん ${chef.missed}人`, '0円']);
+  if (chef.mist) rows.push([`材料のまちがい ${chef.mist}回`, '']);
+  showResult(quit ? 'お店を閉めました' : 'シェフの仕事 おつかれさま！', rows, chef.earn, 'chef');
+  save();
+}
+
+/* =========================================================
+   game engineer: studio, editor and the mini game engine
+   ========================================================= */
+const GW = 480, GH = 280;
+const TPL = {
+  jump: { name: 'ジャンプアクション', desc: 'ブロックやコイン、敵をならべてステージを作ろう' },
+  shoot: { name: 'シューティング', desc: '敵の数や動きを決めて、うちゅうの戦いを作ろう' },
+  block: { name: 'ブロックくずし', desc: 'ブロックをならべて、自分だけの面を作ろう' },
+};
+function defaultGame(type) {
+  if (type === 'jump') {
+    const W = 40, H = 14;
+    const g = Array.from({ length: H }, () => Array(W).fill('.'));
+    for (let x = 0; x < W; x++) if (!(x >= 14 && x <= 15) && !(x >= 27 && x <= 28)) { g[13][x] = '#'; g[12][x] = '#'; }
+    for (let x = 8; x <= 11; x++) g[9][x] = '#';
+    for (let x = 17; x <= 20; x++) g[8][x] = '#';
+    for (let x = 30; x <= 33; x++) g[9][x] = '#';
+    [[8, 9], [8, 10], [7, 18], [7, 19], [8, 31], [8, 32], [11, 24]].forEach(([y, x]) => { g[y][x] = 'c'; });
+    [[11, 12], [11, 22], [11, 35]].forEach(([y, x]) => { g[y][x] = 'e'; });
+    g[11][25] = '^'; g[11][2] = 'S'; g[11][38] = 'G';
+    return { type, title: 'ジャンプランド', grid: g.map(r => r.join('')), set: { speed: 5, jump: 5, gravity: 5, lives: 3 }, colors: { hero: '#ff5b3a', bg: '#8fd3ff', block: '#8a5a33' }, tested: false };
+  }
+  if (type === 'shoot') return { type, title: 'ギャラクシーパトロール', set: { speed: 5, count: 4, espeed: 4, fire: 5, lives: 3 }, pattern: 'zigzag', boss: true, colors: { hero: '#5fbfff', enemy: '#ff5b3a', bg: '#101a3a' }, tested: false };
+  return { type, title: 'ブロックブレイカー', grid: ['..XX....XX..', '111111111111', '122222222221', '12HHHHHHHH21', '122222222221', '111111111111', '............'], set: { ball: 4, paddle: 5, lives: 3 }, colors: { paddle: '#ffc928', ball: '#ffffff', bg: '#1d2b4f' }, tested: false };
+}
+const SCHEMA = {
+  jump: [['speed', 'スピード'], ['jump', 'ジャンプ力'], ['gravity', '重力'], ['lives', 'ライフ']],
+  shoot: [['speed', '自機のスピード'], ['count', '敵の数'], ['espeed', '敵の速さ'], ['fire', '連射'], ['lives', 'ライフ']],
+  block: [['ball', 'ボールの速さ'], ['paddle', 'パドルの長さ'], ['lives', 'ライフ']],
+};
+const COLOR_SCHEMA = {
+  jump: [['hero', '主人公'], ['bg', '背景'], ['block', 'ブロック']],
+  shoot: [['hero', '自機'], ['enemy', '敵'], ['bg', '背景']],
+  block: [['paddle', 'パドル'], ['ball', 'ボール'], ['bg', '背景']],
+};
+const TOOLS = {
+  jump: [['#', 'ブロック', '#8a5a33'], ['c', 'コイン', '#ffd23f'], ['^', 'トゲ', '#9aa5b8'], ['e', 'てき', '#9b5de5'], ['S', 'スタート', '#38d39f'], ['G', 'ゴール', '#ff5b3a'], ['.', 'けしゴム', '#222']],
+  block: [['1', '赤ブロック', '#ff7a59'], ['2', '青ブロック', '#3fb8c9'], ['H', 'かたいブロック', '#8d99c8'], ['X', 'こわれない', '#4a4f63'], ['.', 'けしゴム', '#222']],
+};
+const BRICK_COL = { '1': '#ff7a59', '2': '#3fb8c9', 'H': '#8d99c8', 'X': '#4a4f63' };
+const gpad = { left: false, right: false, up: false, down: false, a: false };
+function readPad() {
+  const k = keys;
+  return {
+    left: !!(k.arrowleft || k.a || gpad.left), right: !!(k.arrowright || k.d || gpad.right),
+    up: !!(k.arrowup || k.w || gpad.up), down: !!(k.arrowdown || k.s || gpad.down),
+    a: !!(k[' '] || k.z || k.j || k.enter || gpad.a),
+  };
+}
+function shade(hex, amt) { const c = new THREE.Color(hex); c.offsetHSL(0, 0, amt); return '#' + c.getHexString(); }
+
+function makeJump(data) {
+  const T = 20;
+  const grid = data.grid.map(r => r.split(''));
+  const H = grid.length, W = grid[0].length;
+  const s = data.set, col = data.colors;
+  let start = { x: 1, y: H - 3 };
+  const enemies0 = []; let coinTotal = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const c = grid[y][x];
+    if (c === 'S') { start = { x, y }; grid[y][x] = '.'; }
+    else if (c === 'e') { enemies0.push({ x: x * T + 2, y: y * T + 4 }); grid[y][x] = '.'; }
+    else if (c === 'c') coinTotal++;
+  }
+  const base = grid.map(r => r.slice());
+  const spd = 60 + s.speed * 14, g = 900 + s.gravity * 140, jh = (1.3 + s.jump * 0.42) * T, jv = Math.sqrt(2 * g * jh);
+  let p, enemies, lives, got, status, camX, t, prevA, score;
+  function reset(full) {
+    if (full) {
+      for (let y = 0; y < H; y++) grid[y] = base[y].slice();
+      enemies = enemies0.map(e => ({ x: e.x, y: e.y, w: 16, h: 16, vx: -(30 + s.speed * 4), alive: true }));
+      lives = s.lives; got = 0; score = 0; status = 'play'; t = 0;
+    }
+    p = { x: start.x * T + 3, y: start.y * T + 2, w: 14, h: 18, vx: 0, vy: 0, on: false, face: 1, inv: full ? 0 : 1.2 };
+    camX = 0; prevA = true;
+  }
+  reset(true);
+  const solid = (tx, ty) => { if (tx < 0 || tx >= W) return true; if (ty < 0 || ty >= H) return false; return grid[ty][tx] === '#'; };
+  function collideX() {
+    const y0 = Math.floor(p.y / T), y1 = Math.floor((p.y + p.h - 0.01) / T);
+    if (p.vx > 0) { const tx = Math.floor((p.x + p.w) / T); for (let ty = y0; ty <= y1; ty++) if (solid(tx, ty)) { p.x = tx * T - p.w; p.vx = 0; break; } }
+    else if (p.vx < 0) { const tx = Math.floor(p.x / T); for (let ty = y0; ty <= y1; ty++) if (solid(tx, ty)) { p.x = (tx + 1) * T; p.vx = 0; break; } }
+  }
+  function collideY() {
+    const x0 = Math.floor(p.x / T), x1 = Math.floor((p.x + p.w - 0.01) / T);
+    if (p.vy > 0) { const ty = Math.floor((p.y + p.h) / T); for (let tx = x0; tx <= x1; tx++) if (solid(tx, ty)) { p.y = ty * T - p.h; p.vy = 0; p.on = true; break; } }
+    else if (p.vy < 0) { const ty = Math.floor(p.y / T); for (let tx = x0; tx <= x1; tx++) if (solid(tx, ty)) { p.y = (ty + 1) * T; p.vy = 0; break; } }
+  }
+  function die() {
+    lives--; sfx('bad');
+    if (lives <= 0) { status = 'over'; return; }
+    reset(false);
+  }
+  return {
+    get status() { return status; },
+    get score() { return score; },
+    update(dt) {
+      const inp = readPad();
+      const a = inp.a || inp.up, aP = a && !prevA; prevA = a;
+      if (status !== 'play') { if (status === 'over' && aP) reset(true); return; }
+      t += dt; p.inv -= dt;
+      const dir = (inp.right ? 1 : 0) - (inp.left ? 1 : 0);
+      p.vx = lerp(p.vx, dir * spd, Math.min(1, dt * 12)); if (dir) p.face = dir;
+      if (aP && p.on) { p.vy = -jv; sfx('jump'); }
+      if (!a && p.vy < 0) p.vy += g * dt * 1.4;
+      p.vy = Math.min(p.vy + g * dt, 800);
+      p.on = false;
+      const steps = Math.max(1, Math.ceil(Math.max(Math.abs(p.vx), Math.abs(p.vy)) * dt / 6));
+      for (let i = 0; i < steps; i++) { p.x += p.vx * dt / steps; collideX(); p.y += p.vy * dt / steps; collideY(); }
+      // tiles
+      const x0 = Math.floor((p.x + 2) / T), x1 = Math.floor((p.x + p.w - 2) / T), y0 = Math.floor((p.y + 2) / T), y1 = Math.floor((p.y + p.h - 2) / T);
+      for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
+        if (ty < 0 || ty >= H || tx < 0 || tx >= W) continue;
+        const c = grid[ty][tx];
+        if (c === 'c') { grid[ty][tx] = '.'; got++; score += 100; sfx('coin'); }
+        else if (c === '^' && p.inv <= 0) { die(); return; }
+        else if (c === 'G') { status = 'clear'; score += 500 + lives * 200; sfx('lvl'); return; }
+      }
+      for (const e of enemies) {
+        if (!e.alive) continue;
+        e.x += e.vx * dt;
+        const front = e.vx > 0 ? e.x + e.w : e.x;
+        const tx = Math.floor(front / T), ty = Math.floor((e.y + e.h / 2) / T), fy = Math.floor((e.y + e.h + 1) / T);
+        if (solid(tx, ty) || !solid(tx, fy)) e.vx = -e.vx;
+        if (p.x < e.x + e.w && p.x + p.w > e.x && p.y < e.y + e.h && p.y + p.h > e.y) {
+          if (p.vy > 0 && p.y + p.h - e.y < 12) { e.alive = false; p.vy = -jv * 0.55; score += 200; sfx('hit'); }
+          else if (p.inv <= 0) { die(); return; }
+        }
+      }
+      if (p.y > H * T + 40) { die(); return; }
+      camX = clamp(p.x - GW / 2 + p.w / 2, 0, Math.max(0, W * T - GW));
+    },
+    draw(c) {
+      c.fillStyle = col.bg; c.fillRect(0, 0, GW, GH);
+      c.fillStyle = shade(col.bg, -0.1);
+      for (let i = -1; i < 6; i++) { const hx = i * 140 - (camX * 0.3) % 140; c.beginPath(); c.arc(hx + 70, GH, 90, Math.PI, 0); c.fill(); }
+      c.save(); c.translate(-Math.round(camX), 0);
+      const tx0 = Math.max(0, Math.floor(camX / T)), tx1 = Math.min(W - 1, Math.ceil((camX + GW) / T));
+      for (let y = 0; y < H; y++) for (let x = tx0; x <= tx1; x++) {
+        const ch = grid[y][x], X = x * T, Y = y * T;
+        if (ch === '#') { c.fillStyle = col.block; c.fillRect(X, Y, T, T); c.fillStyle = shade(col.block, 0.12); c.fillRect(X, Y, T, 4); c.strokeStyle = 'rgba(0,0,0,.18)'; c.strokeRect(X + .5, Y + .5, T - 1, T - 1); }
+        else if (ch === 'c') { const b = Math.sin(t * 5 + x) * 2; c.fillStyle = '#ffd23f'; c.beginPath(); c.ellipse(X + 10, Y + 10 + b, 6, 7, 0, 0, 7); c.fill(); c.fillStyle = '#fff3b0'; c.fillRect(X + 8, Y + 6 + b, 2, 6); }
+        else if (ch === '^') { c.fillStyle = '#9aa5b8'; for (let k = 0; k < 2; k++) { c.beginPath(); c.moveTo(X + k * 10, Y + T); c.lineTo(X + k * 10 + 5, Y + 6); c.lineTo(X + k * 10 + 10, Y + T); c.fill(); } }
+        else if (ch === 'G') { c.fillStyle = '#eee'; c.fillRect(X + 9, Y - 20, 3, 40); c.fillStyle = '#ff5b3a'; c.beginPath(); c.moveTo(X + 12, Y - 20); c.lineTo(X + 26, Y - 14); c.lineTo(X + 12, Y - 8); c.fill(); }
+      }
+      for (const e of enemies) if (e.alive) { c.fillStyle = '#9b5de5'; rrect(c, e.x, e.y, e.w, e.h, 5); c.fill(); c.fillStyle = '#fff'; c.fillRect(e.x + (e.vx > 0 ? 9 : 3), e.y + 4, 4, 4); }
+      if (p.inv <= 0 || Math.floor(t * 12) % 2) {
+        c.fillStyle = col.hero; rrect(c, p.x, p.y, p.w, p.h, 4); c.fill();
+        c.fillStyle = '#fff'; c.fillRect(p.x + (p.face > 0 ? 8 : 2), p.y + 4, 4, 5);
+        c.fillStyle = '#111'; c.fillRect(p.x + (p.face > 0 ? 10 : 2), p.y + 5, 2, 3);
+      }
+      c.restore();
+      hudText(c, data.title, `コイン ${got}/${coinTotal}`, lives);
+      overlayStatus(c, status);
+    },
+  };
+}
+
+function makeShoot(data) {
+  const s = data.set, col = data.colors;
+  const WAVES = 3, perWave = 2 + s.count * 2, ev = 40 + s.espeed * 14;
+  const stars = Array.from({ length: 50 }, () => ({ x: Math.random() * GW, y: Math.random() * GH, v: 20 + Math.random() * 60 }));
+  let p, bullets, ebul, enemies, wave, toSpawn, spawnT, lives, status, boss, bossDone, t, fireT, score, parts;
+  function reset() {
+    p = { x: 60, y: GH / 2, inv: 0 }; bullets = []; ebul = []; enemies = []; parts = [];
+    wave = 0; toSpawn = 0; spawnT = 0; lives = s.lives; status = 'play'; boss = null; bossDone = false; t = 0; fireT = 0; score = 0;
+    startWave();
+  }
+  function startWave() { wave++; toSpawn = perWave; spawnT = 0.6; }
+  function boom(x, y, c) { for (let i = 0; i < 10; i++) parts.push({ x, y, vx: rnd(-120, 120), vy: rnd(-120, 120), l: 0.5, c }); sfx('boom'); }
+  function hurt() { if (p.inv > 0) return; lives--; p.inv = 1.6; sfx('bad'); boom(p.x, p.y, col.hero); if (lives <= 0) status = 'over'; }
+  let prevA = true;
+  reset();
+  return {
+    get status() { return status; },
+    get score() { return score; },
+    update(dt) {
+      const inp = readPad(); const aP = inp.a && !prevA; prevA = inp.a;
+      for (const st of stars) { st.x -= st.v * dt; if (st.x < 0) { st.x = GW; st.y = Math.random() * GH; } }
+      for (const q of parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.l -= dt; }
+      parts = parts.filter(q => q.l > 0);
+      if (status !== 'play') { if (status === 'over' && aP) reset(); return; }
+      t += dt; p.inv -= dt;
+      const sp = 90 + s.speed * 20;
+      p.x = clamp(p.x + ((inp.right ? 1 : 0) - (inp.left ? 1 : 0)) * sp * dt, 14, GW - 14);
+      p.y = clamp(p.y + ((inp.down ? 1 : 0) - (inp.up ? 1 : 0)) * sp * dt, 14, GH - 14);
+      fireT -= dt;
+      if (fireT <= 0) { bullets.push({ x: p.x + 12, y: p.y }); fireT = 0.5 - s.fire * 0.038; }
+      if (toSpawn > 0) {
+        spawnT -= dt;
+        if (spawnT <= 0) { const y = rnd(24, GH - 24); enemies.push({ x: GW + 14, y, y0: y, t: 0, hp: 1 }); toSpawn--; spawnT = Math.max(0.25, 1.1 - s.count * 0.07); }
+      }
+      for (const e of enemies) {
+        e.t += dt; e.x -= ev * dt;
+        if (data.pattern === 'zigzag') e.y = clamp(e.y0 + Math.sin(e.t * 3) * 36, 12, GH - 12);
+        else if (data.pattern === 'aim') e.y += clamp(p.y - e.y, -1, 1) * ev * 0.5 * dt;
+        if (Math.random() < dt * (0.12 + s.espeed * 0.035) && e.x < GW - 20) { const a = Math.atan2(p.y - e.y, p.x - e.x), v = 140 + s.espeed * 10; ebul.push({ x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v }); }
+        if (Math.hypot(e.x - p.x, e.y - p.y) < 18) { e.hp = 0; boom(e.x, e.y, col.enemy); hurt(); }
+      }
+      if (boss) {
+        boss.t += dt; boss.x = lerp(boss.x, GW - 80, dt * 1.5); boss.y = GH / 2 + Math.sin(boss.t * 1.2) * 90;
+        boss.fire -= dt;
+        if (boss.fire <= 0) { boss.fire = Math.max(0.6, 1.5 - s.espeed * 0.08); for (let k = -2; k <= 2; k++) { const a = Math.PI + k * 0.25; ebul.push({ x: boss.x - 20, y: boss.y, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160 }); } }
+        if (Math.hypot(boss.x - p.x, boss.y - p.y) < 36) hurt();
+      }
+      for (const b of bullets) {
+        b.x += 420 * dt;
+        for (const e of enemies) if (e.hp > 0 && Math.abs(b.x - e.x) < 12 && Math.abs(b.y - e.y) < 12) { e.hp = 0; b.x = 9999; score += 100; boom(e.x, e.y, col.enemy); }
+        if (boss && Math.abs(b.x - boss.x) < 30 && Math.abs(b.y - boss.y) < 30) { b.x = 9999; boss.hp--; sfx('hit'); if (boss.hp <= 0) { score += 2000; boom(boss.x, boss.y, col.enemy); boom(boss.x + 10, boss.y - 10, '#fff'); boss = null; bossDone = true; } }
+      }
+      for (const b of ebul) { b.x += b.vx * dt; b.y += b.vy * dt; if (Math.hypot(b.x - p.x, b.y - p.y) < 8) { b.x = -9999; hurt(); } }
+      bullets = bullets.filter(b => b.x < GW + 10);
+      ebul = ebul.filter(b => b.x > -10 && b.x < GW + 10 && b.y > -10 && b.y < GH + 10);
+      enemies = enemies.filter(e => e.hp > 0 && e.x > -20);
+      if (status === 'play' && toSpawn === 0 && enemies.length === 0 && !boss) {
+        if (wave < WAVES) startWave();
+        else if (data.boss && !bossDone) { const hp = 20 + s.espeed * 3; boss = { x: GW + 40, y: GH / 2, hp, max: hp, t: 0, fire: 2 }; }
+        else { status = 'clear'; score += lives * 300; sfx('lvl'); }
+      }
+    },
+    draw(c) {
+      c.fillStyle = col.bg; c.fillRect(0, 0, GW, GH);
+      c.fillStyle = 'rgba(255,255,255,.7)'; for (const st of stars) c.fillRect(st.x, st.y, st.v > 50 ? 2 : 1, st.v > 50 ? 2 : 1);
+      for (const e of enemies) { c.fillStyle = col.enemy; c.beginPath(); c.moveTo(e.x - 11, e.y); c.lineTo(e.x, e.y - 10); c.lineTo(e.x + 11, e.y); c.lineTo(e.x, e.y + 10); c.fill(); c.fillStyle = '#fff'; c.fillRect(e.x - 5, e.y - 2, 4, 4); }
+      if (boss) {
+        c.fillStyle = col.enemy; rrect(c, boss.x - 30, boss.y - 30, 60, 60, 14); c.fill();
+        c.fillStyle = shade(col.enemy, -0.2); c.fillRect(boss.x - 34, boss.y - 8, 12, 16);
+        c.fillStyle = '#fff'; c.fillRect(boss.x - 16, boss.y - 12, 8, 8); c.fillRect(boss.x + 2, boss.y - 12, 8, 8);
+        c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(GW / 2 - 100, 26, 200, 6); c.fillStyle = '#ff5b3a'; c.fillRect(GW / 2 - 100, 26, 200 * boss.hp / boss.max, 6);
+      }
+      c.fillStyle = '#ffe680'; for (const b of bullets) c.fillRect(b.x - 4, b.y - 1.5, 8, 3);
+      c.fillStyle = '#ff9f80'; for (const b of ebul) { c.beginPath(); c.arc(b.x, b.y, 3, 0, 7); c.fill(); }
+      if (status !== 'over' && (p.inv <= 0 || Math.floor(t * 12) % 2)) {
+        c.fillStyle = col.hero; c.beginPath(); c.moveTo(p.x + 14, p.y); c.lineTo(p.x - 10, p.y - 10); c.lineTo(p.x - 5, p.y); c.lineTo(p.x - 10, p.y + 10); c.fill();
+        c.fillStyle = '#ffb347'; c.fillRect(p.x - 12, p.y - 2, 4 + Math.random() * 4, 4);
+      }
+      for (const q of parts) { c.fillStyle = q.c; c.globalAlpha = q.l * 2; c.fillRect(q.x - 2, q.y - 2, 4, 4); }
+      c.globalAlpha = 1;
+      hudText(c, data.title, boss ? 'ボス！' : `ウェーブ ${wave}/${WAVES}`, lives);
+      overlayStatus(c, status);
+    },
+  };
+}
+
+function makeBlock(data) {
+  const s = data.set, col = data.colors;
+  const grid0 = data.grid.map(r => r.split(''));
+  const R = grid0.length, C = grid0[0].length, bw = GW / C, bh = 16, top = 34;
+  const pw = 36 + s.paddle * 9, bs = 150 + s.ball * 22;
+  let hp, pad, ball, lives, status, score, prevA = true, parts;
+  function reset() {
+    hp = grid0.map(r => r.map(c => c === 'H' ? 2 : (c === '1' || c === '2') ? 1 : c === 'X' ? -1 : 0));
+    pad = { x: GW / 2, y: GH - 18 }; ball = { x: 0, y: 0, vx: 0, vy: 0, r: 5, stuck: true };
+    lives = s.lives; status = 'play'; score = 0; parts = [];
+  }
+  reset();
+  const remaining = () => hp.reduce((a, r) => a + r.filter(v => v > 0).length, 0);
+  function hitAt(x, y) {
+    const cc = Math.floor(x / bw), rr = Math.floor((y - top) / bh);
+    if (rr < 0 || rr >= R || cc < 0 || cc >= C) return false;
+    const v = hp[rr][cc];
+    if (v === 0) return false;
+    if (v > 0) {
+      hp[rr][cc]--;
+      if (hp[rr][cc] === 0) { score += 50; sfx('hit'); for (let i = 0; i < 6; i++) parts.push({ x: cc * bw + bw / 2, y: top + rr * bh + 8, vx: rnd(-80, 80), vy: rnd(-80, 40), l: .5, c: BRICK_COL[grid0[rr][cc]] }); }
+      else sfx('click');
+    } else sfx('click');
+    return true;
+  }
+  return {
+    get status() { return status; },
+    get score() { return score; },
+    update(dt) {
+      const inp = readPad(); const aP = inp.a && !prevA; prevA = inp.a;
+      for (const q of parts) { q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 200 * dt; q.l -= dt; }
+      parts = parts.filter(q => q.l > 0);
+      if (status !== 'play') { if (status === 'over' && aP) reset(); return; }
+      pad.x = clamp(pad.x + ((inp.right ? 1 : 0) - (inp.left ? 1 : 0)) * (280 + s.ball * 10) * dt, pw / 2, GW - pw / 2);
+      if (ball.stuck) {
+        ball.x = pad.x; ball.y = pad.y - 11;
+        if (aP || inp.up) { ball.stuck = false; const a = -Math.PI / 2 + rnd(-0.4, 0.4); ball.vx = Math.cos(a) * bs; ball.vy = Math.sin(a) * bs; sfx('jump'); }
+        return;
+      }
+      const n = 3;
+      for (let i = 0; i < n; i++) {
+        ball.x += ball.vx * dt / n;
+        if (ball.x < ball.r) { ball.x = ball.r; ball.vx = Math.abs(ball.vx); }
+        if (ball.x > GW - ball.r) { ball.x = GW - ball.r; ball.vx = -Math.abs(ball.vx); }
+        if (hitAt(ball.x + Math.sign(ball.vx) * ball.r, ball.y)) { ball.vx = -ball.vx; ball.x += ball.vx * dt / n; }
+        ball.y += ball.vy * dt / n;
+        if (ball.y < ball.r) { ball.y = ball.r; ball.vy = Math.abs(ball.vy); }
+        if (hitAt(ball.x, ball.y + Math.sign(ball.vy) * ball.r)) { ball.vy = -ball.vy; ball.y += ball.vy * dt / n; }
+        if (ball.vy > 0 && ball.y + ball.r >= pad.y - 4 && ball.y < pad.y + 6 && Math.abs(ball.x - pad.x) < pw / 2 + ball.r) {
+          const off = clamp((ball.x - pad.x) / (pw / 2), -1, 1), a = -Math.PI / 2 + off * 1.05;
+          ball.vx = Math.cos(a) * bs; ball.vy = Math.sin(a) * bs; ball.y = pad.y - 4 - ball.r; sfx('click');
+        }
+      }
+      if (ball.y > GH + 10) { lives--; sfx('bad'); ball.stuck = true; if (lives <= 0) status = 'over'; }
+      if (remaining() === 0) { status = 'clear'; score += lives * 300; sfx('lvl'); }
+    },
+    draw(c) {
+      c.fillStyle = col.bg; c.fillRect(0, 0, GW, GH);
+      for (let r = 0; r < R; r++) for (let k = 0; k < C; k++) {
+        const v = hp[r][k]; if (v === 0) continue;
+        const ch = grid0[r][k], x = k * bw, y = top + r * bh;
+        c.fillStyle = BRICK_COL[ch]; c.fillRect(x + 1, y + 1, bw - 2, bh - 2);
+        c.fillStyle = 'rgba(255,255,255,.25)'; c.fillRect(x + 1, y + 1, bw - 2, 3);
+        if (ch === 'H' && v === 1) { c.strokeStyle = 'rgba(0,0,0,.5)'; c.beginPath(); c.moveTo(x + 8, y + 2); c.lineTo(x + 18, y + 10); c.lineTo(x + 26, y + 5); c.stroke(); }
+      }
+      for (const q of parts) { c.fillStyle = q.c; c.fillRect(q.x - 2, q.y - 2, 4, 4); }
+      c.fillStyle = col.paddle; rrect(c, pad.x - pw / 2, pad.y - 4, pw, 9, 4); c.fill();
+      c.fillStyle = col.ball; c.beginPath(); c.arc(ball.x, ball.y, ball.r, 0, 7); c.fill();
+      hudText(c, data.title, `のこり ${remaining()}個`, lives);
+      if (ball.stuck && status === 'play') { c.fillStyle = 'rgba(255,255,255,.85)'; c.font = '14px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.fillText('A ボタン（Space）で発射', GW / 2, GH - 46); }
+      overlayStatus(c, status);
+    },
+  };
+}
+function hudText(c, title, mid, lives) {
+  c.font = '13px "Zen Maru Gothic", sans-serif'; c.textBaseline = 'top'; c.textAlign = 'left';
+  c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(0, 0, GW, 20);
+  c.fillStyle = '#fff'; c.fillText(title, 8, 3);
+  c.textAlign = 'center'; c.fillText(mid, GW / 2, 3);
+  c.textAlign = 'right'; c.fillStyle = '#ff7a8a'; c.fillText('♥'.repeat(Math.max(0, lives)), GW - 8, 3);
+  c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+}
+function overlayStatus(c, status) {
+  if (status === 'play') return;
+  c.fillStyle = 'rgba(0,0,0,.55)'; c.fillRect(0, 0, GW, GH);
+  c.textAlign = 'center'; c.fillStyle = status === 'clear' ? '#ffc928' : '#fff';
+  c.font = '34px "Mochiy Pop One", sans-serif'; c.fillText(status === 'clear' ? 'クリア！' : 'ゲームオーバー', GW / 2, GH / 2);
+  c.font = '14px "Zen Maru Gothic", sans-serif'; c.fillStyle = '#fff';
+  c.fillText(status === 'clear' ? 'おめでとう！' : 'A ボタン（Space）でもう一度', GW / 2, GH / 2 + 30);
+  c.textAlign = 'left';
+}
+const MAKERS = { jump: makeJump, shoot: makeShoot, block: makeBlock };
+
+const studio = { cur: null, tool: '#', mode: 'home' };
+function openStudio() {
+  if (job && job.id !== 'engineer') { toast('いまは別の仕事中です'); return; }
+  if (P.inCar) exitCar(true);
+  job = { id: 'engineer' };
+  showScreen('studio');
+  studioHome();
+}
+function closeStudio() { job = null; closeScreen(); save(); }
+function studioHome() {
+  studio.mode = 'home'; mini = { update() {}, key: k => { if (k === 'escape') closeStudio(); } };
+  const body = $('#studioBody');
+  const lv = state.jobs.engineer.lv;
+  body.innerHTML = `
+    <div class="st-top"><h2>ピクセルスタジオ</h2><button class="btn" id="stClose" type="button">スタジオを出る</button></div>
+    <div class="muted">好きなゲームを作って遊ぼう。テストプレイでクリアできたら発売できて、お金がもらえます。家で休むたびに、発売したゲームの売上も入ります。</div>
+    ${levelBlock('engineer')}
+    <h3>新しいゲームを作る</h3>
+    <div class="tpl-grid">${Object.keys(TPL).map(k => `<button class="tpl" data-tpl="${k}" type="button"><canvas width="${GW}" height="${GH}" data-thumb="${k}"></canvas><b>${TPL[k].name}</b><span>${TPL[k].desc}</span></button>`).join('')}</div>
+    <h3>発売したゲーム（${state.games.length}本）</h3>
+    <div class="list">${state.games.length ? state.games.map((g, i) => `<div class="item"><div><div class="name">${esc(g.title)}</div><div class="sub">${TPL[g.type].name}・${'★'.repeat(g.stars)}${'☆'.repeat(5 - g.stars)}・発売のとき ${yen(g.sales)}</div></div><div class="row"><button class="btn" data-play="${i}" type="button">あそぶ</button><button class="btn" data-copy="${i}" type="button">続編を作る</button></div></div>`).join('') : '<div class="muted">まだありません。上のテンプレートから作ってみよう。</div>'}</div>`;
+  void lv;
+  body.querySelectorAll('[data-thumb]').forEach(cv => { const g = MAKERS[cv.dataset.thumb](defaultGame(cv.dataset.thumb)); g.draw(cv.getContext('2d')); });
+  $('#stClose').onclick = closeStudio;
+  body.querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => { sfx('click'); openEditor(defaultGame(b.dataset.tpl)); });
+  body.querySelectorAll('[data-play]').forEach(b => b.onclick = () => openPlay(state.games[+b.dataset.play], false));
+  body.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
+    const g = JSON.parse(JSON.stringify(state.games[+b.dataset.copy]));
+    delete g.stars; delete g.sales; delete g.id; g.tested = false; g.title = (g.title + ' 2').slice(0, 16);
+    openEditor(g);
+  });
+}
+function openEditor(data) {
+  studio.cur = data; studio.mode = 'edit';
+  studio.tool = data.type === 'block' ? '1' : '#';
+  mini = { update() {}, key: k => { if (k === 'escape') studioHome(); } };
+  const body = $('#studioBody');
+  const ticks = '<div class="ticks">' + Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join('') + '</div>';
+  const sliders = SCHEMA[data.type].map(([k, n]) => `<div class="field"><label for="sl_${k}">${n}<b id="v_${k}">${data.set[k]}</b></label><input type="range" min="1" max="10" step="1" id="sl_${k}" data-set="${k}" value="${data.set[k]}">${ticks}</div>`).join('');
+  const colors = `<div class="colors">${COLOR_SCHEMA[data.type].map(([k, n]) => `<label for="cl_${k}">${n}<input type="color" id="cl_${k}" data-col="${k}" value="${data.colors[k]}"></label>`).join('')}</div>`;
+  const shootExtra = data.type === 'shoot' ? `
+    <div class="field"><span>敵の動き</span><div class="seg" id="segPat">${[['straight', 'まっすぐ'], ['zigzag', 'ジグザグ'], ['aim', 'ねらってくる']].map(([k, n]) => `<button type="button" data-pat="${k}" class="${data.pattern === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
+    <div class="field"><span>さいごにボス</span><div class="seg" id="segBoss"><button type="button" data-boss="1" class="${data.boss ? 'on' : ''}">出す</button><button type="button" data-boss="0" class="${!data.boss ? 'on' : ''}">出さない</button></div></div>` : '';
+  const left = data.type === 'shoot'
+    ? `<div class="muted" style="font-size:13px">右のせっていで、敵の数や動き、ボスを決めよう。下は画面のイメージです。</div><div class="ed-canvas-wrap"><canvas id="edCanvas" width="${GW}" height="${GH}" style="width:100%"></canvas></div>`
+    : `<div class="ed-tools" id="edTools">${TOOLS[data.type].map(([k, n, c]) => `<button type="button" class="tool${studio.tool === k ? ' on' : ''}" data-tool="${k}"><i style="background:${c}"></i>${n}</button>`).join('')}</div>
+       <div class="ed-canvas-wrap"><canvas id="edCanvas"></canvas></div>
+       <div class="muted" style="font-size:12px">マスをタップ（ドラッグ）してならべよう。${data.type === 'jump' ? 'スタートとゴールは1つずつ。横にスクロールできます。' : ''}</div>`;
+  body.innerHTML = `
+    <div class="st-top"><h2>${TPL[data.type].name}を作る</h2><div class="row"><button class="btn" id="edBack" type="button">もどる</button><button class="btn" id="edTest" type="button">テストプレイ</button><button class="btn primary" id="edRelease" type="button">発売する</button></div></div>
+    <div class="st-status" id="edStatus"></div>
+    <div class="ed">
+      <div class="ed-left">${left}</div>
+      <div class="ed-right">
+        <div class="field"><label for="edTitle">ゲームの名前</label><input type="text" id="edTitle" maxlength="16" value="${esc(data.title)}"></div>
+        ${sliders}${shootExtra}
+        <div class="field"><span>色</span>${colors}</div>
+      </div>
+    </div>`;
+  const touched = () => { data.tested = false; updateEdStatus(); drawEditor(); };
+  $('#edTitle').oninput = e => { data.title = e.target.value.slice(0, 16) || 'むだいのゲーム'; };
+  body.querySelectorAll('[data-set]').forEach(r => r.oninput = () => { data.set[r.dataset.set] = +r.value; setText($('#v_' + r.dataset.set), r.value); touched(); });
+  body.querySelectorAll('[data-col]').forEach(r => r.oninput = () => { data.colors[r.dataset.col] = r.value; touched(); });
+  body.querySelectorAll('[data-pat]').forEach(b => b.onclick = () => { data.pattern = b.dataset.pat; body.querySelectorAll('[data-pat]').forEach(x => x.classList.toggle('on', x === b)); touched(); });
+  body.querySelectorAll('[data-boss]').forEach(b => b.onclick = () => { data.boss = b.dataset.boss === '1'; body.querySelectorAll('[data-boss]').forEach(x => x.classList.toggle('on', x === b)); touched(); });
+  body.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => { studio.tool = b.dataset.tool; body.querySelectorAll('[data-tool]').forEach(x => x.classList.toggle('on', x === b)); });
+  $('#edBack').onclick = studioHome;
+  $('#edTest').onclick = () => openPlay(data, true);
+  $('#edRelease').onclick = releaseGame;
+  if (data.type !== 'shoot') setupPaint(data, touched);
+  updateEdStatus(); drawEditor();
+}
+function updateEdStatus() {
+  const d = studio.cur, st = $('#edStatus');
+  if (!st) return;
+  const err = validateGame(d);
+  st.className = 'st-status' + (d.tested && !err ? ' ok' : '');
+  st.textContent = err || (d.tested ? 'テストプレイでクリアできました。発売できます！' : 'テストプレイでクリアすると発売できます。');
+  $('#edRelease').disabled = !d.tested || !!err;
+  $('#edTest').disabled = !!err;
+}
+function validateGame(d) {
+  if (d.type === 'jump') {
+    const all = d.grid.join('');
+    if (!all.includes('S')) return 'スタートをおいてください';
+    if (!all.includes('G')) return 'ゴールをおいてください';
+  }
+  if (d.type === 'block' && !/[12H]/.test(d.grid.join(''))) return 'こわせるブロックを1つ以上おいてください';
+  return '';
+}
+function edCell(data) { return data.type === 'jump' ? { cw: 18, ch: 18 } : { cw: 40, ch: 20 }; }
+function drawEditor() {
+  const d = studio.cur, cv = $('#edCanvas');
+  if (!cv) return;
+  const c = cv.getContext('2d');
+  if (d.type === 'shoot') { const g = MAKERS.shoot(d); for (let i = 0; i < 90; i++) g.update(1 / 30); g.draw(c); return; }
+  const { cw, ch } = edCell(d);
+  const rows = d.grid.length, cols = d.grid[0].length;
+  if (cv.width !== cols * cw) { cv.width = cols * cw; cv.height = rows * ch; cv.style.width = d.type === 'jump' ? cols * cw + 'px' : '100%'; }
+  c.fillStyle = d.colors.bg; c.fillRect(0, 0, cv.width, cv.height);
+  const colOf = Object.fromEntries(TOOLS[d.type].map(t => [t[0], t[2]]));
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const v = d.grid[y][x]; if (v === '.') continue;
+    const X = x * cw, Y = y * ch;
+    c.fillStyle = v === '#' ? d.colors.block : colOf[v];
+    if (v === 'c') { c.beginPath(); c.arc(X + cw / 2, Y + ch / 2, cw / 3, 0, 7); c.fill(); }
+    else if (v === '^') { c.beginPath(); c.moveTo(X + 2, Y + ch); c.lineTo(X + cw / 2, Y + 3); c.lineTo(X + cw - 2, Y + ch); c.fill(); }
+    else { c.fillRect(X + 1, Y + 1, cw - 2, ch - 2); }
+    if (v === 'S' || v === 'G' || v === 'e') { c.fillStyle = '#fff'; c.font = '11px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(v === 'S' ? 'ス' : v === 'G' ? 'ゴ' : 'て', X + cw / 2, Y + ch / 2 + 1); }
+  }
+  c.strokeStyle = 'rgba(255,255,255,.12)'; c.lineWidth = 1;
+  for (let x = 0; x <= cols; x++) { c.beginPath(); c.moveTo(x * cw + .5, 0); c.lineTo(x * cw + .5, cv.height); c.stroke(); }
+  for (let y = 0; y <= rows; y++) { c.beginPath(); c.moveTo(0, y * ch + .5); c.lineTo(cv.width, y * ch + .5); c.stroke(); }
+}
+function setupPaint(data, touched) {
+  const cv = $('#edCanvas');
+  let down = false;
+  const paint = e => {
+    const r = cv.getBoundingClientRect();
+    const { cw, ch } = edCell(data);
+    const x = Math.floor((e.clientX - r.left) * (cv.width / r.width) / cw), y = Math.floor((e.clientY - r.top) * (cv.height / r.height) / ch);
+    if (y < 0 || y >= data.grid.length || x < 0 || x >= data.grid[0].length) return;
+    const t = studio.tool;
+    if (data.grid[y][x] === t) return;
+    if (t === 'S' || t === 'G') data.grid = data.grid.map(row => row.split(t).join('.'));
+    const row = data.grid[y].split(''); row[x] = t; data.grid[y] = row.join('');
+    touched();
+  };
+  cv.addEventListener('pointerdown', e => { down = true; cv.setPointerCapture(e.pointerId); paint(e); e.preventDefault(); });
+  cv.addEventListener('pointermove', e => { if (down) paint(e); });
+  cv.addEventListener('pointerup', () => { down = false; });
+  cv.addEventListener('pointercancel', () => { down = false; });
+}
+function gameScore(d) {
+  let sc = 0;
+  if (d.type === 'jump') {
+    const all = d.grid.join('');
+    const cnt = ch => all.split(ch).length - 1;
+    sc = cnt('#') * 0.25 + cnt('c') * 3 + cnt('e') * 5 + cnt('^') * 2;
+  } else if (d.type === 'block') {
+    const all = d.grid.join('');
+    sc = (all.match(/[12]/g) || []).length * 1.1 + (all.match(/H/g) || []).length * 2 + (all.match(/X/g) || []).length * 0.5;
+  } else {
+    sc = d.set.count * 6 + d.set.espeed * 3 + (d.boss ? 20 : 0) + (d.pattern !== 'straight' ? 10 : 0);
+  }
+  return clamp(Math.round(sc), 10, 100);
+}
+function releaseGame() {
+  const d = studio.cur;
+  if (!d.tested || validateGame(d)) return;
+  const sc = gameScore(d);
+  const stars = clamp(1 + Math.floor(sc / 22), 1, 5);
+  const pay = Math.round((150 + sc * 7) * payMult('engineer'));
+  const g = JSON.parse(JSON.stringify(d));
+  g.stars = stars; g.sales = pay; g.id = Date.now();
+  state.games.push(g);
+  addMoney(pay); addXP('engineer', 30 + sc / 2);
+  sfx('ok');
+  save();
+  showResult(`「${d.title}」発売！`, [['ひょうか', '★'.repeat(stars) + '☆'.repeat(5 - stars)], ['ゲームのボリューム', `${sc}点`], ['家で休むたびの売上', yen(stars * 30)]], pay, 'engineer', () => { showScreen('studio'); studioHome(); });
+}
+function openPlay(data, testing) {
+  studio.mode = 'play';
+  const body = $('#studioBody');
+  const isShoot = data.type === 'shoot';
+  body.innerHTML = `
+    <div class="st-top"><h2>${esc(data.title)}</h2><button class="btn" id="plBack" type="button">${testing ? 'エディタにもどる' : 'やめる'}</button></div>
+    <div class="play-wrap">
+      <canvas id="gcanvas" width="${GW}" height="${GH}"></canvas>
+      <div class="pad">
+        <div><button class="pb" data-pad="left" type="button" aria-label="左">◀</button><button class="pb" data-pad="right" type="button" aria-label="右">▶</button>${isShoot ? '<button class="pb" data-pad="up" type="button" aria-label="上">▲</button><button class="pb" data-pad="down" type="button" aria-label="下">▼</button>' : ''}</div>
+        <div>${isShoot ? '' : '<button class="pb a" data-pad="a" type="button">A</button>'}</div>
+      </div>
+      <div class="keys-help">矢印キーで移動、${data.type === 'jump' ? 'Space か ↑ でジャンプ' : data.type === 'block' ? 'Space で発射' : 'たまは自動で出ます'}、Esc でもどる</div>
+    </div>`;
+  for (const k in gpad) gpad[k] = false;
+  body.querySelectorAll('[data-pad]').forEach(b => {
+    const k = b.dataset.pad;
+    b.addEventListener('pointerdown', e => { gpad[k] = true; b.classList.add('on'); b.setPointerCapture(e.pointerId); e.preventDefault(); });
+    const off = () => { gpad[k] = false; b.classList.remove('on'); };
+    b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
+  });
+  const ctx = $('#gcanvas').getContext('2d');
+  const game = MAKERS[data.type](data);
+  let cleared = false, clearT = 0;
+  const back = () => { if (testing) openEditor(data); else studioHome(); };
+  $('#plBack').onclick = back;
+  mini = {
+    update(dt) {
+      game.update(dt); game.draw(ctx);
+      if (game.status === 'clear' && !cleared) {
+        cleared = true;
+        if (testing) { data.tested = true; toast('クリア！これで発売できます', 'big'); }
+      }
+      if (cleared) { clearT += dt; if (clearT > 2.2 && testing) { cleared = false; clearT = -1e9; openEditor(data); } }
+    },
+    key: k => { if (k === 'escape') back(); },
+  };
+}
+
+/* =========================================================
+   minimap
+   ========================================================= */
+const mm = $('#minimap'), mctx = mm.getContext('2d');
+const MMS = 300, MK = MMS / 360;
+const w2m = v => (v + 180) * MK;
+const mmBg = document.createElement('canvas'); mmBg.width = mmBg.height = MMS;
+function drawMinimapStatic() {
+  const g = mmBg.getContext('2d');
+  g.fillStyle = '#6fae58'; g.fillRect(0, 0, MMS, MMS);
+  g.fillStyle = '#4e5566'; g.fillRect(w2m(-126), w2m(-126), 252 * MK, 252 * MK);
+  for (const bz of BC) for (const bx of BC) {
+    const k = BLOCK_KIND[`${bx},${bz}`];
+    g.fillStyle = '#c9ccd2'; g.fillRect(w2m(bx - 24), w2m(bz - 24), 48 * MK, 48 * MK);
+    g.fillStyle = k === 'park' ? '#7fc35e' : k === 'house' || k === 'home' ? '#a7cf8a' : '#e3dccb';
+    g.fillRect(w2m(bx - 21), w2m(bz - 21), 42 * MK, 42 * MK);
+  }
+  g.fillStyle = '#8f96a6';
+  for (const b of boxes) g.fillRect(w2m(b.x0), w2m(b.z0), (b.x1 - b.x0) * MK, (b.z1 - b.z0) * MK);
+  for (const p of PLACES) {
+    g.fillStyle = p.color; rrect(g, w2m(p.mx) - 13, w2m(p.mz) - 13, 26, 26, 7); g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 2.5; g.stroke();
+    g.fillStyle = p.id === 'home' || p.id === 'taxi' ? '#1d1a10' : '#fff';
+    g.font = '16px "Mochiy Pop One", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(p.short, w2m(p.mx), w2m(p.mz) + 1);
+  }
+}
+let mmT = 0;
+function drawMinimap(t) {
+  mctx.drawImage(mmBg, 0, 0);
+  mctx.fillStyle = '#e9ecef';
+  for (const n of npcs) mctx.fillRect(w2m(n.x) - 2.5, w2m(n.z) - 2.5, 5, 5);
+  if (goal.active) {
+    const r = 8 + Math.sin(t * 6) * 3;
+    mctx.strokeStyle = '#fff'; mctx.lineWidth = 3; mctx.beginPath(); mctx.arc(w2m(goal.x), w2m(goal.z), r, 0, 7); mctx.stroke();
+    mctx.fillStyle = '#' + goalRingMat.color.getHexString(); mctx.beginPath(); mctx.arc(w2m(goal.x), w2m(goal.z), 6, 0, 7); mctx.fill();
+  }
+  if (myCar && P.inCar !== myCar) { mctx.fillStyle = '#5fbfff'; mctx.fillRect(w2m(myCar.x) - 4, w2m(myCar.z) - 4, 8, 8); }
+  const { x, z } = playerPos();
+  const h = P.inCar ? P.inCar.h : P.h;
+  mctx.save(); mctx.translate(w2m(x), w2m(z)); mctx.rotate(Math.atan2(Math.cos(h), Math.sin(h)));
+  mctx.fillStyle = '#ffc928'; mctx.strokeStyle = '#1d1a10'; mctx.lineWidth = 2;
+  mctx.beginPath(); mctx.moveTo(11, 0); mctx.lineTo(-7, -7); mctx.lineTo(-3, 0); mctx.lineTo(-7, 7); mctx.closePath(); mctx.fill(); mctx.stroke();
+  mctx.restore();
+}
+
+/* =========================================================
+   day & night
+   ========================================================= */
+const skyDay = new THREE.Color(0x8fd3ff), skyNight = new THREE.Color(0x0c1430), skyDusk = new THREE.Color(0xf29b6b);
+const tmpC = new THREE.Color();
+let lastNight = -1;
+function updateSky() {
+  const h = state.time / 60;
+  const day = smooth(5, 7, h) * (1 - smooth(17.5, 19.5, h));
+  const dusk = Math.max(0, 1 - Math.abs(h - 18.3) / 1.4) + Math.max(0, 1 - Math.abs(h - 5.8) / 1.2);
+  tmpC.copy(skyNight).lerp(skyDay, day).lerp(skyDusk, clamp(dusk, 0, 1) * 0.55);
+  scene.background.copy(tmpC); scene.fog.color.copy(tmpC);
+  hemi.intensity = 0.28 + 0.55 * day;
+  sun.intensity = 0.12 + 0.85 * day;
+  sun.color.setHSL(0.1, 0.6 + dusk * 0.3, 0.9 - dusk * 0.15);
+  const night = 1 - day;
+  const q = Math.round(night * 20) / 20;
+  if (q !== lastNight) {
+    lastNight = q;
+    for (const m of winMats) m.emissive.setRGB(q * 0.95, q * 0.78, q * 0.5);
+    if (lampMat) lampMat.emissive.setRGB(q, q * 0.9, q * 0.6);
+    headMat.color.setRGB(1, 0.95, 0.75 + q * 0.2);
+  }
+}
+
+/* =========================================================
+   main loop
+   ========================================================= */
+let titleT = 0, clockAcc = 0, saveAcc = 0, elapsed = 0;
+const tmpV = new THREE.Vector3();
+function updatePlayer(dt) {
+  const inp = readMove();
+  if (P.inCar) {
+    P.inCar.drive(dt, inp);
+    P.x = P.inCar.x; P.z = P.inCar.z;
+    return;
+  }
+  const l = Math.hypot(inp.x, inp.y);
+  if (l > 0.08) {
+    const fx = Math.sin(cam.yaw), fz = Math.cos(cam.yaw), rx = -Math.cos(cam.yaw), rz = Math.sin(cam.yaw);
+    const dx = fx * inp.y + rx * inp.x, dz = fz * inp.y + rz * inp.x;
+    const dl = Math.hypot(dx, dz) || 1;
+    P.h += angDiff(P.h, Math.atan2(dx, dz)) * Math.min(1, dt * 12);
+    const sp = 7.5 * Math.min(1, l);
+    const r = resolve(P.x + dx / dl * sp * dt, P.z + dz / dl * sp * dt, 0.45, P);
+    P.x = r.x; P.z = r.z;
+    P.t += dt * 11 * Math.min(1, l);
+    animPerson(P.person, P.t, Math.min(1, l));
+  } else {
+    animPerson(P.person, 0, 0);
+  }
+  P.person.g.position.set(P.x, surf(P.x, P.z) - 0.02, P.z);
+  P.person.g.rotation.y = P.h;
+}
+function updateCamera(dt) {
+  if (!running) {
+    titleT += dt * 0.05;
+    camera.position.set(Math.sin(titleT) * 150, 70, Math.cos(titleT) * 150);
+    camera.lookAt(0, 0, 0);
+    return;
+  }
+  let tx, tz, ty, dist, pitch;
+  if (P.inCar) {
+    const c = P.inCar;
+    if (cam.dragT <= 0 && Math.abs(c.speed) > 0.5) cam.yaw += angDiff(cam.yaw, c.h) * Math.min(1, dt * 2.5);
+    tx = c.x; tz = c.z; ty = 1.4; dist = 10.5 + Math.abs(c.speed) * 0.09; pitch = cam.pitch * 0.85;
+  } else { tx = P.x; tz = P.z; ty = 1.6; dist = 7.5; pitch = cam.pitch; }
+  cam.dragT -= dt;
+  const cp = Math.cos(pitch), sp = Math.sin(pitch);
+  let k = 1;
+  for (let i = 0; i < 6; i++) {
+    const px = tx - Math.sin(cam.yaw) * dist * cp * k, py = ty + 1 + dist * sp * k, pz = tz - Math.cos(cam.yaw) * dist * cp * k;
+    if (!insideBuilding(px, py, pz)) break;
+    k *= 0.72;
+  }
+  tmpV.set(tx - Math.sin(cam.yaw) * dist * cp * k, ty + 1 + dist * sp * k, tz - Math.cos(cam.yaw) * dist * cp * k);
+  camera.position.lerp(tmpV, Math.min(1, dt * 9));
+  if (cam.shake > 0) { camera.position.x += rnd(-1, 1) * cam.shake; camera.position.y += rnd(-1, 1) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 1.5); }
+  camera.lookAt(tx, ty + 0.8, tz);
+}
+function updateHud(dt) {
+  setText($('#money'), yen(state.money));
+  setText($('#clock'), `${state.day}日目 ${clockStr()}`);
+  const it = getInteraction();
+  const pr = $('#prompt');
+  if (it) { pr.hidden = false; setText($('#promptText'), it.label); } else pr.hidden = true;
+  const ba = $('#bAction');
+  setText($('#bActionText'), it ? (it.label.length > 7 ? it.label.slice(0, 6) + '…' : it.label) : (P.inCar ? 'おりる' : 'アクション'));
+  ba.classList.toggle('dim', !it);
+  $('#bBrake').hidden = !P.inCar;
+  const sp = $('#speedo');
+  sp.hidden = !P.inCar;
+  if (P.inCar) setText($('#spd'), Math.round(Math.abs(P.inCar.speed) * 3.6));
+  if (hintT > 0) { hintT -= dt; if (hintT <= 0) $('#hint').hidden = true; }
+  updateJobPanel();
+}
+let last = performance.now();
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  elapsed += dt;
+  if (mini) mini.update(dt);
+  const full = openScreen === 'chef' || openScreen === 'studio';
+  if (running && !openScreen) {
+    clockAcc += dt * 4; if (clockAcc >= 1) { const m = Math.floor(clockAcc); clockAcc -= m; state.time = (state.time + m) % 1440; }
+    updatePlayer(dt);
+    updateNpcs(dt);
+    updatePeds(dt);
+    updateDriveJob(dt);
+    updateHud(dt);
+    saveAcc += dt; if (saveAcc > 15) { saveAcc = 0; save(); }
+  } else if (!running) {
+    updateNpcs(dt); updatePeds(dt);
+  }
+  if (full) return;
+  updateSky();
+  // markers & arrow
+  const pulse = 1 + Math.sin(elapsed * 4) * 0.06;
+  for (const m of markers) { m.userData.ring.scale.setScalar(pulse); m.userData.ring.rotation.z += dt * 0.5; }
+  if (goal.active) {
+    goalRing.scale.setScalar(pulse);
+    const { x, z } = playerPos();
+    arrow.position.set(x, P.inCar ? 3.6 : 3.4, z);
+    arrow.rotation.y = Math.atan2(goal.x - x, goal.z - z);
+    arrow.visible = Math.hypot(goal.x - x, goal.z - z) > 8;
+  }
+  if (customer.g.visible) {
+    if (customer.wave > 0) { customer.wave -= dt; wavePerson(customer, elapsed); if (customer.wave <= 0 && (!job || job.stage !== 'pickup')) customer.g.visible = false; }
+    else if (job && job.stage === 'pickup') wavePerson(customer, elapsed);
+    else animPerson(customer, 0, 0);
+  }
+  for (const cl of clouds) { cl.position.x += dt * 2; if (cl.position.x > 300) cl.position.x = -300; }
+  if (running) {
+    const { x, z } = playerPos();
+    sun.position.set(x + 60, 110, z + 40); sun.target.position.set(x, 0, z);
+    mmT += dt; if (mmT > 0.05) { mmT = 0; drawMinimap(elapsed); }
+  }
+  updateCamera(dt);
+  renderer.render(scene, camera);
+}
+
+/* =========================================================
+   boot
+   ========================================================= */
+function startGame(fresh) {
+  initAudio();
+  if (fresh) {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
+    state = DEFAULT_STATE();
+    const home = PLACES.find(p => p.id === 'home');
+    placeAtHome();
+    if (myCar) myCar.remove();
+    myCar = new Car('basic', home.sx, home.sz, home.sh);
+  }
+  closeScreen();
+  $('#hud').hidden = false;
+  running = true;
+  cam.yaw = P.h;
+  camera.position.set(P.x - Math.sin(cam.yaw) * 8, 6, P.z - Math.cos(cam.yaw) * 8);
+  toast(fresh || !hasSave ? 'ようこそドライブタウンへ！光る輪に入って仕事をはじめよう' : 'おかえりなさい！', 'big');
+  if (!hasSave || fresh) setTimeout(() => toast('となりの青い車に近づくと乗れます'), 2600);
+  save();
+}
+function boot() {
+  hasSave = loadSave();
+  buildWorld();
+  spawnPlayer();
+  buildTraffic();
+  buildPeds();
+  drawMinimapStatic();
+  updateSky();
+  if (hasSave) { $('#btnStart').textContent = 'つづきから'; $('#btnNew').hidden = false; }
+  $('#btnStart').onclick = () => startGame(false);
+  $('#btnNew').onclick = e => {
+    const b = e.currentTarget;
+    if (b.dataset.sure) startGame(true); else { b.dataset.sure = '1'; b.textContent = 'もう一度押すとデータを消してはじめます'; }
+  };
+  openScreen = 'title';
+  requestAnimationFrame(frame);
+}
+const fontsReady = (document.fonts && document.fonts.load)
+  ? Promise.all([document.fonts.load('40px "Mochiy Pop One"'), document.fonts.load('700 16px "Zen Maru Gothic"')]).catch(() => null)
+  : Promise.resolve();
+Promise.race([fontsReady, new Promise(r => setTimeout(r, 2500))]).then(boot);
+})();
+</script>
+</body>
+</html>
