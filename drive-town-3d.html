@@ -282,7 +282,7 @@
   /* ---------- studio (game engineer) ---------- */
   .st-top { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
   .st-top h2 { color: var(--sky); }
-  .tpl-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
   @media (max-width: 640px) { .tpl-grid { grid-template-columns: 1fr; } }
   .tpl { background: var(--panel-3); border: 2px solid var(--line); border-radius: 14px; padding: 10px; display: grid; gap: 6px; text-align: left; }
   .tpl:hover { border-color: var(--sky); }
@@ -320,6 +320,8 @@
   .pb { width: 62px; height: 56px; border-radius: 14px; background: var(--panel-3); border: 2px solid var(--line); font-size: 20px; touch-action: none; }
   .pb.a { width: 76px; background: var(--sky); color: #0d1b2a; font-family: var(--display); }
   .pb.on { filter: brightness(1.4); }
+  .pad.compact .pb { width: 48px; }
+  .pad.compact .pb.a { width: 64px; }
   .keys-help { font-size: 12px; color: var(--muted); font-weight: 500; }
   body.touch .keys-help { display: none; }
 
@@ -1780,6 +1782,7 @@ const TPL = {
   jump: { name: 'ジャンプアクション', desc: 'ブロックやコイン、敵をならべてステージを作ろう' },
   shoot: { name: 'シューティング', desc: '敵の数や動きを決めて、うちゅうの戦いを作ろう' },
   block: { name: 'ブロックくずし', desc: 'ブロックをならべて、自分だけの面を作ろう' },
+  war: { name: 'リーグオブワー', desc: 'ヒーローと兵士で道を進み、敵のタワーと本拠地をこわすチームバトル' },
 };
 function defaultGame(type) {
   if (type === 'jump') {
@@ -1795,17 +1798,20 @@ function defaultGame(type) {
     return { type, title: 'ジャンプランド', grid: g.map(r => r.join('')), set: { speed: 5, jump: 5, gravity: 5, lives: 3 }, colors: { hero: '#ff5b3a', bg: '#8fd3ff', block: '#8a5a33' }, tested: false };
   }
   if (type === 'shoot') return { type, title: 'ギャラクシーパトロール', set: { speed: 5, count: 4, espeed: 4, fire: 5, lives: 3 }, pattern: 'zigzag', boss: true, colors: { hero: '#5fbfff', enemy: '#ff5b3a', bg: '#101a3a' }, tested: false };
+  if (type === 'war') return { type, title: 'リーグオブワー', set: { speed: 5, power: 5, enemy: 5, count: 5, lives: 3 }, heroType: 'sword', rival: true, colors: { hero: '#ffc928', ally: '#5fbfff', enemy: '#ff5b3a', bg: '#4f8a4a' }, tested: false };
   return { type, title: 'ブロックブレイカー', grid: ['..XX....XX..', '111111111111', '122222222221', '12HHHHHHHH21', '122222222221', '111111111111', '............'], set: { ball: 4, paddle: 5, lives: 3 }, colors: { paddle: '#ffc928', ball: '#ffffff', bg: '#1d2b4f' }, tested: false };
 }
 const SCHEMA = {
   jump: [['speed', 'スピード'], ['jump', 'ジャンプ力'], ['gravity', '重力'], ['lives', 'ライフ']],
   shoot: [['speed', '自機のスピード'], ['count', '敵の数'], ['espeed', '敵の速さ'], ['fire', '連射'], ['lives', 'ライフ']],
   block: [['ball', 'ボールの速さ'], ['paddle', 'パドルの長さ'], ['lives', 'ライフ']],
+  war: [['speed', 'ヒーローの速さ'], ['power', 'こうげき力'], ['enemy', '敵の強さ'], ['count', '兵士の数'], ['lives', 'ライフ']],
 };
 const COLOR_SCHEMA = {
   jump: [['hero', '主人公'], ['bg', '背景'], ['block', 'ブロック']],
   shoot: [['hero', '自機'], ['enemy', '敵'], ['bg', '背景']],
   block: [['paddle', 'パドル'], ['ball', 'ボール'], ['bg', '背景']],
+  war: [['hero', 'ヒーロー'], ['ally', '味方'], ['enemy', '敵チーム'], ['bg', '地面']],
 };
 const TOOLS = {
   jump: [['#', 'ブロック', '#8a5a33'], ['c', 'コイン', '#ffd23f'], ['^', 'トゲ', '#9aa5b8'], ['e', 'てき', '#9b5de5'], ['S', 'スタート', '#38d39f'], ['G', 'ゴール', '#ff5b3a'], ['.', 'けしゴム', '#222']],
@@ -2107,7 +2113,221 @@ function overlayStatus(c, status) {
   c.fillText(status === 'clear' ? 'おめでとう！' : 'A ボタン（Space）でもう一度', GW / 2, GH / 2 + 30);
   c.textAlign = 'left';
 }
-const MAKERS = { jump: makeJump, shoot: makeShoot, block: makeBlock };
+const HERO_TYPES = {
+  sword: { name: '剣士', hp: 270, atk: 20, range: 24, cd: 0.6, skill: 'まわりの敵をまとめて切る' },
+  magic: { name: '魔法使い', hp: 170, atk: 22, range: 90, cd: 1.0, skill: '前に大きな魔法をうつ' },
+  bow: { name: '弓使い', hp: 190, atk: 11, range: 120, cd: 0.45, skill: 'まっすぐ遠くまで矢をうつ' },
+};
+function makeWar(data) {
+  const s = data.set, col = data.colors;
+  const WW = 960, MID = 160, TOP = 58, BOT = GH - 34;
+  const ht = HERO_TYPES[data.heroType] || HERO_TYPES.sword;
+  const perWave = 1 + Math.round(s.count * 0.5);
+  const eMul = 0.6 + s.enemy * 0.12, pMul = 0.7 + s.power * 0.09;
+  const teamCol = tm => tm ? col.enemy : col.ally;
+  let units, builds, fx, hero, rival, waveT, lives, status, t, kills, lvl, skillCd, prevA, score, respawn, rivalRespawn, camX;
+  const mkBuild = (team, x, kind) => {
+    const base = kind === 'base', hp = (base ? 900 : 550) * (team ? eMul : 1);
+    return { team, x, y: MID, hp, max: hp, r: base ? 22 : 14, kind, range: base ? 85 : 95, atk: (base ? 24 : 17) * (team ? eMul : 1), cd: 0, cdMax: 1, isB: true };
+  };
+  const mkMinion = (team, k) => {
+    const ranged = k % 2 === 1, m = team ? eMul : 1, hp = (ranged ? 40 : 60) * m;
+    return { team, x: team ? WW - 64 : 64, y: MID + (k - (perWave - 1) / 2) * 14, hp, max: hp, atk: (ranged ? 6 : 8) * m, range: ranged ? 60 : 16, spd: 34, cd: 0, cdMax: 1.1, r: 6, kind: 'minion', ranged };
+  };
+  const mkHero = () => { const hp = ht.hp * pMul; return { team: 0, x: 70, y: MID, hp, max: hp, atk: ht.atk * pMul, range: ht.range, spd: 70 + s.speed * 9, cd: 0, cdMax: ht.cd, r: 9, kind: 'hero', face: 1, dead: false }; };
+  const mkRival = () => { const hp = 230 * eMul; return { team: 1, x: WW - 70, y: MID, hp, max: hp, atk: 14 * eMul, range: 70, spd: 72, cd: 0, cdMax: 0.8, r: 9, kind: 'rival', dead: false }; };
+  function reset() {
+    builds = [mkBuild(0, 36, 'base'), mkBuild(0, 190, 'tower'), mkBuild(0, 340, 'tower'), mkBuild(1, WW - 36, 'base'), mkBuild(1, WW - 190, 'tower'), mkBuild(1, WW - 340, 'tower')];
+    hero = mkHero(); rival = data.rival ? mkRival() : null;
+    units = [hero]; if (rival) units.push(rival);
+    fx = []; waveT = 1.5; lives = s.lives; status = 'play'; t = 0; kills = 0; lvl = 1; skillCd = 0; prevA = true; score = 0; respawn = 0; rivalRespawn = 0; camX = 0;
+  }
+  reset();
+  const alive = u => u.hp > 0 && !u.dead;
+  const shielded = b => b.kind === 'base' && builds.some(o => o.team === b.team && o.kind === 'tower' && o.hp > 0);
+  function nearestEnemy(u, maxD, unitsOnly, minionsFirst) {
+    let best = null, bd = maxD;
+    if (minionsFirst) {
+      for (const o of units) if (o.kind === 'minion' && o.team !== u.team && alive(o)) { const d = Math.hypot(o.x - u.x, o.y - u.y) - o.r; if (d < bd) { bd = d; best = o; } }
+      if (best) return best;
+    }
+    for (const o of units) if (o.team !== u.team && alive(o)) { const d = Math.hypot(o.x - u.x, o.y - u.y) - o.r; if (d < bd) { bd = d; best = o; } }
+    if (!unitsOnly) for (const b of builds) if (b.team !== u.team && b.hp > 0 && !shielded(b)) { const d = Math.hypot(b.x - u.x, b.y - u.y) - b.r; if (d < bd) { bd = d; best = b; } }
+    return best;
+  }
+  function damage(tg, dmg, src) {
+    if (!alive(tg)) return;
+    if (tg.isB && shielded(tg)) return;
+    tg.hp -= dmg;
+    if (tg.hp > 0) return;
+    if (tg.isB) {
+      sfx('boom'); fx.push({ ring: true, x: tg.x, y: tg.y, r: 30, l: .5, c: '#fff' });
+      if (tg.team === 1) score += tg.kind === 'base' ? 1000 : 300;
+      if (tg.kind === 'base') { status = tg.team === 1 ? 'clear' : 'over'; if (status === 'clear') { score += lives * 300; sfx('lvl'); } }
+      return;
+    }
+    if (tg === hero) {
+      hero.dead = true; lives--; respawn = 4; sfx('bad');
+      if (lives <= 0) status = 'over';
+      return;
+    }
+    if (tg === rival) { rival.dead = true; rivalRespawn = 9; score += 400; }
+    if (src === hero) {
+      kills++; score += tg === rival ? 0 : 50;
+      const nl = Math.min(10, 1 + Math.floor(kills / 4));
+      if (nl > lvl) { lvl = nl; hero.max *= 1.08; hero.atk *= 1.1; hero.hp = Math.min(hero.max, hero.hp + hero.max * 0.3); sfx('coin'); fx.push({ text: `レベル${lvl}！`, x: hero.x, y: hero.y - 20, l: 1 }); }
+    }
+  }
+  function attack(u, tg) {
+    if (u.cd > 0) return;
+    u.cd = u.cdMax;
+    damage(tg, u.atk, u);
+    if (u.range > 30 || u.isB) fx.push({ x: u.x, y: u.isB ? u.y - u.r - 6 : u.y, x2: tg.x, y2: tg.y, l: .12, c: u === hero ? col.hero : teamCol(u.team) });
+    else fx.push({ ring: true, x: tg.x, y: tg.y, r: 8, l: .12, c: '#fff' });
+  }
+  function moveTo(u, x, y, dt) {
+    const dx = x - u.x, dy = y - u.y, d = Math.hypot(dx, dy) || 1;
+    u.x += dx / d * u.spd * dt; u.y = clamp(u.y + dy / d * u.spd * dt, TOP, BOT);
+  }
+  function skill() {
+    skillCd = 5; sfx('boom');
+    const pw = hero.atk;
+    const foes = units.filter(o => o.team === 1 && alive(o)).concat(builds.filter(b => b.team === 1 && b.hp > 0));
+    if (data.heroType === 'magic') {
+      const cx = hero.x + hero.face * 70, cy = hero.y;
+      fx.push({ ring: true, x: cx, y: cy, r: 50, l: .35, c: col.hero, fill: true });
+      for (const o of foes) if (Math.hypot(o.x - cx, o.y - cy) < 50 + o.r) damage(o, pw * 3.5, hero);
+    } else if (data.heroType === 'bow') {
+      fx.push({ x: hero.x, y: hero.y, x2: hero.x + hero.face * 260, y2: hero.y, l: .3, c: col.hero, w: 5 });
+      for (const o of foes) { const ax = (o.x - hero.x) * hero.face; if (ax > 0 && ax < 260 && Math.abs(o.y - hero.y) < 18 + o.r) damage(o, pw * 2.5, hero); }
+    } else {
+      fx.push({ ring: true, x: hero.x, y: hero.y, r: 55, l: .3, c: col.hero, fill: true });
+      for (const o of foes) if (Math.hypot(o.x - hero.x, o.y - hero.y) < 55 + o.r) damage(o, pw * 3, hero);
+    }
+  }
+  return {
+    get status() { return status; },
+    get score() { return score; },
+    update(dt) {
+      const inp = readPad(); const aP = inp.a && !prevA; prevA = inp.a;
+      for (const f of fx) { f.l -= dt; if (f.text) f.y -= 20 * dt; }
+      fx = fx.filter(f => f.l > 0);
+      if (status !== 'play') { if (status === 'over' && aP) reset(); return; }
+      t += dt; skillCd = Math.max(0, skillCd - dt);
+      // waves
+      waveT -= dt;
+      if (waveT <= 0) { waveT = 14; for (let k = 0; k < perWave; k++) units.push(mkMinion(0, k), mkMinion(1, k)); }
+      for (const u of units) u.cd -= dt;
+      for (const b of builds) b.cd -= dt;
+      // hero
+      if (hero.dead) {
+        respawn -= dt;
+        if (respawn <= 0 && lives > 0) { const h = mkHero(); hero.dead = false; hero.hp = hero.max; hero.x = h.x; hero.y = h.y; }
+      } else {
+        let dx = (inp.right ? 1 : 0) - (inp.left ? 1 : 0), dy = (inp.down ? 1 : 0) - (inp.up ? 1 : 0);
+        const l = Math.hypot(dx, dy) || 1;
+        hero.x = clamp(hero.x + dx / l * hero.spd * dt, 12, WW - 12);
+        hero.y = clamp(hero.y + dy / l * hero.spd * dt, TOP, BOT);
+        if (dx) hero.face = dx > 0 ? 1 : -1;
+        const tg = nearestEnemy(hero, hero.range + 4);
+        if (tg) attack(hero, tg);
+        if (aP && skillCd <= 0) skill();
+        hero.hp = Math.min(hero.max, hero.hp + hero.max * (hero.x < 90 ? 0.25 : 0.012) * dt);
+      }
+      // rival hero
+      if (rival) {
+        if (rival.dead) {
+          rivalRespawn -= dt;
+          if (rivalRespawn <= 0) { const r = mkRival(); Object.assign(rival, { dead: false, hp: r.max, max: r.max, x: r.x, y: r.y }); }
+        } else if (rival.hp < rival.max * 0.3 || rival.healing) {
+          rival.healing = rival.hp < rival.max * 0.95;
+          moveTo(rival, WW - 60, MID, dt);
+          if (rival.x > WW - 110) rival.hp = Math.min(rival.max, rival.hp + rival.max * 0.2 * dt);
+        } else {
+          const tg = (alive(hero) && Math.hypot(hero.x - rival.x, hero.y - rival.y) < 120) ? hero : nearestEnemy(rival, 110);
+          if (tg) { if (Math.hypot(tg.x - rival.x, tg.y - rival.y) > rival.range + tg.r) moveTo(rival, tg.x, tg.y, dt); else attack(rival, tg); }
+          else moveTo(rival, rival.x - 40, MID, dt);
+        }
+      }
+      // minions
+      for (const u of units) {
+        if (u.kind !== 'minion' || u.hp <= 0) continue;
+        const tg = nearestEnemy(u, 75);
+        if (tg) { if (Math.hypot(tg.x - u.x, tg.y - u.y) > u.range + tg.r) moveTo(u, tg.x, tg.y, dt); else attack(u, tg); }
+        else { u.x = clamp(u.x + (u.team ? -1 : 1) * u.spd * dt, 12, WW - 12); u.y = clamp(u.y + (MID - u.y) * 0.3 * dt, TOP, BOT); }
+      }
+      // keep minions from stacking
+      for (let i = 0; i < units.length; i++) for (let j = i + 1; j < units.length; j++) {
+        const a = units[i], b = units[j];
+        if (a.kind !== 'minion' || b.kind !== 'minion') continue;
+        const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy);
+        if (d > 0.01 && d < 11) { const p = (11 - d) / d * 0.5; a.x -= dx * p; a.y -= dy * p; b.x += dx * p; b.y += dy * p; }
+      }
+      // towers & bases
+      for (const b of builds) if (b.hp > 0) { const tg = nearestEnemy(b, b.range, true, true); if (tg) attack(b, tg); }
+      units = units.filter(u => u.kind !== 'minion' || u.hp > 0);
+      camX = clamp((hero.dead ? 70 : hero.x) - GW / 2, 0, WW - GW);
+    },
+    draw(c) {
+      c.fillStyle = col.bg; c.fillRect(0, 0, GW, GH);
+      c.save(); c.translate(-Math.round(camX), 0);
+      c.fillStyle = shade(col.bg, 0.12); c.fillRect(0, TOP - 14, WW, BOT - TOP + 28);
+      c.fillStyle = shade(col.bg, -0.12);
+      for (let x = 10; x < WW; x += 34) { c.beginPath(); c.arc(x, TOP - 24, 13, 0, 7); c.fill(); c.beginPath(); c.arc(x + 17, BOT + 24, 13, 0, 7); c.fill(); }
+      c.fillStyle = 'rgba(255,255,255,.15)'; c.fillRect(WW / 2 - 2, TOP - 14, 4, BOT - TOP + 28);
+      const bar = (x, y, w, v, cc) => { c.fillStyle = 'rgba(0,0,0,.5)'; c.fillRect(x - w / 2, y, w, 4); c.fillStyle = cc; c.fillRect(x - w / 2, y, w * clamp(v, 0, 1), 4); };
+      for (const b of builds) {
+        if (b.hp <= 0) { c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.arc(b.x, b.y + 8, b.r, 0, 7); c.fill(); continue; }
+        const tc = teamCol(b.team);
+        if (b.kind === 'base') {
+          c.fillStyle = shade(tc, -0.15); c.beginPath();
+          for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; c.lineTo(b.x + Math.cos(a) * b.r, b.y + Math.sin(a) * b.r); }
+          c.fill(); c.fillStyle = tc; c.beginPath(); c.arc(b.x, b.y, b.r * 0.5, 0, 7); c.fill();
+        } else {
+          c.fillStyle = shade(tc, -0.2); c.fillRect(b.x - 10, b.y - 22, 20, 30);
+          c.fillStyle = tc; c.fillRect(b.x - 13, b.y - 28, 26, 8);
+        }
+        if (shielded(b)) { c.strokeStyle = 'rgba(255,255,255,.6)'; c.lineWidth = 2; c.beginPath(); c.arc(b.x, b.y, b.r + 6, 0, 7); c.stroke(); }
+        bar(b.x, b.y - b.r - 18, 34, b.hp / b.max, b.team ? '#ff7a6a' : '#7fd0ff');
+      }
+      for (const u of units) {
+        if (!alive(u)) continue;
+        if (u.kind === 'minion') {
+          c.fillStyle = teamCol(u.team);
+          if (u.ranged) c.fillRect(u.x - 5, u.y - 5, 10, 10); else { c.beginPath(); c.arc(u.x, u.y, 6, 0, 7); c.fill(); }
+          if (u.hp < u.max) bar(u.x, u.y - 11, 14, u.hp / u.max, u.team ? '#ff7a6a' : '#7fd0ff');
+        } else {
+          const isH = u === hero;
+          c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(u.x, u.y + 9, 9, 4, 0, 0, 7); c.fill();
+          c.fillStyle = isH ? col.hero : col.enemy; c.beginPath(); c.arc(u.x, u.y, 9, 0, 7); c.fill();
+          c.strokeStyle = isH ? '#fff' : '#2a0d0d'; c.lineWidth = 2.5; c.stroke();
+          c.fillStyle = isH ? '#1d1a10' : '#fff'; c.fillRect(u.x + (isH ? hero.face * 3 : -3) - 1.5, u.y - 3, 3, 3);
+          if (!isH) { c.fillStyle = '#ffd23f'; c.beginPath(); c.moveTo(u.x - 6, u.y - 11); c.lineTo(u.x - 3, u.y - 16); c.lineTo(u.x, u.y - 12); c.lineTo(u.x + 3, u.y - 16); c.lineTo(u.x + 6, u.y - 11); c.fill(); }
+          bar(u.x, u.y - (isH ? 16 : 22), 24, u.hp / u.max, isH ? '#7dff9e' : '#ff7a6a');
+        }
+      }
+      for (const f of fx) {
+        c.globalAlpha = clamp(f.l * 4, 0, 1);
+        if (f.text) { c.fillStyle = '#fff'; c.font = '13px "Mochiy Pop One", sans-serif'; c.textAlign = 'center'; c.fillText(f.text, f.x, f.y); c.textAlign = 'left'; }
+        else if (f.ring) { c.strokeStyle = f.c; c.fillStyle = f.c; c.lineWidth = 3; c.beginPath(); c.arc(f.x, f.y, f.r, 0, 7); if (f.fill) { c.globalAlpha *= 0.35; c.fill(); } else c.stroke(); }
+        else { c.strokeStyle = f.c; c.lineWidth = f.w || 2; c.beginPath(); c.moveTo(f.x, f.y); c.lineTo(f.x2, f.y2); c.stroke(); }
+      }
+      c.globalAlpha = 1;
+      c.restore();
+      // lane overview strip
+      c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(0, GH - 12, GW, 12);
+      const sx = v => v / WW * GW;
+      c.fillStyle = 'rgba(255,255,255,.25)'; c.fillRect(sx(camX), GH - 12, sx(GW), 12);
+      for (const b of builds) if (b.hp > 0) { c.fillStyle = teamCol(b.team); c.fillRect(sx(b.x) - 3, GH - 10, 6, 8); }
+      for (const u of units) if (alive(u)) { c.fillStyle = u === hero ? col.hero : teamCol(u.team); c.fillRect(sx(u.x) - 1, GH - 7, u.kind === 'minion' ? 2 : 4, 3); }
+      const towersLeft = tm => builds.filter(b => b.team === tm && b.kind === 'tower' && b.hp > 0).length;
+      hudText(c, data.title, `Lv${lvl}  たおした ${kills}  わざ ${skillCd > 0 ? Math.ceil(skillCd) + '秒' : 'OK'}  敵タワー ${towersLeft(1)}/2`, lives);
+      if (hero.dead && status === 'play') { c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(0, 20, GW, GH - 32); c.fillStyle = '#fff'; c.font = '20px "Mochiy Pop One", sans-serif'; c.textAlign = 'center'; c.fillText(`ふっかつまで ${Math.ceil(respawn)}秒`, GW / 2, GH / 2); c.textAlign = 'left'; }
+      overlayStatus(c, status);
+    },
+  };
+}
+const MAKERS = { jump: makeJump, shoot: makeShoot, block: makeBlock, war: makeWar };
 
 const studio = { cur: null, tool: '#', mode: 'home' };
 function openStudio() {
@@ -2151,9 +2371,11 @@ function openEditor(data) {
   const colors = `<div class="colors">${COLOR_SCHEMA[data.type].map(([k, n]) => `<label for="cl_${k}">${n}<input type="color" id="cl_${k}" data-col="${k}" value="${data.colors[k]}"></label>`).join('')}</div>`;
   const shootExtra = data.type === 'shoot' ? `
     <div class="field"><span>敵の動き</span><div class="seg" id="segPat">${[['straight', 'まっすぐ'], ['zigzag', 'ジグザグ'], ['aim', 'ねらってくる']].map(([k, n]) => `<button type="button" data-pat="${k}" class="${data.pattern === k ? 'on' : ''}">${n}</button>`).join('')}</div></div>
-    <div class="field"><span>さいごにボス</span><div class="seg" id="segBoss"><button type="button" data-boss="1" class="${data.boss ? 'on' : ''}">出す</button><button type="button" data-boss="0" class="${!data.boss ? 'on' : ''}">出さない</button></div></div>` : '';
-  const left = data.type === 'shoot'
-    ? `<div class="muted" style="font-size:13px">右のせっていで、敵の数や動き、ボスを決めよう。下は画面のイメージです。</div><div class="ed-canvas-wrap"><canvas id="edCanvas" width="${GW}" height="${GH}" style="width:100%"></canvas></div>`
+    <div class="field"><span>さいごにボス</span><div class="seg" id="segBoss"><button type="button" data-boss="1" class="${data.boss ? 'on' : ''}">出す</button><button type="button" data-boss="0" class="${!data.boss ? 'on' : ''}">出さない</button></div></div>` : data.type === 'war' ? `
+    <div class="field"><span>ヒーローのタイプ</span><div class="seg">${Object.entries(HERO_TYPES).map(([k, h]) => `<button type="button" data-hero="${k}" class="${data.heroType === k ? 'on' : ''}">${h.name}</button>`).join('')}</div><span class="muted" id="heroSkill" style="font-size:12px">わざ：${HERO_TYPES[data.heroType].skill}</span></div>
+    <div class="field"><span>敵のヒーロー</span><div class="seg"><button type="button" data-rival="1" class="${data.rival ? 'on' : ''}">出す</button><button type="button" data-rival="0" class="${!data.rival ? 'on' : ''}">出さない</button></div></div>` : '';
+  const left = !TOOLS[data.type]
+    ? `<div class="muted" style="font-size:13px">${data.type === 'war' ? '右のせっていで、ヒーローのタイプや兵士の数、敵の強さを決めよう。敵のタワー2本をこわすと、本拠地をこうげきできます。' : '右のせっていで、敵の数や動き、ボスを決めよう。'}下は画面のイメージです。</div><div class="ed-canvas-wrap"><canvas id="edCanvas" width="${GW}" height="${GH}" style="width:100%"></canvas></div>`
     : `<div class="ed-tools" id="edTools">${TOOLS[data.type].map(([k, n, c]) => `<button type="button" class="tool${studio.tool === k ? ' on' : ''}" data-tool="${k}"><i style="background:${c}"></i>${n}</button>`).join('')}</div>
        <div class="ed-canvas-wrap"><canvas id="edCanvas"></canvas></div>
        <div class="muted" style="font-size:12px">マスをタップ（ドラッグ）してならべよう。${data.type === 'jump' ? 'スタートとゴールは1つずつ。横にスクロールできます。' : ''}</div>`;
@@ -2174,11 +2396,13 @@ function openEditor(data) {
   body.querySelectorAll('[data-col]').forEach(r => r.oninput = () => { data.colors[r.dataset.col] = r.value; touched(); });
   body.querySelectorAll('[data-pat]').forEach(b => b.onclick = () => { data.pattern = b.dataset.pat; body.querySelectorAll('[data-pat]').forEach(x => x.classList.toggle('on', x === b)); touched(); });
   body.querySelectorAll('[data-boss]').forEach(b => b.onclick = () => { data.boss = b.dataset.boss === '1'; body.querySelectorAll('[data-boss]').forEach(x => x.classList.toggle('on', x === b)); touched(); });
+  body.querySelectorAll('[data-hero]').forEach(b => b.onclick = () => { data.heroType = b.dataset.hero; body.querySelectorAll('[data-hero]').forEach(x => x.classList.toggle('on', x === b)); setText($('#heroSkill'), `わざ：${HERO_TYPES[data.heroType].skill}`); touched(); });
+  body.querySelectorAll('[data-rival]').forEach(b => b.onclick = () => { data.rival = b.dataset.rival === '1'; body.querySelectorAll('[data-rival]').forEach(x => x.classList.toggle('on', x === b)); touched(); });
   body.querySelectorAll('[data-tool]').forEach(b => b.onclick = () => { studio.tool = b.dataset.tool; body.querySelectorAll('[data-tool]').forEach(x => x.classList.toggle('on', x === b)); });
   $('#edBack').onclick = studioHome;
   $('#edTest').onclick = () => openPlay(data, true);
   $('#edRelease').onclick = releaseGame;
-  if (data.type !== 'shoot') setupPaint(data, touched);
+  if (TOOLS[data.type]) setupPaint(data, touched);
   updateEdStatus(); drawEditor();
 }
 function updateEdStatus() {
@@ -2204,7 +2428,7 @@ function drawEditor() {
   const d = studio.cur, cv = $('#edCanvas');
   if (!cv) return;
   const c = cv.getContext('2d');
-  if (d.type === 'shoot') { const g = MAKERS.shoot(d); for (let i = 0; i < 90; i++) g.update(1 / 30); g.draw(c); return; }
+  if (!TOOLS[d.type]) { const g = MAKERS[d.type](d); for (let i = 0; i < (d.type === 'war' ? 150 : 90); i++) g.update(1 / 30); g.draw(c); return; }
   const { cw, ch } = edCell(d);
   const rows = d.grid.length, cols = d.grid[0].length;
   if (cv.width !== cols * cw) { cv.width = cols * cw; cv.height = rows * ch; cv.style.width = d.type === 'jump' ? cols * cw + 'px' : '100%'; }
@@ -2251,6 +2475,8 @@ function gameScore(d) {
   } else if (d.type === 'block') {
     const all = d.grid.join('');
     sc = (all.match(/[12]/g) || []).length * 1.1 + (all.match(/H/g) || []).length * 2 + (all.match(/X/g) || []).length * 0.5;
+  } else if (d.type === 'war') {
+    sc = d.set.count * 5 + d.set.enemy * 4 + (d.rival ? 20 : 0) + 15;
   } else {
     sc = d.set.count * 6 + d.set.espeed * 3 + (d.boss ? 20 : 0) + (d.pattern !== 'straight' ? 10 : 0);
   }
@@ -2273,16 +2499,16 @@ function releaseGame() {
 function openPlay(data, testing) {
   studio.mode = 'play';
   const body = $('#studioBody');
-  const isShoot = data.type === 'shoot';
+  const isShoot = data.type === 'shoot', isWar = data.type === 'war', fourWay = isShoot || isWar;
   body.innerHTML = `
     <div class="st-top"><h2>${esc(data.title)}</h2><button class="btn" id="plBack" type="button">${testing ? 'エディタにもどる' : 'やめる'}</button></div>
     <div class="play-wrap">
       <canvas id="gcanvas" width="${GW}" height="${GH}"></canvas>
-      <div class="pad">
-        <div><button class="pb" data-pad="left" type="button" aria-label="左">◀</button><button class="pb" data-pad="right" type="button" aria-label="右">▶</button>${isShoot ? '<button class="pb" data-pad="up" type="button" aria-label="上">▲</button><button class="pb" data-pad="down" type="button" aria-label="下">▼</button>' : ''}</div>
+      <div class="pad${isWar ? ' compact' : ''}">
+        <div><button class="pb" data-pad="left" type="button" aria-label="左">◀</button><button class="pb" data-pad="right" type="button" aria-label="右">▶</button>${fourWay ? '<button class="pb" data-pad="up" type="button" aria-label="上">▲</button><button class="pb" data-pad="down" type="button" aria-label="下">▼</button>' : ''}</div>
         <div>${isShoot ? '' : '<button class="pb a" data-pad="a" type="button">A</button>'}</div>
       </div>
-      <div class="keys-help">矢印キーで移動、${data.type === 'jump' ? 'Space か ↑ でジャンプ' : data.type === 'block' ? 'Space で発射' : 'たまは自動で出ます'}、Esc でもどる</div>
+      <div class="keys-help">矢印キーで移動、${data.type === 'jump' ? 'Space か ↑ でジャンプ' : data.type === 'block' ? 'Space で発射' : isWar ? '近くの敵には自動でこうげき、Space（A）でわざ' : 'たまは自動で出ます'}、Esc でもどる</div>
     </div>`;
   for (const k in gpad) gpad[k] = false;
   body.querySelectorAll('[data-pad]').forEach(b => {
