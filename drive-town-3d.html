@@ -327,6 +327,29 @@
 
   /* rest fade */
   #rest { background: #05070d; transition: opacity .6s; }
+
+  /* League of War (separate file, played inside the studio) */
+  .low-card {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center;
+    background: linear-gradient(100deg, #10161f, #1c2533); border: 2px solid #3a4a5f; border-left: 6px solid #f0b429;
+    border-radius: 14px; padding: 14px 16px; text-align: left; width: 100%;
+  }
+  .low-card:hover { border-color: #f0b429; }
+  .low-card b { font-family: var(--display); font-weight: 400; font-size: 20px; color: #f0b429; display: block; }
+  .low-card span { font-size: 13px; color: var(--muted); font-weight: 500; line-height: 1.6; }
+  .low-card i { font-style: normal; background: #f0b429; color: #10161f; border-radius: 10px; padding: 10px 16px; font-weight: 900; white-space: nowrap; }
+  .low-card.off { opacity: .55; cursor: default; }
+  .low-card.off i { background: var(--panel-3); color: var(--muted); }
+  #low { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; background: #070910; padding: 0; z-index: 30; }
+  .low-bar {
+    display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap;
+    padding-block: calc(6px + env(safe-area-inset-top, 0px)) 6px;
+    padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
+    background: #10161f; border-bottom: 1px solid #2a3647; font-size: 13px;
+  }
+  .low-bar b { color: #f0b429; font-family: var(--display); font-weight: 400; }
+  .low-bar span { color: var(--muted); font-variant-numeric: tabular-nums; }
+  #lowFrame { flex: 1; width: 100%; border: 0; display: block; background: #070910; }
   #rest p { font-family: var(--display); font-size: 24px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -432,6 +455,11 @@
     </div>
     <div class="k-ingr" id="kIngr"></div>
   </div>
+</div>
+
+<!-- league of war -->
+<div id="low" class="screen" hidden>
+  <div class="low-bar"><b>リーグオブワー</b><span id="lowTime">テストプレイ 0分</span><button class="btn" id="lowBack" type="button">スタジオにもどる</button></div>
 </div>
 
 <!-- studio -->
@@ -1544,7 +1572,7 @@ function quitJob() {
 /* =========================================================
    screens
    ========================================================= */
-const SCREENS = ['title', 'phone', 'dealer', 'result', 'chef', 'studio', 'rest'];
+const SCREENS = ['title', 'phone', 'dealer', 'result', 'chef', 'studio', 'rest', 'low'];
 function showScreen(id) {
   for (const s of SCREENS) $('#' + s).hidden = s !== id;
   openScreen = id;
@@ -1782,7 +1810,7 @@ const TPL = {
   jump: { name: 'ジャンプアクション', desc: 'ブロックやコイン、敵をならべてステージを作ろう' },
   shoot: { name: 'シューティング', desc: '敵の数や動きを決めて、うちゅうの戦いを作ろう' },
   block: { name: 'ブロックくずし', desc: 'ブロックをならべて、自分だけの面を作ろう' },
-  war: { name: 'リーグオブワー', desc: 'ヒーローと兵士で道を進み、敵のタワーと本拠地をこわすチームバトル' },
+  war: { name: 'タワーバトル', desc: 'ヒーローと兵士で道を進み、敵のタワーと本拠地をこわすチームバトル' },
 };
 function defaultGame(type) {
   if (type === 'jump') {
@@ -1798,7 +1826,7 @@ function defaultGame(type) {
     return { type, title: 'ジャンプランド', grid: g.map(r => r.join('')), set: { speed: 5, jump: 5, gravity: 5, lives: 3 }, colors: { hero: '#ff5b3a', bg: '#8fd3ff', block: '#8a5a33' }, tested: false };
   }
   if (type === 'shoot') return { type, title: 'ギャラクシーパトロール', set: { speed: 5, count: 4, espeed: 4, fire: 5, lives: 3 }, pattern: 'zigzag', boss: true, colors: { hero: '#5fbfff', enemy: '#ff5b3a', bg: '#101a3a' }, tested: false };
-  if (type === 'war') return { type, title: 'リーグオブワー', set: { speed: 5, power: 5, enemy: 5, count: 5, lives: 3 }, heroType: 'sword', rival: true, colors: { hero: '#ffc928', ally: '#5fbfff', enemy: '#ff5b3a', bg: '#4f8a4a' }, tested: false };
+  if (type === 'war') return { type, title: 'タワーバトル', set: { speed: 5, power: 5, enemy: 5, count: 5, lives: 3 }, heroType: 'sword', rival: true, colors: { hero: '#ffc928', ally: '#5fbfff', enemy: '#ff5b3a', bg: '#4f8a4a' }, tested: false };
   return { type, title: 'ブロックブレイカー', grid: ['..XX....XX..', '111111111111', '122222222221', '12HHHHHHHH21', '122222222221', '111111111111', '............'], set: { ball: 4, paddle: 5, lives: 3 }, colors: { paddle: '#ffc928', ball: '#ffffff', bg: '#1d2b4f' }, tested: false };
 }
 const SCHEMA = {
@@ -2346,6 +2374,8 @@ function studioHome() {
     <div class="st-top"><h2>ピクセルスタジオ</h2><button class="btn" id="stClose" type="button">スタジオを出る</button></div>
     <div class="muted">好きなゲームを作って遊ぼう。テストプレイでクリアできたら発売できて、お金がもらえます。家で休むたびに、発売したゲームの売上も入ります。</div>
     ${levelBlock('engineer')}
+    <h3>テストプレイの仕事</h3>
+    <button class="low-card" id="lowOpen" type="button"><div><b>リーグオブワー</b><span>市街地で部隊を動かして戦う本格3D戦略ゲーム。遊んだ時間に合わせてテストプレイ代がもらえます（1分ごと、15分まで）。</span></div><i>あそぶ</i></button>
     <h3>新しいゲームを作る</h3>
     <div class="tpl-grid">${Object.keys(TPL).map(k => `<button class="tpl" data-tpl="${k}" type="button"><canvas width="${GW}" height="${GH}" data-thumb="${k}"></canvas><b>${TPL[k].name}</b><span>${TPL[k].desc}</span></button>`).join('')}</div>
     <h3>発売したゲーム（${state.games.length}本）</h3>
@@ -2353,6 +2383,7 @@ function studioHome() {
   void lv;
   body.querySelectorAll('[data-thumb]').forEach(cv => { const g = MAKERS[cv.dataset.thumb](defaultGame(cv.dataset.thumb)); g.draw(cv.getContext('2d')); });
   $('#stClose').onclick = closeStudio;
+  setupLowCard();
   body.querySelectorAll('[data-tpl]').forEach(b => b.onclick = () => { sfx('click'); openEditor(defaultGame(b.dataset.tpl)); });
   body.querySelectorAll('[data-play]').forEach(b => b.onclick = () => openPlay(state.games[+b.dataset.play], false));
   body.querySelectorAll('[data-copy]').forEach(b => b.onclick = () => {
@@ -2360,6 +2391,41 @@ function studioHome() {
     delete g.stars; delete g.sales; delete g.id; g.tested = false; g.title = (g.title + ' 2').slice(0, 16);
     openEditor(g);
   });
+}
+const LOW_FILE = 'league-of-war.html';
+const LOW_MAX_MIN = 15;
+function setupLowCard() {
+  const card = $('#lowOpen');
+  const off = msg => { card.classList.add('off'); card.querySelector('span').textContent = msg; card.querySelector('i').textContent = '遊べません'; card.onclick = null; };
+  card.onclick = openLow;
+  // On a web server the file must sit next to this page; check once so the card can explain instead of opening a blank frame.
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    fetch(LOW_FILE, { method: 'HEAD' }).then(r => { if (!r.ok) throw new Error(r.status); })
+      .catch(() => off(`このページでは遊べません。${LOW_FILE} をこのゲームと同じフォルダーに入れると遊べます。`));
+  }
+}
+function openLow() {
+  sfx('click');
+  const wrap = $('#low');
+  const fr = document.createElement('iframe');
+  fr.id = 'lowFrame'; fr.title = 'リーグオブワー'; fr.src = LOW_FILE;
+  fr.setAttribute('allow', 'fullscreen; autoplay');
+  wrap.appendChild(fr);
+  showScreen('low');
+  let played = 0;
+  const shown = () => { const m = Math.min(LOW_MAX_MIN, Math.floor(played / 60)); setText($('#lowTime'), `テストプレイ ${m}分${m >= LOW_MAX_MIN ? '（上限）' : ''}`); };
+  shown();
+  fr.addEventListener('load', () => { try { fr.contentWindow.focus(); } catch (e) { /* cross-origin */ } });
+  mini = { update(dt) { if (!document.hidden) played += dt; shown(); } };
+  $('#lowBack').onclick = () => {
+    fr.src = 'about:blank'; fr.remove();
+    mini = null;
+    const min = Math.min(LOW_MAX_MIN, Math.floor(played / 60));
+    if (min < 1) { showScreen('studio'); studioHome(); toast('1分以上遊ぶとテストプレイ代がもらえます'); return; }
+    const pay = Math.round(min * 25 * payMult('engineer'));
+    addMoney(pay); addXP('engineer', min * 6); save();
+    showResult('リーグオブワー テストプレイ', [['遊んだ時間', `${min}分`], ['1分あたり', yen(25 * payMult('engineer'))]], pay, 'engineer', () => { showScreen('studio'); studioHome(); });
+  };
 }
 function openEditor(data) {
   studio.cur = data; studio.mode = 'edit';
@@ -2683,7 +2749,7 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   elapsed += dt;
   if (mini) mini.update(dt);
-  const full = openScreen === 'chef' || openScreen === 'studio';
+  const full = openScreen === 'chef' || openScreen === 'studio' || openScreen === 'low';
   if (running && !openScreen) {
     clockAcc += dt * 4; if (clockAcc >= 1) { const m = Math.floor(clockAcc); clockAcc -= m; state.time = (state.time + m) % 1440; }
     updatePlayer(dt);
