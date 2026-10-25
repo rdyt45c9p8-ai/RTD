@@ -352,6 +352,92 @@
   #lowFrame { flex: 1; width: 100%; border: 0; display: block; background: #070910; }
   #rest p { font-family: var(--display); font-size: 24px; }
 
+
+  /* ---------- 200 additions ---------- */
+  .chip { flex-wrap: wrap; }
+  .stam { flex-basis: 100%; display: block; height: 5px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .stam b { display: block; height: 100%; width: 100%; background: var(--mint); transition: width .3s; }
+  #gauges { display: grid; gap: 3px; font-size: 11px; color: var(--muted); margin-left: 8px; align-self: center; }
+  #gauges span { display: grid; grid-template-columns: 16px 54px; align-items: center; gap: 4px; }
+  #gauges i { display: block; height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
+  #gauges b { display: block; height: 100%; background: var(--signal); }
+  #gauges b#dmgBar { background: var(--mint); }
+  #tools {
+    position: absolute; right: calc(10px + env(safe-area-inset-right, 0px)); top: calc(172px + env(safe-area-inset-top, 0px));
+    display: flex; flex-direction: column; gap: 8px; pointer-events: auto;
+  }
+  .tbtn { width: 50px; height: 50px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); font-size: 11px; display: grid; place-items: center; line-height: 1.1; }
+  .tbtn span { font-size: 18px; display: block; }
+  #bJump { width: 62px; height: 62px; }
+  #photoBar { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  @media (max-width: 640px) {
+    #tools { top: calc(132px + env(safe-area-inset-top, 0px)); }
+    #toasts { left: calc(10px + env(safe-area-inset-left, 0px)); transform: none; width: calc(100% - 84px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); }
+  }
+  @media (max-height: 460px) { #tools { top: calc(122px + env(safe-area-inset-top, 0px)); flex-direction: row; } .tbtn { width: 44px; height: 44px; } }
+  .g-card { position: relative; }
+  .g-body { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .g-msg { min-height: 1.6em; font-size: 17px; color: var(--signal); text-align: center; }
+  .g-msg.ok { color: var(--mint); } .g-msg.ng { color: var(--tomato); }
+  .k-bar .needle { position: absolute; top: -4px; bottom: -4px; width: 6px; margin-left: -3px; background: #fff; border-radius: 3px; box-shadow: 0 0 8px #000; }
+  .qz { display: grid; gap: 12px; justify-items: center; align-content: center; flex: 1; }
+  .qz-q { font-family: var(--display); font-size: clamp(20px, 4vw, 30px); text-align: center; text-wrap: balance; }
+  .qz-timer { width: min(520px, 100%); height: 8px; border-radius: 4px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .qz-timer b { display: block; height: 100%; width: 100%; background: var(--sky); }
+  .qz-c { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: min(620px, 100%); }
+  .qz-b { font-size: 18px; padding: 16px 10px; position: relative; }
+  .qz-b small { position: absolute; left: 8px; top: 6px; font-size: 11px; color: var(--muted); }
+  .qz-b.right { background: var(--mint); color: #0d1b2a; } .qz-b.wrong { background: var(--tomato); color: #fff; }
+  .cs-items { display: grid; gap: 4px; width: min(420px, 100%); background: var(--ticket); color: var(--ticket-ink); border-radius: 8px; padding: 10px 14px; }
+  .cs-items div { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; font-variant-numeric: tabular-nums; }
+  .cs-items span { font-size: 22px; }
+  .tm { display: grid; gap: 14px; justify-items: center; align-content: center; flex: 1; }
+  .tm-target { font-size: 72px; line-height: 1; transition: transform .2s; }
+  .tm-target.pop { transform: scale(1.3); }
+  .tm-bar { width: min(560px, 100%); height: 40px; }
+  .tm-hit { font-size: 22px; padding: 14px 44px; }
+  .st { display: grid; gap: 14px; justify-items: center; align-content: center; flex: 1; }
+  .st-item { background: var(--ticket); color: var(--ticket-ink); border-radius: 14px; padding: 16px 28px; display: grid; justify-items: center; gap: 4px; min-width: 220px; }
+  .st-item span { font-size: 56px; line-height: 1; } .st-item b { font-size: 20px; }
+  .st-item.shake, .plate-dish.shake { animation: shake .3s; }
+  .st-bins { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 10px; width: min(720px, 100%); }
+  .st-bin { padding: 22px 6px; font-size: 16px; position: relative; }
+  .st-bin small { position: absolute; left: 8px; top: 6px; font-size: 11px; color: var(--muted); }
+  @media (max-width: 520px) { .st-bins { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tp { display: grid; gap: 10px; justify-items: center; align-content: center; flex: 1; }
+  .tp-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; width: min(520px, 100%); }
+  .tp-cell { aspect-ratio: 1; border-radius: 50%; background: #3a2c1c; border: 4px solid #5a4630; font-size: clamp(28px, 7vw, 44px); touch-action: none; }
+  .tp-cell.on { background: #6b5235; }
+  .mm { display: grid; gap: 12px; justify-items: center; align-content: center; flex: 1; }
+  .mm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: min(420px, 100%); }
+  .mm-pad { aspect-ratio: 1.4; border-radius: 18px; font-size: clamp(22px, 5vw, 34px); opacity: .6; border: 3px solid rgba(255,255,255,.2); position: relative; touch-action: none; transition: opacity .1s, transform .1s; }
+  .mm-pad small { position: absolute; left: 10px; top: 6px; font-size: 12px; opacity: .8; }
+  .mm-pad.lit { opacity: 1; transform: scale(1.05); border-color: #fff; }
+  .mm0 { background: #e74c3c; } .mm1 { background: #f1c40f; color: #1d1a10; } .mm2 { background: #27ae60; } .mm3 { background: #2e86de; }
+  .apps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  @media (max-width: 420px) { .apps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .app { background: var(--panel-3); border: 1px solid var(--line); border-radius: 16px; padding: 12px 4px; display: grid; justify-items: center; gap: 4px; font-size: 12px; position: relative; }
+  .app span { font-size: 28px; line-height: 1.1; }
+  .app i { position: absolute; right: 6px; top: 6px; background: var(--tomato); color: #fff; font-style: normal; border-radius: 10px; padding: 0 6px; font-size: 11px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chipb { border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 12px; background: var(--panel-3); }
+  .chipb.on { background: var(--signal); color: var(--signal-ink); }
+  .item .lv { font-size: 11px; color: var(--sky); margin-left: 4px; }
+  .item .done { font-size: 10px; color: var(--mint); border: 1px solid var(--mint); border-radius: 6px; padding: 0 4px; margin-left: 4px; }
+  .item.got { border: 1px solid var(--signal); }
+  .add-list { margin: 0; padding-left: 0; list-style: none; display: grid; gap: 6px; }
+  .add-list li { background: var(--panel-3); border-radius: 10px; padding: 8px 12px; display: grid; gap: 2px; }
+  .add-list b { font-size: 14px; } .add-list span { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .wx { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; }
+  .wx div { background: var(--panel-3); border-radius: 12px; padding: 10px 4px; display: grid; gap: 2px; }
+  .wx b { font-size: 34px; } .wx small { font-size: 11px; color: var(--muted); }
+  .bank { display: flex; justify-content: space-between; align-items: baseline; background: var(--panel-3); border-radius: 12px; padding: 12px 14px; }
+  .bank b { font-family: var(--display); font-weight: 400; font-size: 24px; color: var(--signal); }
+  .meter.big { grid-template-columns: 90px 1fr 44px; font-size: 13px; }
+  .meter.big i { height: 10px; }
+  .meter em { font-style: normal; text-align: right; font-variant-numeric: tabular-nums; }
+  #bigmap { width: 100%; max-width: 520px; aspect-ratio: 1; border-radius: 12px; align-self: center; touch-action: none; }
+
   @media (prefers-reduced-motion: reduce) {
     .toast, .plate-dish.shake { animation: none; }
   }
@@ -362,7 +448,7 @@
 
 <div id="hud" hidden>
   <div class="tl">
-    <div class="chip"><span id="money">0円</span><span id="clock">1日目 08:00</span></div>
+    <div class="chip"><span id="money">0円</span><span id="clock">1日目 08:00</span><i class="stam" title="体力"><b id="stamBar"></b></i></div>
     <div id="jobPanel" hidden>
       <div class="jp-head"><b id="jpTitle"></b><span id="jpCount"></span></div>
       <div id="jpTask"></div>
@@ -374,20 +460,23 @@
   <div id="toasts"></div>
   <div id="hint" hidden></div>
   <div id="prompt" hidden role="button" tabindex="0"><kbd>E</kbd><span id="promptText"></span></div>
-  <div id="speedo" hidden><b id="spd">0</b><small>km/h</small></div>
+  <div id="speedo" hidden><b id="spd">0</b><small>km/h</small><div id="gauges" hidden><span><em id="fuelLabel">⛽</em><i><b id="fuelBar"></b></i></span><span>🔧<i><b id="dmgBar"></b></i></span></div></div>
+  <div id="tools"><button class="tbtn" id="tHorn" type="button"><span>📯</span>ホーン</button><button class="tbtn" id="tLight" type="button"><span>💡</span>ライト</button><button class="tbtn" id="tCam" type="button"><span>🎥</span>カメラ</button><button class="tbtn" id="tPhoto" type="button"><span>📷</span>写真</button></div>
   <div id="joy"><div id="joyKnob"></div></div>
   <div id="btns">
     <button class="rbtn" id="bPhone" type="button">スマホ<small class="kb">M</small></button>
     <button class="rbtn" id="bAction" type="button"><span id="bActionText">アクション</span><small class="kb">E</small></button>
     <button class="rbtn" id="bBrake" type="button">ブレーキ<small class="kb">Space</small></button>
+    <button class="rbtn" id="bJump" type="button">ジャンプ<small class="kb">Space</small></button>
   </div>
 </div>
+<div id="photoBar" hidden><button class="btn primary" id="photoExit" type="button">写真モードを終わる</button></div>
 
 <!-- title -->
 <div id="title" class="screen">
   <div class="card title-card">
     <div class="plate"><h1>ドライブタウン<em>3D</em></h1><p>はたらく・はしる・くらす</p></div>
-    <p class="muted" style="margin:0">町で仕事をしてお金をかせごう。かせいだお金で新しい車も買えます。</p>
+    <p class="muted" style="margin:0">町で仕事をしてお金をかせごう。かせいだお金で新しい車も買えます。スマホの「しごと」アプリから104種類の仕事ができます。</p>
     <div class="jobs-chips">
       <div class="jc" style="--c:var(--tomato)">ピザ配達<span>あつあつのうちに届ける</span></div>
       <div class="jc" style="--c:var(--signal)">タクシー<span>お客さんを目的地へ</span></div>
@@ -455,6 +544,28 @@
     </div>
     <div class="k-ingr" id="kIngr"></div>
   </div>
+</div>
+
+<!-- gig (画面の中でする仕事) -->
+<div id="gig" class="screen full" hidden>
+  <div class="card g-card">
+    <div class="k-top">
+      <h2 id="gTitle"></h2>
+      <div class="k-stats"><span id="gTimeWrap">のこり <b id="gTime">0</b>秒</span><span>スコア <b id="gScore">0</b></span></div>
+      <button class="btn danger" id="gQuit" type="button">やめる</button>
+    </div>
+    <div class="g-body" id="gBody"></div>
+    <div class="k-cook" id="gIntro"><div>
+      <div id="gIntroTitle" style="font-family:var(--display);font-size:20px;text-align:center"></div>
+      <div class="muted" id="gIntroText" style="text-align:center;line-height:1.7"></div>
+      <button class="btn primary" id="gGo" type="button" style="font-size:18px;padding:12px 34px">はじめる</button>
+    </div></div>
+  </div>
+</div>
+
+<!-- お店 -->
+<div id="svc" class="screen" hidden>
+  <div class="card" id="svcBody"></div>
 </div>
 
 <!-- league of war -->
@@ -532,10 +643,10 @@ const JOBS = {
 };
 const MAX_LV = 10;
 const xpNeed = lv => 60 + lv * 40;
-const payMult = id => 1 + (state.jobs[id].lv - 1) * 0.15;
-function addMoney(n) { state.money += Math.round(n); }
+const payMult = id => (1 + (jobState(id).lv - 1) * 0.15) * (isWeekend() ? 1.2 : 1);
+function addMoney(n) { state.money += Math.round(n); if (n > 0 && state.stats) state.stats.earned += Math.round(n); }
 function addXP(id, xp) {
-  const j = state.jobs[id];
+  const j = jobState(id);
   if (j.lv >= MAX_LV) return;
   j.xp += Math.round(xp);
   let up = false;
@@ -558,11 +669,11 @@ const SFX = {
   jump: [380, 760, .12, 'square', .04], hit: [600, 200, .1, 'square', .04], boom: [200, 40, .3, 'sawtooth', .07],
 };
 function sfx(name) {
-  if (!actx) return;
+  if (!actx || sfxVol() <= 0) return;
   const p = SFX[name]; if (!p) return;
   const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
   o.type = p[3]; o.frequency.setValueAtTime(p[0], t); o.frequency.exponentialRampToValueAtTime(p[1], t + p[2]);
-  g.gain.setValueAtTime(p[4], t); g.gain.exponentialRampToValueAtTime(0.0001, t + p[2]);
+  g.gain.setValueAtTime(p[4] * sfxVol(), t); g.gain.exponentialRampToValueAtTime(0.0001, t + p[2]);
   o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + p[2] + .02);
 }
 
@@ -726,7 +837,8 @@ function buildWorld() {
   roofGeo = new THREE.ConeGeometry(1, 1, 4); roofGeo.rotateY(Math.PI / 4); roofGeo.translate(0, 0.5, 0);
 
   // ground, asphalt
-  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), lam(0x86c06a));
+  groundMat = lam(0x86c06a);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000), groundMat);
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
   const asph = new THREE.Mesh(new THREE.PlaneGeometry(252, 252), lam(0x3d4352));
   asph.rotation.x = -Math.PI / 2; asph.position.y = 0.02; asph.receiveShadow = true; scene.add(asph);
@@ -789,6 +901,7 @@ function buildWorld() {
     const a = rs(0, Math.PI * 2), r = rs(138, 200);
     const x = Math.cos(a) * r, z = Math.sin(a) * r;
     if (Math.abs(x) < 132 && Math.abs(z) < 132) continue;
+    if (nearRampLane(x, z) || Math.hypot(x - RACE.x, z - RACE.z) < 8) continue;
     addTree(x, z, rs(0.9, 1.6));
   }
   // trees
@@ -820,6 +933,7 @@ function buildWorld() {
     for (let k = 0; k < 4; k++) { const p = new THREE.Mesh(cloudGeo, cloudMat); p.position.set(k * 5 - 8, rs(-1, 1.5), rs(-2, 2)); p.scale.set(rs(5, 8), rs(2.5, 4), rs(4, 6)); g.add(p); }
     g.position.set(rs(-250, 250), rs(70, 95), rs(-250, 250)); scene.add(g); clouds.push(g);
   }
+  buildExtras();
 }
 let clouds = [];
 
@@ -842,6 +956,8 @@ function addHouse(x, z, w, d, h, mats, roofMat) {
 function fillBlock(bx, bz, kind, no, roofCols) {
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
     const cx = bx + sx * 10.5, cz = bz + sz * 10.5;
+    const svc = SERVICE_AT[`${bx},${bz},${sx},${sz}`];
+    if (svc) { buildService(svc, bx, bz, sx, sz); continue; }
     let label;
     if (kind === 'mid' && srnd() < 0.22) {
       for (let k = 0; k < 3; k++) addTree(cx + rs(-6, 6), cz + rs(-6, 6), rs(0.9, 1.2));
@@ -880,6 +996,7 @@ function buildPark(bx, bz, no) {
   const benchMat = lam(0x8a5a36);
   for (const [dx, dz, r] of [[7, 3.3, 0], [-7, -3.3, 0], [3.3, -8, Math.PI / 2], [-3.3, 8, Math.PI / 2]]) {
     const b = new THREE.Mesh(BX(3, 0.5, 0.9), benchMat); b.position.set(bx + dx, 0.6, bz + dz); b.rotation.y = r; b.castShadow = true; scene.add(b);
+    BENCHES.push({ x: bx + dx, z: bz + dz });
   }
   const lm = { x: bx + 22.2, z: bz, nx: 1, nz: 0, name: '中央公園', gx: bx + 25.8, gz: bz };
   landmarks.push(lm);
@@ -994,99 +1111,6 @@ const wheelGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.34, 14); wheelGeo.rota
 const wheelMat = lam(0x1b1c20), glassMat = lam(0x24374f), darkMat = lam(0x23272f);
 const headMat = new THREE.MeshBasicMaterial({ color: 0xfff3c4 }), tailMat = new THREE.MeshBasicMaterial({ color: 0xff3b3b });
 let taxiSignTex = null, pizzaSignTex = null;
-function makeCarMesh(type, colorOverride) {
-  const def = CAR_TYPES[type];
-  const g = new THREE.Group();
-  const body = lam(colorOverride != null ? colorOverride : def.color);
-  const L = 4.2, W = 2.0;
-  const low = def.low ? -0.14 : 0, tall = def.tall ? 0.2 : 0;
-  const b = new THREE.Mesh(BX(W, 0.72 + tall, L), body); b.position.y = 0.78 + low + tall / 2; b.castShadow = true;
-  const cabL = def.low ? L * 0.42 : L * 0.54;
-  const cab = new THREE.Mesh(BX(W * 0.84, 0.62, cabL), glassMat); cab.position.set(0, 1.42 + low * 1.4 + tall, def.low ? -0.25 : -0.15); cab.castShadow = true;
-  const roof = new THREE.Mesh(BX(W * 0.86, 0.1, cabL * 0.95), body); roof.position.set(0, 1.77 + low * 1.4 + tall, cab.position.z);
-  const bf = new THREE.Mesh(BX(W * 1.02, 0.25, 0.2), darkMat); bf.position.set(0, 0.55 + low, L / 2);
-  const bb = bf.clone(); bb.position.z = -L / 2;
-  const h1 = new THREE.Mesh(BX(0.42, 0.18, 0.06), headMat); h1.position.set(-0.62, 0.92 + low + tall, L / 2 + 0.01);
-  const h2 = h1.clone(); h2.position.x = 0.62;
-  const t1 = new THREE.Mesh(BX(0.42, 0.16, 0.06), tailMat); t1.position.set(-0.62, 0.92 + low + tall, -L / 2 - 0.01);
-  const t2 = t1.clone(); t2.position.x = 0.62;
-  g.add(b, cab, roof, bf, bb, h1, h2, t1, t2);
-  const wheels = [], front = [];
-  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-    const piv = new THREE.Group(); piv.position.set(sx * (W / 2 - 0.02), 0.42, sz * L * 0.31);
-    const w = new THREE.Mesh(wheelGeo, wheelMat); w.castShadow = true; piv.add(w); g.add(piv);
-    wheels.push(w); if (sz > 0) front.push(piv);
-  }
-  if (type === 'taxi') {
-    taxiSignTex = taxiSignTex || textTexture('TAXI', '#1d1a10', '#ffc928', 256, 96, 56);
-    const s = new THREE.Mesh(BX(0.9, 0.36, 0.45), [lam(0xffc928), lam(0xffc928), lam(0xffe9a0), lam(0xffc928), new THREE.MeshBasicMaterial({ map: taxiSignTex }), new THREE.MeshBasicMaterial({ map: taxiSignTex })]);
-    s.position.set(0, 2.0, cab.position.z); g.add(s);
-    const stripe = new THREE.Mesh(BX(W + 0.02, 0.14, L * 0.7), darkMat); stripe.position.set(0, 0.95, 0); g.add(stripe);
-  }
-  if (type === 'pizza') {
-    pizzaSignTex = pizzaSignTex || textTexture('PIZZA', '#ffffff', '#e2462b', 256, 96, 52);
-    const s = new THREE.Mesh(BX(1.5, 0.5, 0.2), [lam(0xffffff), lam(0xffffff), lam(0xffffff), lam(0xffffff), new THREE.MeshBasicMaterial({ map: pizzaSignTex }), new THREE.MeshBasicMaterial({ map: pizzaSignTex })]);
-    s.position.set(0, 2.1, cab.position.z); g.add(s);
-    const box = new THREE.Mesh(BX(1.4, 0.3, 1.4), lam(0xf4e1c1)); box.position.set(0, 0.85, -L / 2 + 0.2); g.add(box);
-  }
-  if (type === 'sports' || type === 'super') {
-    const sp = new THREE.Mesh(BX(W * 0.9, 0.08, 0.5), darkMat); sp.position.set(0, 1.35 + low, -L / 2 + 0.3); g.add(sp);
-    const l1 = new THREE.Mesh(BX(0.1, 0.4, 0.1), darkMat); l1.position.set(-0.6, 1.15 + low, -L / 2 + 0.3);
-    const l2 = l1.clone(); l2.position.x = 0.6; g.add(l1, l2);
-  }
-  if (type === 'suv') {
-    const rack = new THREE.Mesh(BX(W * 0.7, 0.12, cabL * 0.7), darkMat); rack.position.set(0, 1.95 + tall, cab.position.z); g.add(rack);
-  }
-  return { g, wheels, front };
-}
-
-class Car {
-  constructor(type, x, z, h, color) {
-    this.type = type; this.def = CAR_TYPES[type];
-    const m = makeCarMesh(type, color);
-    this.mesh = m.g; this.wheels = m.wheels; this.front = m.front;
-    this.x = x; this.z = z; this.h = h; this.speed = 0; this.steer = 0; this.bumpCd = 0;
-    scene.add(this.mesh); cars.push(this); this.sync();
-  }
-  sync() { this.mesh.position.set(this.x, surf(this.x, this.z), this.z); this.mesh.rotation.y = this.h; }
-  drive(dt, inp) {
-    const d = this.def;
-    if (inp.brake) {
-      this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), 32 * dt);
-    } else if (inp.y > 0.05) {
-      if (this.speed < -0.3) this.speed += 26 * dt * inp.y;
-      else this.speed += d.acc * inp.y * dt * Math.max(0, 1 - (this.speed / d.max) ** 2);
-    } else if (inp.y < -0.05) {
-      if (this.speed > 0.3) this.speed += 26 * dt * inp.y;
-      else this.speed = Math.max(-9, this.speed + d.acc * 0.6 * inp.y * dt);
-    } else {
-      this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), (2.2 + Math.abs(this.speed) * 0.12) * dt);
-    }
-    this.steer = lerp(this.steer, inp.x, Math.min(1, dt * 7));
-    const sp = Math.abs(this.speed);
-    const tr = d.turn * this.steer * clamp(sp / 5, 0, 1) * (1 - 0.45 * clamp(sp / d.max, 0, 1));
-    this.h -= tr * dt * (this.speed < 0 ? -1 : 1);
-    const nx = this.x + Math.sin(this.h) * this.speed * dt, nz = this.z + Math.cos(this.h) * this.speed * dt;
-    const r = resolve(nx, nz, 1.7, this);
-    if (r.hit) {
-      const nl = Math.hypot(r.nx, r.nz) || 1;
-      const vn = (Math.sin(this.h) * r.nx + Math.cos(this.h) * r.nz) / nl * this.speed;
-      const impact = -vn;
-      if (impact > 3) {
-        this.speed *= 0.3;
-        if (this.bumpCd <= 0) { onBump(impact, this); this.bumpCd = 0.6; }
-      } else this.speed *= 0.985;
-    }
-    this.bumpCd -= dt;
-    this.x = r.x; this.z = r.z;
-    for (const w of this.wheels) w.rotation.x += this.speed * dt / 0.42;
-    for (const f of this.front) f.rotation.y = this.steer * 0.45;
-    this.sync();
-    this.mesh.rotation.z = this.steer * clamp(sp / d.max, 0, 1) * 0.06;
-  }
-  remove() { scene.remove(this.mesh); const i = cars.indexOf(this); if (i >= 0) cars.splice(i, 1); }
-}
-
 /* =========================================================
    collision
    ========================================================= */
@@ -1112,7 +1136,7 @@ function resolve(x, z, r, self) {
     if (d < rr && d > 1e-4) { const p = (rr - d) / d; x += dx * p; z += dz * p; nx += dx / d; nz += dz / d; hit = true; }
   };
   for (const c of circles) circ(c.x, c.z, c.r);
-  for (const c of cars) if (c !== self && !(self === P && P.inCar === c)) circ(c.x, c.z, 1.7);
+  for (const c of cars) if (c !== self && !(self === P && P.inCar === c)) circ(c.x, c.z, c.r || 1.7);
   for (const n of npcs) circ(n.x, n.z, 1.7);
   if (x < -WORLD) { x = -WORLD; nx += 1; hit = true; }
   if (x > WORLD) { x = WORLD; nx -= 1; hit = true; }
@@ -1176,7 +1200,7 @@ function updateNpcs(dt) {
   for (const n of npcs) {
     const fx = Math.sin(n.h), fz = Math.cos(n.h);
     const ahead = (ox, oz, dist) => { const dx = ox - n.x, dz = oz - n.z; const a = dx * fx + dz * fz; return a > 0 && a < dist && Math.abs(dx * fz - dz * fx) < 2.6; };
-    let blocked = ahead(px, pz, 10);
+    let blocked = ahead(px, pz, 10) || signalStop(n);
     if (!blocked) for (const c of cars) if (ahead(c.x, c.z, 9)) { blocked = true; break; }
     if (!blocked && n.ghost <= 0) for (const o of npcs) if (o !== n && ahead(o.x, o.z, 8)) { blocked = true; break; }
     n.ghost -= dt;
@@ -1280,9 +1304,15 @@ addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 function onKeyPress(k) {
   if (mini && mini.key) { mini.key(k); return; }
   if (!running) return;
-  if (openScreen) { if (k === 'escape' && ['phone', 'dealer', 'result'].includes(openScreen)) closeScreen(); return; }
+  if (cam.photo) { if (k === 'p' || k === 'escape') togglePhoto(); return; }
+  if (openScreen) { if (k === 'escape' && ['phone', 'dealer', 'result', 'svc'].includes(openScreen)) closeScreen(); return; }
   if (k === 'e' || k === 'enter') doAction();
   if (k === 'm' || k === 'tab') openPhone();
+  if (k === 'h') honk();
+  if (k === 'l') toggleLights();
+  if (k === 'c') cycleCam();
+  if (k === 'p') togglePhoto();
+  if (k === ' ' && !P.inCar) playerJump();
 }
 function readMove() {
   let x = 0, y = 0;
@@ -1321,6 +1351,12 @@ holdBtn($('#bBrake'), () => { touch.brake = true; }, () => { touch.brake = false
 $('#bAction').addEventListener('click', () => { initAudio(); if (!openScreen) doAction(); });
 $('#bPhone').addEventListener('click', () => { initAudio(); if (!openScreen) openPhone(); });
 $('#prompt').addEventListener('click', () => { if (!openScreen) doAction(); });
+$('#bJump').addEventListener('click', () => { initAudio(); if (!openScreen) playerJump(); });
+$('#tHorn').addEventListener('click', () => { if (!openScreen) honk(); });
+$('#tLight').addEventListener('click', () => { if (!openScreen) toggleLights(); });
+$('#tCam').addEventListener('click', () => { if (!openScreen) cycleCam(); });
+$('#tPhoto').addEventListener('click', () => { if (!openScreen) togglePhoto(); });
+$('#photoExit').addEventListener('click', () => { if (cam.photo) togglePhoto(); });
 // camera drag
 const cam = { yaw: 0, pitch: 0.32, dragT: 0, shake: 0, drag: null, lx: 0, ly: 0 };
 canvas.addEventListener('pointerdown', e => {
@@ -1332,7 +1368,7 @@ canvas.addEventListener('pointerdown', e => {
 canvas.addEventListener('pointermove', e => {
   if (e.pointerId !== cam.drag) return;
   const dx = e.clientX - cam.lx, dy = e.clientY - cam.ly; cam.lx = e.clientX; cam.ly = e.clientY;
-  cam.yaw -= dx * 0.006; cam.pitch = clamp(cam.pitch + dy * 0.004, 0.05, 1.2); cam.dragT = 1.6;
+  const ks = (state.settings ? state.settings.sens : 5) / 5; cam.yaw -= dx * 0.006 * ks; cam.pitch = clamp(cam.pitch + dy * 0.004 * ks, 0.05, 1.2); cam.dragT = 1.6;
 });
 const endDrag = e => { if (e.pointerId === cam.drag) cam.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
@@ -1353,6 +1389,8 @@ function getInteraction() {
       return { label: p.prompt, fn: () => usePlace(p) };
     }
   }
+  const ex = extraInteraction(x, z);
+  if (ex) return ex;
   if (P.inCar) return Math.abs(P.inCar.speed) < 3 ? { label: '車をおりる', fn: () => exitCar() } : null;
   let best = null, bd = 3.8 * 3.8;
   for (const c of cars) { const d = (c.x - x) ** 2 + (c.z - z) ** 2; if (d < bd) { bd = d; best = c; } }
@@ -1445,17 +1483,20 @@ function nextTask() {
 }
 function buildJobPanel() {
   const panel = $('#jobPanel');
-  if (!job || job.id === 'chef' || job.id === 'engineer') { panel.hidden = true; return; }
+  if (!job || job.id === 'chef' || job.id === 'engineer' || job.overlay) { panel.hidden = true; return; }
   panel.hidden = false;
+  if (job.kind === 'race') return;
   panel.style.setProperty('--job', JOBS[job.id].color);
-  setText($('#jpTitle'), JOBS[job.id].name);
+  setText($('#jpTitle'), job.kind ? `${job.def.e} ${job.def.name}` : JOBS[job.id].name);
+  if (job.kind) { gigPanelBuild(); return; }
   const m = $('#jpMeters');
   if (job.id === 'pizza') m.innerHTML = '<div class="meter"><span>あつあつ度</span><i><b id="m1"></b></i></div><div class="meter"><span>ピザの形</span><i><b id="m2"></b></i></div>';
   else if (job.stage === 'ride') m.innerHTML = '<div class="meter"><span>満足度</span><i><b id="m1"></b></i></div>';
   else m.innerHTML = '';
 }
 function updateJobPanel() {
-  if (!job || job.id === 'chef' || job.id === 'engineer') return;
+  if (!job || job.id === 'chef' || job.id === 'engineer' || job.overlay || job.kind === 'race') return;
+  if (job.kind) { gigPanelUpdate(); return; }
   const { x, z } = playerPos();
   const d = Math.round(Math.hypot(goal.x - x, goal.z - z));
   setText($('#jpCount'), `${job.n + 1}件目 / ${job.total}件`);
@@ -1483,6 +1524,7 @@ function updateJobPanel() {
 function onBump(impact, car) {
   if (car !== P.inCar) return;
   sfx('bump'); cam.shake = Math.min(0.6, impact * 0.04);
+  state.stats.bumps++; damageCar(impact); gigBump(impact);
   if (!job) return;
   if (job.id === 'pizza' && job.stage === 'go') {
     job.cond = Math.max(0, job.cond - clamp(impact * 2.2, 6, 30));
@@ -1558,13 +1600,16 @@ function finishDriveJob() {
   clearGoal();
   addXP(j.id, j.xp);
   job = null; $('#jobPanel').hidden = true;
+  jobDone(j.id, j.earn, j.earn);
   showResult(`${JOBS[j.id].name} おつかれさま！`, j.log, j.earn, j.id);
   save();
 }
 function quitJob() {
   if (!job) return;
   clearGoal(); customer.g.visible = false;
-  if (job.earn) addXP(job.id, job.xp * 0.5);
+  if (job.towMesh && job.towMesh.parent) job.towMesh.parent.remove(job.towMesh);
+  gigClear(); goalRing.visible = true;
+  if (job.earn && JOBS[job.id]) addXP(job.id, job.xp * 0.5);
   job = null; $('#jobPanel').hidden = true;
   toast('仕事をやめました');
 }
@@ -1572,7 +1617,7 @@ function quitJob() {
 /* =========================================================
    screens
    ========================================================= */
-const SCREENS = ['title', 'phone', 'dealer', 'result', 'chef', 'studio', 'rest', 'low'];
+const SCREENS = ['title', 'phone', 'dealer', 'result', 'chef', 'studio', 'rest', 'low', 'gig', 'svc'];
 function showScreen(id) {
   for (const s of SCREENS) $('#' + s).hidden = s !== id;
   openScreen = id;
@@ -1602,44 +1647,16 @@ function showResult(title, rows, total, jobId, after) {
   $('#resOk').onclick = () => { closeScreen(); if (after) after(); };
   $('#resOk').focus();
 }
-function openPhone() {
-  const body = $('#phoneBody');
-  const gamesHtml = state.games.length ? state.games.map((g, i) => `<div class="item"><div><div class="name">${esc(g.title)}</div><div class="sub">${TPL[g.type].name}・${'★'.repeat(g.stars)}${'☆'.repeat(5 - g.stars)}</div></div><button class="btn" data-play="${i}" type="button">あそぶ</button></div>`).join('') : '<div class="muted">まだありません。ピクセルスタジオでゲームを作って発売しよう。</div>';
-  body.innerHTML = `
-    <div class="row" style="justify-content:space-between"><h2>スマホ</h2><button class="btn" id="phClose" type="button">とじる</button></div>
-    <div class="row" style="justify-content:space-between"><span style="font-family:var(--display);font-size:24px;color:var(--signal)">${yen(state.money)}</span><span class="muted">${state.day}日目 ${clockStr()}</span></div>
-    ${job ? `<div class="item"><div><div class="name">いまの仕事：${JOBS[job.id].name}</div><div class="sub">${job.n}件 / ${job.total}件 終わった</div></div><button class="btn danger" id="phQuit" type="button">仕事をやめる</button></div>` : ''}
-    <h3>仕事のレベル（1から10まで）</h3>
-    ${Object.keys(JOBS).map(levelBlock).join('')}
-    <h3>マイカー</h3>
-    <div class="list">${state.cars.map(t => `<div class="item"><div class="row"><span class="swatch" style="background:#${CAR_TYPES[t].color.toString(16).padStart(6, '0')}"></span><div><div class="name">${CAR_TYPES[t].name}</div><div class="sub">${CAR_TYPES[t].desc}</div></div></div><button class="btn" data-car="${t}" type="button">ここによぶ</button></div>`).join('')}</div>
-    <h3>マイゲーム</h3>
-    <div class="list">${gamesHtml}</div>
-    <h3>ヒント</h3>
-    <div class="muted" style="line-height:1.7">光る輪に入ると仕事ができます。地図の「ピ」「タ」「シ」「ゲ」が仕事場、「車」がカーショップ、「家」がわが家です。仕事のレベルが上がると、もらえるお金がふえます。</div>
-    <div class="row"><button class="btn" id="phSave" type="button">セーブする</button><button class="btn danger" id="phReset" type="button">データを消す</button></div>`;
-  showScreen('phone');
-  $('#phClose').onclick = closeScreen;
-  $('#phSave').onclick = () => { save(); toast('セーブしました'); };
-  $('#phReset').onclick = e => {
-    const b = e.currentTarget;
-    if (b.dataset.sure) { try { localStorage.removeItem(SAVE_KEY); } catch (er) { /* ignore */ } location.reload(); }
-    else { b.dataset.sure = '1'; b.textContent = 'もう一度押すと全部消えます'; }
-  };
-  if ($('#phQuit')) $('#phQuit').onclick = () => { quitJob(); closeScreen(); };
-  body.querySelectorAll('[data-car]').forEach(b => b.onclick = () => { closeScreen(); summonCar(b.dataset.car); });
-  body.querySelectorAll('[data-play]').forEach(b => b.onclick = () => { const g = state.games[+b.dataset.play]; openStudio(); openPlay(g, false); });
-}
 function openDealer() {
   const body = $('#dealerBody');
-  const bar = (v, max) => `<i><b style="width:${Math.round(v / max * 100)}%"></b></i>`;
+  const bar = (v, max) => `<i><b style="width:${Math.min(100, Math.round(v / max * 100))}%"></b></i>`;
   body.innerHTML = `
     <div class="row" style="justify-content:space-between"><h2>カーショップ ブーン</h2><button class="btn" id="dlClose" type="button">とじる</button></div>
     <div class="muted">もっているお金：<b style="color:var(--signal)">${yen(state.money)}</b></div>
     <div class="list">${MY_CARS.map(t => {
       const c = CAR_TYPES[t], owned = state.cars.includes(t);
       return `<div class="item"><div class="row"><span class="swatch" style="background:#${c.color.toString(16).padStart(6, '0')}"></span><div><div class="name">${c.name}</div><div class="sub">${c.desc}</div></div></div>
-        <div class="stat-grid"><span>最高速度</span>${bar(c.max, 48)}<span>加速</span>${bar(c.acc, 23)}</div>
+        <div class="stat-grid"><span>最高速度</span>${bar(c.max, 60)}<span>加速</span>${bar(c.acc, 30)}</div>
         ${owned ? `<button class="btn" data-ride="${t}" type="button">乗る</button>` : `<button class="btn primary" data-buy="${t}" type="button" ${state.money < c.price ? 'disabled' : ''}>${yen(c.price)}で買う</button>`}</div>`;
     }).join('')}</div>`;
   showScreen('dealer');
@@ -1658,6 +1675,7 @@ function rest() {
   showScreen('rest');
   setTimeout(() => {
     state.day++; state.time = 8 * 60;
+    onNewDay();
     let income = 0;
     for (const g of state.games) income += g.stars * 30;
     closeScreen();
@@ -1798,6 +1816,7 @@ function endChef(quit) {
   const rows = chef.log.slice();
   if (chef.missed) rows.push([`帰ってしまったお客さん ${chef.missed}人`, '0円']);
   if (chef.mist) rows.push([`材料のまちがい ${chef.mist}回`, '']);
+  if (chef.served) jobDone('chef', chef.earn, chef.earn);
   showResult(quit ? 'お店を閉めました' : 'シェフの仕事 おつかれさま！', rows, chef.earn, 'chef');
   save();
 }
@@ -2423,7 +2442,7 @@ function openLow() {
     const min = Math.min(LOW_MAX_MIN, Math.floor(played / 60));
     if (min < 1) { showScreen('studio'); studioHome(); toast('1分以上遊ぶとテストプレイ代がもらえます'); return; }
     const pay = Math.round(min * 25 * payMult('engineer'));
-    addMoney(pay); addXP('engineer', min * 6); save();
+    addMoney(pay); addXP('engineer', min * 6); jobDone('engineer', pay, min); save();
     showResult('リーグオブワー テストプレイ', [['遊んだ時間', `${min}分`], ['1分あたり', yen(25 * payMult('engineer'))]], pay, 'engineer', () => { showScreen('studio'); studioHome(); });
   };
 }
@@ -2557,7 +2576,7 @@ function releaseGame() {
   const g = JSON.parse(JSON.stringify(d));
   g.stars = stars; g.sales = pay; g.id = Date.now();
   state.games.push(g);
-  addMoney(pay); addXP('engineer', 30 + sc / 2);
+  addMoney(pay); addXP('engineer', 30 + sc / 2); jobDone('engineer', pay, sc);
   sfx('ok');
   save();
   showResult(`「${d.title}」発売！`, [['ひょうか', '★'.repeat(stars) + '☆'.repeat(5 - stars)], ['ゲームのボリューム', `${sc}点`], ['家で休むたびの売上', yen(stars * 30)]], pay, 'engineer', () => { showScreen('studio'); studioHome(); });
@@ -2627,6 +2646,7 @@ function drawMinimapStatic() {
     g.font = '16px "Mochiy Pop One", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     g.fillText(p.short, w2m(p.mx), w2m(p.mz) + 1);
   }
+  drawMinimapServices(g);
 }
 let mmT = 0;
 function drawMinimap(t) {
@@ -2638,6 +2658,7 @@ function drawMinimap(t) {
     mctx.strokeStyle = '#fff'; mctx.lineWidth = 3; mctx.beginPath(); mctx.arc(w2m(goal.x), w2m(goal.z), r, 0, 7); mctx.stroke();
     mctx.fillStyle = '#' + goalRingMat.color.getHexString(); mctx.beginPath(); mctx.arc(w2m(goal.x), w2m(goal.z), 6, 0, 7); mctx.fill();
   }
+  drawMinimapExtra();
   if (myCar && P.inCar !== myCar) { mctx.fillStyle = '#5fbfff'; mctx.fillRect(w2m(myCar.x) - 4, w2m(myCar.z) - 4, 8, 8); }
   const { x, z } = playerPos();
   const h = P.inCar ? P.inCar.h : P.h;
@@ -2690,7 +2711,7 @@ function updatePlayer(dt) {
     const dx = fx * inp.y + rx * inp.x, dz = fz * inp.y + rz * inp.x;
     const dl = Math.hypot(dx, dz) || 1;
     P.h += angDiff(P.h, Math.atan2(dx, dz)) * Math.min(1, dt * 12);
-    const sp = 7.5 * Math.min(1, l);
+    const sp = walkSpeed(l);
     const r = resolve(P.x + dx / dl * sp * dt, P.z + dz / dl * sp * dt, 0.45, P);
     P.x = r.x; P.z = r.z;
     P.t += dt * 11 * Math.min(1, l);
@@ -2708,6 +2729,7 @@ function updateCamera(dt) {
     camera.lookAt(0, 0, 0);
     return;
   }
+  if (camExtra(dt)) return;
   let tx, tz, ty, dist, pitch;
   if (P.inCar) {
     const c = P.inCar;
@@ -2729,7 +2751,6 @@ function updateCamera(dt) {
 }
 function updateHud(dt) {
   setText($('#money'), yen(state.money));
-  setText($('#clock'), `${state.day}日目 ${clockStr()}`);
   const it = getInteraction();
   const pr = $('#prompt');
   if (it) { pr.hidden = false; setText($('#promptText'), it.label); } else pr.hidden = true;
@@ -2742,6 +2763,7 @@ function updateHud(dt) {
   if (P.inCar) setText($('#spd'), Math.round(Math.abs(P.inCar.speed) * 3.6));
   if (hintT > 0) { hintT -= dt; if (hintT <= 0) $('#hint').hidden = true; }
   updateJobPanel();
+  hudExtra();
 }
 let last = performance.now();
 function frame(now) {
@@ -2749,13 +2771,15 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   elapsed += dt;
   if (mini) mini.update(dt);
-  const full = openScreen === 'chef' || openScreen === 'studio' || openScreen === 'low';
+  const full = openScreen === 'chef' || openScreen === 'studio' || openScreen === 'low' || openScreen === 'gig';
   if (running && !openScreen) {
     clockAcc += dt * 4; if (clockAcc >= 1) { const m = Math.floor(clockAcc); clockAcc -= m; state.time = (state.time + m) % 1440; }
     updatePlayer(dt);
     updateNpcs(dt);
     updatePeds(dt);
     updateDriveJob(dt);
+    updateGigDrive(dt);
+    updateExtras(dt);
     updateHud(dt);
     saveAcc += dt; if (saveAcc > 15) { saveAcc = 0; save(); }
   } else if (!running) {
@@ -2763,6 +2787,8 @@ function frame(now) {
   }
   if (full) return;
   updateSky();
+  weatherSky();
+  if (running) { updateWeather(dt); updateFireworks(dt); }
   // markers & arrow
   const pulse = 1 + Math.sin(elapsed * 4) * 0.06;
   for (const m of markers) { m.userData.ring.scale.setScalar(pulse); m.userData.ring.rotation.z += dt * 0.5; }
@@ -2789,6 +2815,2396 @@ function frame(now) {
 }
 
 /* =========================================================
+   追加要素 200（仕事 100・実績 30・乗り物 12・着せかえ 20・機能 38）
+   ========================================================= */
+const KIND_INFO = {
+  route: { name: 'ルート巡回', color: '#ff9f43', how: '順番に回る場所へ車で行き、止まって仕事をします' },
+  carry: { name: '運ぶ仕事', color: '#ee5253', how: '荷物を積んで届け先まで運びます。ぶつけたり時間をかけすぎたりすると荷物が傷みます' },
+  chase: { name: '追いかける仕事', color: '#5f27cd', how: '逃げる相手を追いかけてつかまえます' },
+  park: { name: '駐車の仕事', color: '#10ac84', how: '白い枠の中に、まっすぐ止めます' },
+  recipe: { name: 'お店の仕事', color: '#38d39f', how: '注文票の材料を順番にタップ。マークのある材料は緑で止めます' },
+  quiz: { name: '先生・ガイドの仕事', color: '#54a0ff', how: '4つの答えから正しいものを選びます' },
+  timing: { name: '職人の仕事', color: '#feca57', how: '動く針を緑のところで止めます' },
+  sort: { name: '仕分けの仕事', color: '#48dbfb', how: '出てきた物を正しい箱へ分けます' },
+  tap: { name: 'タップの仕事', color: '#ff6b6b', how: '出てきた目印をタップ。まちがいのマークはさわらないこと' },
+  memory: { name: '記憶の仕事', color: '#c56cf0', how: '光った順番をおぼえて、同じ順番で押します' },
+  cashier: { name: 'レジの仕事', color: '#f8a5c2', how: 'お会計やおつりを計算して、正しい答えを選びます' },
+};
+const KIND_ORDER = ['route', 'carry', 'chase', 'park', 'recipe', 'quiz', 'timing', 'sort', 'tap', 'memory', 'cashier'];
+
+/* ---------- 運転する仕事の車 ---------- */
+Object.assign(CAR_TYPES, {
+  mail: { name: '郵便車', job: true, shape: 'van', color: 0xd63031, color2: 0xffffff, max: 25, acc: 12, turn: 2.0 },
+  newsbike: { name: '配達バイク', job: true, shape: 'bike', color: 0x2d98da, max: 20, acc: 12, turn: 2.6, r: 1.1 },
+  keijob: { name: '配達用の軽トラ', job: true, shape: 'truck', bed: true, color: 0xf5f6fa, max: 24, acc: 11, turn: 2.1 },
+  garbage: { name: 'ゴミ収集車', job: true, shape: 'truck', color: 0x20bf6b, color2: 0xd1d8e0, max: 21, acc: 9, turn: 1.7, r: 2.1 },
+  citybus: { name: '路線バス', job: true, shape: 'bus', color: 0x3867d6, color2: 0xffffff, max: 20, acc: 8, turn: 1.5, r: 2.6 },
+  schoolbus: { name: 'スクールバス', job: true, shape: 'bus', color: 0xf7b731, color2: 0x2d3436, max: 20, acc: 8, turn: 1.5, r: 2.6 },
+  tourbus: { name: '観光バス', job: true, shape: 'bus', color: 0xa55eea, color2: 0xffffff, max: 22, acc: 8, turn: 1.5, r: 2.6 },
+  workvan: { name: '作業用のバン', job: true, shape: 'van', color: 0xf5f6fa, color2: 0x4b7bec, max: 25, acc: 11, turn: 1.9 },
+  cargo: { name: 'トラック', job: true, shape: 'truck', color: 0x4b6584, color2: 0xf1f2f6, max: 23, acc: 9, turn: 1.7, r: 2.1 },
+  ambulance: { name: '救急車', job: true, shape: 'van', color: 0xffffff, color2: 0xeb3b5a, siren: [0xff3b3b, 0xff3b3b], max: 30, acc: 14, turn: 2.0 },
+  tow: { name: 'レッカー車', job: true, shape: 'truck', bed: true, color: 0xfa8231, max: 24, acc: 10, turn: 1.8, r: 2.0, siren: [0xffa500, 0xffa500] },
+  police: { name: 'パトカー', job: true, shape: 'car', color: 0xf5f6fa, color2: 0x1e272e, siren: [0xff3b3b, 0x3b6bff], max: 36, acc: 18, turn: 2.2 },
+  policebike: { name: '白バイ', job: true, shape: 'bike', color: 0xf5f6fa, siren: [0xff3b3b, 0xff3b3b], max: 40, acc: 22, turn: 2.6, r: 1.1 },
+  limojob: { name: 'お客さんのリムジン', job: true, shape: 'car', long: 1.6, color: 0x1e1e1e, max: 30, acc: 12, turn: 1.7, r: 2.2 },
+  showcar: { name: '展示用のスポーツカー', job: true, shape: 'car', low: true, color: 0xff3f34, max: 40, acc: 20, turn: 2.2 },
+  driving: { name: '教習車', job: true, shape: 'car', color: 0xf5f6fa, color2: 0x3dc1d3, max: 26, acc: 11, turn: 1.9 },
+  tailcar: { name: '目立たない車', job: true, shape: 'car', color: 0x7f8c8d, max: 30, acc: 13, turn: 2.0 },
+});
+
+/* ---------- 買える乗り物 12 ---------- */
+const NEW_CARS = {
+  scooter: { name: 'スクーター', price: 800, shape: 'bike', color: 0xff9ff3, max: 19, acc: 11, turn: 2.6, r: 1.1, fuelUse: 0.4, desc: '小回りがきいて、ガソリンもあまり使わない' },
+  kei: { name: '軽トラック', price: 1800, shape: 'truck', bed: true, color: 0xdfe6e9, max: 25, acc: 11, turn: 2.1, desc: '荷台つき。町の仕事にぴったり' },
+  wagon: { name: 'ワゴン', price: 3500, shape: 'van', color: 0x74b9ff, color2: 0x0984e3, max: 28, acc: 12, turn: 1.9, desc: 'たくさん乗れる家族の車' },
+  camper: { name: 'キャンピングカー', price: 9000, shape: 'van', long: 1.4, color: 0xffeaa7, color2: 0xe17055, max: 24, acc: 9, turn: 1.6, r: 2.1, camper: true, desc: '車の中で休める（どこでもセーブして朝になる）' },
+  classic: { name: 'クラシックカー', price: 8000, shape: 'car', color: 0x81ecec, color2: 0xffffff, max: 30, acc: 12, turn: 1.9, desc: 'むかしの形のおしゃれな車' },
+  ev: { name: '電気自動車', price: 7000, shape: 'car', color: 0xdff9fb, color2: 0x00b894, max: 34, acc: 18, turn: 2.0, ev: true, desc: 'ガソリンがいらない' },
+  limo: { name: 'リムジン', price: 12000, shape: 'car', long: 1.6, color: 0x2d3436, max: 32, acc: 12, turn: 1.7, r: 2.2, desc: 'とても長い高級車' },
+  open: { name: 'オープンカー', price: 10000, shape: 'car', noRoof: true, low: true, color: 0xe84393, max: 40, acc: 18, turn: 2.2, desc: '屋根がなくて風が気持ちいい' },
+  rally: { name: 'ラリーカー', price: 14000, shape: 'car', color: 0x0984e3, color2: 0xfdcb6e, max: 42, acc: 21, turn: 2.3, grip: true, desc: '雨や雪でもすべりにくい' },
+  monster: { name: 'モンスタートラック', price: 20000, shape: 'truck', bed: true, bigWheel: true, color: 0x6c5ce7, max: 34, acc: 16, turn: 1.8, r: 2.1, tough: true, desc: 'ぶつかっても傷まない' },
+  double: { name: '2階建てバス', price: 25000, shape: 'bus', double: true, color: 0xd63031, color2: 0xffffff, max: 22, acc: 8, turn: 1.4, r: 2.6, desc: '町でいちばん大きい車' },
+  hyper: { name: 'ハイパーカー', price: 50000, shape: 'car', low: true, color: 0x00cec9, color2: 0x2d3436, max: 60, acc: 30, turn: 2.4, desc: 'スーパーカーよりさらに速い' },
+};
+Object.assign(CAR_TYPES, NEW_CARS);
+MY_CARS.push(...Object.keys(NEW_CARS));
+
+/* ---------- 仕事 100 ---------- */
+const G = (kind, id, name, e, o) => Object.assign({ kind, id, name, e }, o);
+const GIGS = [
+  // ルート巡回 10
+  G('route', 'yubin', '郵便配達', '📮', { veh: 'mail', stops: 5, per: 45, desc: '手紙を5か所のポストに届ける', msg: '手紙を届けた' }),
+  G('route', 'shinbun', '新聞配達', '📰', { veh: 'newsbike', stops: 6, per: 38, early: true, desc: '朝の4時から7時は朝刊ボーナス', msg: '新聞を入れた' }),
+  G('route', 'milk', '牛乳配達', '🥛', { veh: 'keijob', stops: 5, per: 42, fragile: 1.2, meter: 'びんの無事', desc: 'ぶつけるとびんが割れる', msg: '牛乳を置いた' }),
+  G('route', 'gomi', 'ゴミ収集', '🗑️', { veh: 'garbage', stops: 6, per: 50, wait: 1.5, desc: '止まってゴミを積みこむ', msg: 'ゴミを積んだ' }),
+  G('route', 'bus', '路線バスの運転手', '🚌', { veh: 'citybus', stops: 5, per: 60, wait: 2.5, marks: true, desc: 'バス停でしっかり止まる', msg: 'お客さんが乗りおりした' }),
+  G('route', 'schoolbus', 'スクールバスの運転手', '🏫', { veh: 'schoolbus', stops: 4, per: 58, wait: 2, limit: 60, desc: '時速60kmをこえないように', msg: '子どもたちが乗った' }),
+  G('route', 'kanko', '観光バスの運転手', '🗺️', { veh: 'tourbus', stops: 4, per: 80, wait: 2, landmarks: true, desc: '町の名所をめぐる', msg: '名所を案内した' }),
+  G('route', 'gaitou', '街灯の点検', '💡', { veh: 'workvan', stops: 5, per: 46, wait: 2, night: true, desc: '夜にやると夜間ボーナス', msg: '街灯を点検した' }),
+  G('route', 'jihanki', '自動販売機の補充', '🥤', { veh: 'cargo', stops: 5, per: 46, wait: 1.5, vending: true, desc: '町の自販機に飲み物を補充', msg: '飲み物を補充した' }),
+  G('route', 'idotosho', '移動図書館', '📚', { veh: 'workvan', stops: 4, per: 55, wait: 3, desc: '止まって本を貸し出す', msg: '本を貸し出した' }),
+  // 運ぶ仕事 10
+  G('carry', 'takuhai', '宅配便', '📦', { veh: 'cargo', runs: 3, fragile: 0.6, base: 120, desc: '荷物を3か所へ届ける' }),
+  G('carry', 'kyukyu', '救急車の隊員', '🚑', { veh: 'ambulance', runs: 2, pick: true, toHospital: true, fragile: 1.4, tight: 0.75, base: 220, meter: '患者さんの具合', desc: '急いで、でもやさしく病院へ' }),
+  G('carry', 'hikkoshi', '引っ越し屋', '🛋️', { veh: 'cargo', runs: 2, pick: true, wait: 3, fragile: 1.0, base: 220, desc: '家具を積んで新しい家へ' }),
+  G('carry', 'hanaya', '花屋の配達', '💐', { veh: 'workvan', runs: 3, melt: 0.35, fragile: 0.8, base: 110, meter: '花の元気', desc: '花がしおれる前に届ける' }),
+  G('carry', 'bento', 'お弁当の配達', '🍱', { veh: 'newsbike', runs: 4, short: true, melt: 0.5, base: 80, meter: 'あたたかさ', desc: '近くのお客さんへ次々と' }),
+  G('carry', 'tow', 'レッカー車の運転手', '🛻', { veh: 'tow', runs: 2, pick: true, towCar: true, toRepair: true, base: 200, desc: 'こわれた車を修理工場へ運ぶ' }),
+  G('carry', 'catering', 'ケータリング', '🥘', { veh: 'workvan', runs: 2, toLandmark: true, fragile: 1.0, melt: 0.3, base: 180, meter: '料理の見ため', desc: 'パーティー会場へ料理を運ぶ' }),
+  G('carry', 'kusuri', '薬の配達', '💊', { veh: 'workvan', runs: 3, toHospital: true, tight: 0.75, base: 140, desc: '病院へ急いで薬を届ける' }),
+  G('carry', 'bijutsu', '美術品の運搬', '🖼️', { veh: 'cargo', runs: 2, fragile: 2.6, slow: true, base: 260, meter: '美術品の無事', desc: 'とてもこわれやすい。ゆっくり運ぶ' }),
+  G('carry', 'reitou', '冷凍便', '🧊', { veh: 'cargo', runs: 3, melt: 1.1, base: 140, meter: 'つめたさ', desc: 'アイスがとける前に届ける' }),
+  // 追いかける仕事 5
+  G('chase', 'police', 'おまわりさん（パトカー）', '🚓', { veh: 'police', targets: 2, tv: 15, catchR: 4.5, desc: '逃げる車にタッチしてつかまえる' }),
+  G('chase', 'shirobai', '白バイ隊員', '🏍️', { veh: 'policebike', targets: 3, tv: 19, catchR: 4, desc: 'スピード違反の車を追いかける' }),
+  G('chase', 'tantei', '探偵の尾行', '🕵️', { veh: 'tailcar', targets: 1, tv: 10, tail: true, desc: '近すぎず遠すぎず、25秒ついていく' }),
+  G('chase', 'inu', '逃げた犬をつかまえる', '🐕', { foot: true, animal: 'dog', targets: 3, tv: 5.6, desc: '歩いて公園の犬をつかまえる（走るとはやい）' }),
+  G('chase', 'penguin', '脱走ペンギンの保護', '🐧', { foot: true, animal: 'penguin', targets: 4, tv: 3.6, desc: '公園に逃げたペンギンを保護する' }),
+  // 駐車の仕事 5
+  G('park', 'chusha', '駐車場の係', '🅿️', { veh: 'basic', count: 3, tol: 1.6, tolA: 25, per: 150, desc: 'お客さんの車を枠に止める' }),
+  G('park', 'kyoshu', '教習所の先生', '🚗', { veh: 'driving', count: 3, tol: 1.0, tolA: 15, per: 190, desc: 'お手本になるきれいな駐車' }),
+  G('park', 'truckpark', 'トラックの車庫入れ', '🚚', { veh: 'cargo', count: 2, tol: 1.8, tolA: 20, per: 230, desc: '大きなトラックを枠へ' }),
+  G('park', 'valet', 'ホテルのバレーパーキング', '🏨', { veh: 'limojob', count: 3, tol: 1.8, tolA: 22, per: 210, fragile: true, desc: '高級車をぶつけずに止める' }),
+  G('park', 'tenji', '展示車の並べ係', '✨', { veh: 'showcar', count: 3, tol: 1.2, tolA: 12, per: 220, fragile: true, desc: '新車をぴったり並べる' }),
+];
+// お店の仕事 10（材料: [名前, 絵, 動作]）
+const RECIPES = {
+  cafe: { name: 'カフェの店員', e: '☕', desc: 'コーヒーやラテを作る', ing: { bean: ['コーヒー豆', '🟤', 'ひく'], milk: ['ミルク', '🥛'], ice: ['氷', '🧊'], sugar: ['さとう', '🍬'], cocoa: ['ココア', '🍫'], matcha: ['抹茶', '🍵'], whip: ['ホイップ', '🍦'], cup: ['カップ', '🥤'] },
+    dishes: [['カフェラテ', '☕', ['cup', 'bean', 'milk'], 110], ['アイスコーヒー', '🧋', ['cup', 'ice', 'bean'], 100], ['ココア', '🍫', ['cup', 'cocoa', 'milk', 'whip'], 120], ['抹茶ラテ', '🍵', ['cup', 'matcha', 'milk', 'sugar'], 130]] },
+  panya: { name: 'パン屋', e: '🥐', desc: '生地を作ってオーブンで焼く', ing: { flour: ['小麦粉', '🌾'], butter: ['バター', '🧈'], egg: ['たまご', '🥚'], sugar: ['さとう', '🍬'], jam: ['ジャム', '🍓'], choco: ['チョコ', '🍫'], oven: ['オーブン', '🔥', '焼く'] },
+    dishes: [['クロワッサン', '🥐', ['flour', 'butter', 'oven'], 100], ['メロンパン', '🍈', ['flour', 'sugar', 'egg', 'oven'], 120], ['ジャムパン', '🍞', ['flour', 'egg', 'oven', 'jam'], 110], ['チョコパン', '🍫', ['flour', 'butter', 'choco', 'oven'], 120]] },
+  cake: { name: 'ケーキ屋', e: '🍰', desc: 'スポンジを焼いてかざる', ing: { sponge: ['スポンジ', '🧁', '焼く'], cream: ['クリーム', '🍦'], straw: ['いちご', '🍓'], choco: ['チョコ', '🍫'], fruit: ['フルーツ', '🍑'], candle: ['ろうそく', '🕯️'] },
+    dishes: [['ショートケーキ', '🍰', ['sponge', 'cream', 'straw'], 140], ['チョコケーキ', '🎂', ['sponge', 'choco', 'cream'], 140], ['フルーツタルト', '🥧', ['sponge', 'cream', 'fruit', 'straw'], 160], ['バースデーケーキ', '🎂', ['sponge', 'cream', 'straw', 'candle'], 180]] },
+  sushi: { name: 'すし職人', e: '🍣', desc: 'シャリをにぎってネタをのせる', ing: { rice: ['シャリ', '🍚', 'にぎる'], tuna: ['マグロ', '🐟'], salmon: ['サーモン', '🍣'], shrimp: ['エビ', '🦐'], egg: ['たまご焼き', '🥚'], nori: ['のり', '🟩'], ikura: ['いくら', '🔴'], wasabi: ['わさび', '🟢'] },
+    dishes: [['マグロにぎり', '🍣', ['rice', 'wasabi', 'tuna'], 120], ['サーモンにぎり', '🍣', ['rice', 'wasabi', 'salmon'], 120], ['てっか巻き', '🍙', ['nori', 'rice', 'tuna'], 110], ['いくら軍艦', '🍱', ['rice', 'nori', 'ikura'], 150], ['エビにぎり', '🦐', ['rice', 'shrimp'], 100], ['たまごにぎり', '🥚', ['rice', 'nori', 'egg'], 90]] },
+  crepe: { name: 'クレープ屋', e: '🥞', desc: '生地を焼いて具を巻く', ing: { dough: ['生地', '🥞', '焼く'], banana: ['バナナ', '🍌'], straw: ['いちご', '🍓'], choco: ['チョコ', '🍫'], cream: ['クリーム', '🍦'], tuna: ['ツナ', '🐟'], lettuce: ['レタス', '🥬'] },
+    dishes: [['バナナチョコ', '🍌', ['dough', 'cream', 'banana', 'choco'], 120], ['いちごクリーム', '🍓', ['dough', 'cream', 'straw'], 110], ['ツナサラダ', '🥗', ['dough', 'lettuce', 'tuna'], 110]] },
+  ice: { name: 'アイスクリーム屋', e: '🍨', desc: 'コーンやカップにアイスをのせる', ing: { cone: ['コーン', '🍦'], cup: ['カップ', '🥣'], vanilla: ['バニラ', '⚪', 'すくう'], choco: ['チョコ', '🍫'], straw: ['いちご', '🍓'], matcha: ['抹茶', '🍵'], sprinkle: ['トッピング', '✨'] },
+    dishes: [['バニラコーン', '🍦', ['cone', 'vanilla'], 80], ['2段アイス', '🍨', ['cone', 'vanilla', 'choco'], 110], ['いちごカップ', '🍓', ['cup', 'straw', 'sprinkle'], 100], ['抹茶カップ', '🍵', ['cup', 'vanilla', 'matcha', 'sprinkle'], 130]] },
+  bentoya: { name: 'お弁当屋', e: '🍱', desc: 'おかずをつめてお弁当を作る', ing: { rice: ['ごはん', '🍚'], karaage: ['からあげ', '🍗', 'あげる'], tamago: ['卵焼き', '🍳', '焼く'], sausage: ['ウインナー', '🌭'], broc: ['ブロッコリー', '🥦'], ume: ['梅干し', '🔴'], salmon: ['焼き鮭', '🐟'] },
+    dishes: [['からあげ弁当', '🍗', ['rice', 'karaage', 'broc'], 130], ['鮭弁当', '🐟', ['rice', 'salmon', 'tamago'], 140], ['日の丸弁当', '🍙', ['rice', 'ume'], 80], ['スペシャル弁当', '🍱', ['rice', 'karaage', 'tamago', 'sausage', 'broc'], 200]] },
+  donut: { name: 'ドーナツ屋', e: '🍩', desc: '生地をあげてかざる', ing: { dough: ['生地', '🍩', 'あげる'], choco: ['チョコ', '🍫'], straw: ['いちご', '🍓'], sugar: ['さとう', '🍬'], nuts: ['ナッツ', '🥜'], sprinkle: ['トッピング', '✨'] },
+    dishes: [['シュガードーナツ', '🍩', ['dough', 'sugar'], 80], ['チョコドーナツ', '🍫', ['dough', 'choco', 'sprinkle'], 110], ['いちごドーナツ', '🍓', ['dough', 'straw', 'sprinkle'], 110], ['ナッツドーナツ', '🥜', ['dough', 'choco', 'nuts'], 120]] },
+  kakigori: { name: 'かき氷屋', e: '🍧', desc: '氷をけずってシロップをかける', ing: { ice: ['氷', '🧊', 'けずる'], straw: ['いちご', '🍓'], melon: ['メロン', '🍈'], lemon: ['レモン', '🍋'], blue: ['ブルーハワイ', '🔵'], milk: ['練乳', '🥛'], azuki: ['あずき', '🟤'] },
+    dishes: [['いちご', '🍓', ['ice', 'straw', 'milk'], 90], ['メロン', '🍈', ['ice', 'melon'], 80], ['ブルーハワイ', '🔵', ['ice', 'blue'], 80], ['宇治金時', '🍵', ['ice', 'azuki', 'milk'], 120], ['レモン', '🍋', ['ice', 'lemon'], 80]] },
+  pizzashoku: { name: 'ピザ職人', e: '🍕', desc: '生地にのせてオーブンで焼く', ing: { dough: ['生地', '⚪'], tomato: ['トマトソース', '🍅'], cheese: ['チーズ', '🧀'], salami: ['サラミ', '🍖'], mush: ['きのこ', '🍄'], basil: ['バジル', '🌿'], oven: ['オーブン', '🔥', '焼く'] },
+    dishes: [['マルゲリータ', '🍕', ['dough', 'tomato', 'cheese', 'basil', 'oven'], 160], ['サラミピザ', '🍕', ['dough', 'tomato', 'cheese', 'salami', 'oven'], 170], ['きのこピザ', '🍄', ['dough', 'cheese', 'mush', 'oven'], 150]] },
+};
+for (const [id, r] of Object.entries(RECIPES)) GIGS.push(G('recipe', id, r.name, r.e, { desc: r.desc, data: r }));
+
+// 先生・ガイドの仕事 10
+const QZ = (q, a, ...w) => ({ q, a, w });
+const QUIZ = {
+  sansu: { name: '算数の先生', e: '🧮', desc: '計算の問題を出す（レベルで難しくなる）', gen: 'math' },
+  kokugo: { name: '国語の先生', e: '📖', desc: '漢字の読みの問題', gen: 'kanji' },
+  rika: { name: '理科の先生', e: '🔬', desc: '自然や科学の問題', list: [
+    QZ('水が氷になる温度は？', '0度', '10度', '100度', '50度'),
+    QZ('植物が日光で養分を作るはたらきは？', '光合成', '呼吸', '蒸発', '発芽'),
+    QZ('地球のまわりを回っている天体は？', '月', '太陽', '火星', '金星'),
+    QZ('磁石にくっつくのはどれ？', '鉄', 'アルミ', '銅', 'ガラス'),
+    QZ('昆虫の足は何本？', '6本', '4本', '8本', '10本'),
+    QZ('太陽がのぼってくる方角は？', '東', '西', '南', '北'),
+    QZ('空気の中にいちばん多い気体は？', 'ちっ素', '酸素', '二酸化炭素', '水素'),
+    QZ('クモの足は何本？', '8本', '6本', '4本', '10本'),
+    QZ('音が伝わらないところは？', '宇宙（真空）', '水の中', '空気の中', '鉄の中'),
+    QZ('月が光って見えるのはなぜ？', '太陽の光をはね返すから', '自分で光るから', '電気がついているから', '星の光を集めるから'),
+    QZ('水がふっとうする温度は？（ふつうの気圧）', '100度', '50度', '80度', '200度'),
+  ] },
+  shakai: { name: '社会の先生', e: '🗾', desc: '日本や世界の問題', list: [
+    QZ('日本の首都は？', '東京', '大阪', '京都', '名古屋'),
+    QZ('日本でいちばん高い山は？', '富士山', '北岳', '浅間山', '阿蘇山'),
+    QZ('日本でいちばん長い川は？', '信濃川', '利根川', '石狩川', '淀川'),
+    QZ('日本でいちばん大きい湖は？', '琵琶湖', '霞ヶ浦', '十和田湖', '浜名湖'),
+    QZ('日本でいちばん面積が広い都道府県は？', '北海道', '岩手県', '長野県', '東京都'),
+    QZ('日本の都道府県はいくつ？', '47', '43', '50', '45'),
+    QZ('沖縄県の県庁所在地は？', '那覇市', '沖縄市', '名護市', '石垣市'),
+    QZ('金閣がある都市は？', '京都市', '奈良市', '大阪市', '神戸市'),
+    QZ('こどもの日は何月何日？', '5月5日', '3月3日', '7月7日', '11月3日'),
+    QZ('世界でいちばん広い海は？', '太平洋', '大西洋', 'インド洋', '北極海'),
+    QZ('日本のお金の単位は？', '円', 'ドル', 'ウォン', 'ユーロ'),
+  ] },
+  eigo: { name: '英語の先生', e: '🔤', desc: '英単語の意味の問題', gen: 'eigo' },
+  guide: { name: '町の観光ガイド', e: '🧭', desc: 'ドライブタウンのことを案内する', gen: 'town' },
+  tokei: { name: '時計屋', e: '⏰', desc: '時間の計算の問題', gen: 'clock' },
+  tenki: { name: '天気予報士', e: '🌤️', desc: '天気のマークや天気の問題', list: [
+    QZ('☀️ のマークは？', '晴れ', 'くもり', '雨', '雪'),
+    QZ('☁️ のマークは？', 'くもり', '晴れ', '雨', 'かみなり'),
+    QZ('☔ のマークは？', '雨', '雪', 'くもり', '晴れ'),
+    QZ('❄️ のマークは？', '雪', '雨', '晴れ', '霧'),
+    QZ('⚡ のマークは？', 'かみなり', '雪', '晴れ', 'くもり'),
+    QZ('台風が日本によく来るのは？', '夏から秋', '冬', '春だけ', '一年中同じ'),
+    QZ('虹が見えるのは太陽のどちら側の空？', '反対側', '同じ側', '真上', '真下'),
+    QZ('気温をはかる道具は？', '温度計', '風向計', '雨量計', '気圧計'),
+    QZ('降水確率10%と90%、雨がふりやすいのは？', '90%', '10%', 'どちらも同じ', 'わからない'),
+    QZ('梅雨（つゆ）があるのはおもに何月ごろ？', '6月ごろ', '1月ごろ', '9月ごろ', '12月ごろ'),
+  ] },
+  shisho: { name: '図書館の司書', e: '📚', desc: '本と作者の問題', gen: 'books' },
+  shiiku: { name: '動物園の飼育員', e: '🦁', desc: '動物の問題', list: [
+    QZ('いちばん首が長い動物は？', 'キリン', 'ゾウ', 'ウマ', 'ラクダ'),
+    QZ('陸の上でいちばん速く走る動物は？', 'チーター', 'ライオン', 'ウマ', 'シカ'),
+    QZ('パンダがおもに食べるものは？', '竹や笹', '魚', '肉', 'りんご'),
+    QZ('カンガルーが赤ちゃんを入れるところは？', 'おなかの袋', '背中', '口の中', '巣'),
+    QZ('コアラが食べる葉っぱは？', 'ユーカリ', 'さくら', 'まつ', 'もみじ'),
+    QZ('世界でいちばん大きな動物は？', 'シロナガスクジラ', 'アフリカゾウ', 'キリン', 'ジンベエザメ'),
+    QZ('ラクダのこぶに入っているのは？', '脂肪', '水', '空気', '骨'),
+    QZ('タコの足は何本？', '8本', '10本', '6本', '4本'),
+    QZ('イルカは何のなかま？', 'ほにゅう類', '魚類', '両生類', 'は虫類'),
+    QZ('冬眠する動物は？', 'クマ', 'ウマ', 'キリン', 'ゾウ'),
+  ] },
+};
+for (const [id, q] of Object.entries(QUIZ)) GIGS.push(G('quiz', id, q.name, q.e, { desc: q.desc, data: q }));
+
+// 職人の仕事 10（sp: 針の速さ, zone: 緑の幅, move: 緑が動く, ramp: だんだん速く, jump: 毎回場所が変わる）
+const TIMING = [
+  ['camera', '写真家', '📷', 'シャッターを切る', { sp: 1.1, zone: 0.16, move: 0.35 }, '動くモデルさんを、ちょうどいい瞬間にとる'],
+  ['daiku', '大工', '🔨', 'くぎを打つ', { sp: 1.7, zone: 0.12 }, 'すばやい針でくぎを打つ'],
+  ['tsuri', '釣り師', '🎣', 'つり上げる', { sp: 1.2, zone: 0.16, jump: true }, '魚がかかる場所は毎回ちがう'],
+  ['tokoya', '床屋', '💈', 'カットする', { sp: 1.0, zone: 0.18 }, 'お客さんの髪を切りそろえる'],
+  ['hanabishi', '花火師', '🎆', '打ち上げる', { sp: 1.0, zone: 0.15, ramp: 0.15 }, 'だんだん速くなる'],
+  ['touki', '陶芸家', '🏺', 'ろくろを止める', { sp: 0.7, zone: 0.08 }, 'ゆっくりだけど、緑がせまい'],
+  ['kaji', '鍛冶屋', '⚒️', 'たたく', { sp: 1.3, zone: 0.14, ramp: 0.12 }, '熱いうちにリズムよくたたく'],
+  ['batting', 'バッティングセンターのコーチ', '⚾', '打つ', { sp: 2.2, zone: 0.16 }, 'とても速い球を打ちかえす'],
+  ['tokeishoku', '時計職人', '⚙️', '歯車をはめる', { sp: 0.6, zone: 0.06 }, 'ほんの少しのずれも許されない'],
+  ['rocket', 'ロケット技師', '🚀', '発射ボタンを押す', { sp: 1.5, zone: 0.14, move: 0.5 }, '動く窓をねらって発射'],
+];
+for (const [id, name, e, verb, o, desc] of TIMING) GIGS.push(G('timing', id, name, e, { verb, desc, data: o }));
+
+// 仕分けの仕事 10（bins: 箱の名前, items: [名前, 絵, 箱の番号]）
+const SORTS = {
+  yubinkyoku: { name: '郵便局の仕分け', e: '✉️', desc: '手紙を地区ごとに分ける', bins: ['北町', '南町', '東町', '西町'], gen: 'mail' },
+  recycle: { name: 'リサイクル係', e: '♻️', desc: 'ゴミを正しく分別する', bins: ['もえるゴミ', 'プラスチック', 'びん・かん', '紙'], items: [['バナナの皮', '🍌', 0], ['ティッシュ', '🧻', 0], ['わりばし', '🥢', 0], ['ペットボトル', '🧴', 1], ['おかしの袋', '🛍️', 1], ['あきかん', '🥫', 2], ['ジュースのびん', '🍾', 2], ['新聞紙', '📰', 3], ['ダンボール', '📦', 3], ['ざっし', '📚', 3]] },
+  honseiri: { name: '図書館の本の整理', e: '📗', desc: '本を棚ごとに分ける', bins: ['絵本', '図鑑', '小説', '料理の本'], items: [['ももたろう', '🍑', 0], ['ねずみのよめいり', '🐭', 0], ['きょうりゅう図鑑', '🦖', 1], ['昆虫図鑑', '🐞', 1], ['星座図鑑', '⭐', 1], ['走れメロス', '🏃', 2], ['坊っちゃん', '🏫', 2], ['はじめてのカレー', '🍛', 3], ['おやつの本', '🍪', 3]] },
+  yaoya: { name: '八百屋', e: '🥕', desc: '野菜とくだものを分ける', bins: ['野菜', 'くだもの'], items: [['にんじん', '🥕', 0], ['キャベツ', '🥬', 0], ['なす', '🍆', 0], ['じゃがいも', '🥔', 0], ['トマト', '🍅', 0], ['りんご', '🍎', 1], ['ぶどう', '🍇', 1], ['バナナ', '🍌', 1], ['みかん', '🍊', 1], ['もも', '🍑', 1]] },
+  fukuya: { name: '洋服屋のたたみ係', e: '👕', desc: 'サイズごとに棚へ', bins: ['S', 'M', 'L', 'XL'], gen: 'size' },
+  souko: { name: '倉庫係', e: '🏭', desc: '荷物を棚の記号で分ける', bins: ['A棚', 'B棚', 'C棚'], gen: 'shelf' },
+  suizokukan: { name: '水族館の飼育係', e: '🐠', desc: '海の生き物と川・池の生き物', bins: ['海', '川・池'], items: [['マグロ', '🐟', 0], ['タコ', '🐙', 0], ['クマノミ', '🐠', 0], ['フグ', '🐡', 0], ['カニ', '🦀', 0], ['メダカ', '🐟', 1], ['コイ', '🎏', 1], ['ザリガニ', '🦞', 1], ['カエル', '🐸', 1]] },
+  cleaning: { name: 'クリーニング屋', e: '👔', desc: '水あらいとドライクリーニング', bins: ['水あらい', 'ドライ'], items: [['Tシャツ', '👕', 0], ['タオル', '🧺', 0], ['ジーンズ', '👖', 0], ['くつした', '🧦', 0], ['スーツ', '👔', 1], ['ネクタイ', '🎀', 1], ['ドレス', '👗', 1], ['着物', '👘', 1]] },
+  kuko: { name: '空港の荷物係', e: '🧳', desc: '行き先のタグで荷物を分ける', bins: ['東京', '大阪', '札幌', '福岡'], items: [['HND', '🧳', 0], ['KIX', '🧳', 1], ['CTS', '🧳', 2], ['FUK', '🧳', 3]], tags: true },
+  shinadashi: { name: 'コンビニの品出し', e: '🏪', desc: '商品を売り場ごとに並べる', bins: ['飲み物', 'おかし', 'パン', '日用品'], items: [['お茶', '🍵', 0], ['ジュース', '🧃', 0], ['牛乳', '🥛', 0], ['チョコ', '🍫', 1], ['ポテチ', '🥔', 1], ['クッキー', '🍪', 1], ['食パン', '🍞', 2], ['メロンパン', '🥐', 2], ['歯ブラシ', '🪥', 3], ['電池', '🔋', 3], ['ティッシュ', '🧻', 3]] },
+};
+for (const [id, s] of Object.entries(SORTS)) GIGS.push(G('sort', id, s.name, s.e, { desc: s.desc, data: s }));
+
+// タップの仕事 10（hit: さわる目印, bad: さわってはいけない目印）
+const TAPS = [
+  ['gaichu', '害虫駆除', '🐛', '🐛', '🦋', '畑の虫を追いはらう。チョウはさわらない'],
+  ['shukaku', '農家の収穫', '🍅', '🍅', '🟢', '赤いトマトだけをとる'],
+  ['seisou', '公園の清掃員', '🧹', '🥤', null, '落ちているゴミを拾う'],
+  ['haisha', '歯医者', '🦷', '🦠', '🦷', 'ばい菌だけをやっつける'],
+  ['shoubou', '消防士', '🚒', '🔥', null, '火をすばやく消す'],
+  ['madofuki', '窓ふき', '🧽', '🟫', null, 'ビルの窓のよごれをふく'],
+  ['yukikaki', '雪かき', '⛄', '❄️', null, '道の雪をどける'],
+  ['kajuen', '果樹園の手伝い', '🍎', '🍎', '🐝', 'りんごをとる。ハチはさわらない'],
+  ['kusamushiri', '草むしり', '🌿', '🌿', '🌷', '雑草だけをぬく。花はさわらない'],
+  ['penki', 'ペンキ屋', '🎨', '⬜', null, '白いところをぬる'],
+];
+for (const [id, name, e, hit, bad, desc] of TAPS) GIGS.push(G('tap', id, name, e, { desc, data: { hit, bad } }));
+
+// 記憶の仕事 10（pads: 4つのボタン, base: 音の高さ）
+const MEMS = [
+  ['pianist', 'ピアニスト', '🎹', ['ド', 'レ', 'ミ', 'ソ'], [262, 294, 330, 392], 'メロディーをおぼえてひく'],
+  ['drummer', 'ドラマー', '🥁', ['🥁', '🔔', '🪘', '🎵'], [110, 660, 180, 330], 'リズムをおぼえてたたく'],
+  ['dancer', 'ダンサー', '💃', ['⬆️', '⬇️', '⬅️', '➡️'], [392, 330, 294, 440], 'ふりつけをおぼえておどる'],
+  ['kinko', '金庫の番人', '🔐', ['1', '2', '3', '4'], [523, 587, 659, 698], '暗証番号をおぼえる'],
+  ['shingoutenken', '信号機の点検', '🚦', ['🔴', '🟡', '🟢', '⚪'], [220, 330, 440, 550], '光った順番をたしかめる'],
+  ['shikisha', 'オーケストラの指揮者', '🎼', ['🎻', '🎺', '🎷', '🎹'], [349, 392, 440, 523], '楽器の出番をおぼえる'],
+  ['tejina', '手品師', '🎩', ['🃏', '🐇', '🕊️', '🎩'], [300, 400, 500, 600], '手品の順番をおぼえる'],
+  ['orgel', 'オルゴール職人', '🎵', ['♪', '♫', '♬', '♩'], [784, 880, 988, 1047], '高い音の並びをおぼえる'],
+  ['keibiin', '警備員', '📹', ['カメラ1', 'カメラ2', 'カメラ3', 'カメラ4'], [200, 250, 300, 350], 'あやしい動きがあったカメラの順番'],
+  ['karaoke', 'カラオケ店員', '🎤', ['🎤', '🎶', '💿', '📻'], [440, 494, 554, 659], '曲の順番をおぼえる'],
+];
+for (const [id, name, e, pads, tones, desc] of MEMS) GIGS.push(G('memory', id, name, e, { desc, data: { pads, tones } }));
+
+// レジの仕事 10（items: [品物, 絵, ねだん]）
+const CASH = [
+  ['konbini', 'コンビニ店員', '🏪', [['おにぎり', '🍙', 120], ['お茶', '🍵', 150], ['パン', '🍞', 180], ['アイス', '🍦', 130], ['ざっし', '📕', 400], ['からあげ', '🍗', 220]]],
+  ['super', 'スーパーのレジ係', '🛒', [['牛乳', '🥛', 200], ['たまご', '🥚', 250], ['キャベツ', '🥬', 150], ['お肉', '🥩', 500], ['りんご', '🍎', 100], ['魚', '🐟', 350]]],
+  ['ginko', '銀行の窓口', '🏦', [['千円札', '💴', 1000], ['五千円札', '💴', 5000], ['一万円札', '💴', 10000], ['五百円玉', '🪙', 500], ['百円玉', '🪙', 100]]],
+  ['eki', '駅のきっぷ売り場', '🚉', [['大人のきっぷ', '🎫', 210], ['子どものきっぷ', '🎫', 110], ['特急券', '🚄', 800], ['入場券', '🎟️', 150]]],
+  ['eiga', '映画館のチケット係', '🎬', [['大人', '🎫', 1800], ['子ども', '🎟️', 1000], ['ポップコーン', '🍿', 500], ['ジュース', '🥤', 300]]],
+  ['yuenchi', '遊園地のチケット係', '🎡', [['入園券', '🎫', 1200], ['のりもの券', '🎟️', 400], ['フリーパス', '🎢', 3000], ['風船', '🎈', 300]]],
+  ['honya', '本屋', '📕', [['まんが', '📙', 500], ['絵本', '📗', 1200], ['図鑑', '📘', 2000], ['ざっし', '📰', 700]]],
+  ['bunbougu', '文房具屋', '✏️', [['えんぴつ', '✏️', 80], ['けしゴム', '🧽', 100], ['ノート', '📓', 150], ['ものさし', '📏', 200], ['はさみ', '✂️', 300]]],
+  ['yakkyoku', '薬局', '💊', [['かぜ薬', '💊', 1200], ['ばんそうこう', '🩹', 300], ['マスク', '😷', 500], ['目薬', '💧', 700]]],
+  ['omochaya', 'おもちゃ屋', '🧸', [['ぬいぐるみ', '🧸', 1500], ['ミニカー', '🚗', 600], ['ボール', '⚽', 900], ['つみき', '🧱', 2000]]],
+];
+for (const [id, name, e, items] of CASH) GIGS.push(G('cashier', id, name, e, { desc: 'お会計とおつりの計算', data: { items } }));
+
+const GIG = Object.fromEntries(GIGS.map(g => [g.id, g]));
+for (const g of GIGS) JOBS[g.id] = { name: g.name, color: KIND_INFO[g.kind].color, gig: true };
+
+/* ---------- 実績 30 ---------- */
+const ACH = [
+  ['first', 'はじめてのお給料', '仕事を1回やりとげる', s => s.stats.jobs >= 1, 100],
+  ['jobs10', 'はたらき者', '仕事を10回やりとげる', s => s.stats.jobs >= 10, 500],
+  ['jobs50', '仕事の達人', '仕事を50回やりとげる', s => s.stats.jobs >= 50, 2000],
+  ['jobs100', '町のヒーロー', '仕事を100回やりとげる', s => s.stats.jobs >= 100, 5000],
+  ['kinds10', 'いろいろ体験', '10種類の仕事をやってみる', s => Object.keys(s.tried).length >= 10, 1000],
+  ['kinds30', 'なんでも屋', '30種類の仕事をやってみる', s => Object.keys(s.tried).length >= 30, 3000],
+  ['kindsAll', '全部の仕事を体験', '104種類すべての仕事をやってみる', s => Object.keys(s.tried).length >= 104, 20000],
+  ['lv5', '一人前', 'どれかの仕事でレベル5', s => Object.values(s.jobs).some(j => j.lv >= 5), 1000],
+  ['lv10', 'マスター', 'どれかの仕事でレベル10', s => Object.values(s.jobs).some(j => j.lv >= 10), 5000],
+  ['rich1', 'お金持ち', '1万円をもつ', s => s.money >= 10000, 500],
+  ['rich2', '大金持ち', '10万円をもつ', s => s.money >= 100000, 3000],
+  ['earn1m', '百万長者', '合計で100万円かせぐ', s => s.stats.earned >= 1000000, 10000],
+  ['km10', 'ドライバー', '合計10km運転する', s => s.stats.dist >= 10000, 500],
+  ['km100', '長距離ドライバー', '合計100km運転する', s => s.stats.dist >= 100000, 3000],
+  ['car1', 'はじめてのマイカー', '車を1台買う', s => s.cars.length >= 2, 500],
+  ['carAll', 'カーコレクター', '買える車を全部そろえる', s => MY_CARS.every(t => s.cars.includes(t)), 20000],
+  ['coin10', 'コインさがし', '隠しコインを10枚見つける', s => s.coins.length >= 10, 500],
+  ['coin50', 'コインコンプリート', '隠しコインを50枚全部見つける', s => s.coins.length >= 50, 5000],
+  ['style5', 'おしゃれさん', '着せかえを5つ買う', s => s.owned.length >= 5, 500],
+  ['pet', 'ペットといっしょ', 'ペットを家族にする', s => !!s.pet, 500],
+  ['bank', '貯金上手', '銀行に1万円あずける', s => s.bank >= 10000, 1000],
+  ['race1', 'レース完走', 'タイムアタックを完走する', s => s.raceBest > 0, 500],
+  ['race2', 'スピードスター', 'タイムアタックを50秒以内で走る', s => s.raceBest > 0 && s.raceBest <= 50, 3000],
+  ['jump', '大ジャンプ', 'ジャンプ台で1.5秒以上とぶ', s => s.stats.air >= 1.5, 1000],
+  ['lotto', 'ラッキー', '宝くじに当たる', s => s.stats.lottoWins >= 1, 500],
+  ['games3', 'ゲーム会社', 'ゲームを3本発売する', s => s.games.length >= 3, 1500],
+  ['daily10', 'ミッションこなし', 'デイリーミッションを10個クリア', s => s.stats.daily >= 10, 2000],
+  ['rain', '雨の日ドライバー', '雨か雪の日に1km運転する', s => s.stats.wetDist >= 1000, 800],
+  ['hanabi', '花火見物', '週末の夜に花火を見る', s => s.stats.hanabi >= 1, 800],
+  ['lost3', '落とし物の届け人', '落とし物を3回届ける', s => s.stats.lost >= 3, 1500],
+];
+
+/* ---------- 着せかえ 20 ---------- */
+const OUTFITS = [
+  ['cap_red', 'hat', 'キャップ（赤）', 300, { hat: 'cap', c: 0xe74c3c }],
+  ['cap_blue', 'hat', 'キャップ（青）', 300, { hat: 'cap', c: 0x2e86de }],
+  ['straw', 'hat', 'むぎわら帽子', 600, { hat: 'straw', c: 0xf6d365 }],
+  ['silk', 'hat', 'シルクハット', 2000, { hat: 'silk', c: 0x222222 }],
+  ['helmet', 'hat', 'ヘルメット', 800, { hat: 'helmet', c: 0xfeca57 }],
+  ['crown', 'hat', '王冠', 10000, { hat: 'crown', c: 0xffd700 }],
+  ['sh_white', 'shirt', 'シャツ（白）', 400, { c: 0xf5f6fa }],
+  ['sh_black', 'shirt', 'シャツ（黒）', 400, { c: 0x2d3436 }],
+  ['sh_green', 'shirt', 'シャツ（緑）', 400, { c: 0x26de81 }],
+  ['sh_pink', 'shirt', 'シャツ（ピンク）', 400, { c: 0xfd79a8 }],
+  ['sh_sky', 'shirt', 'シャツ（水色）', 400, { c: 0x74b9ff }],
+  ['sh_purple', 'shirt', 'シャツ（むらさき）', 400, { c: 0xa29bfe }],
+  ['sh_orange', 'shirt', 'シャツ（オレンジ）', 400, { c: 0xff9f43 }],
+  ['sh_stripe', 'shirt', 'しましまシャツ', 900, { c: 0xffffff, stripe: 0x2e86de }],
+  ['pt_jeans', 'pants', 'ジーンズ', 500, { c: 0x3c6382 }],
+  ['pt_beige', 'pants', 'ベージュのズボン', 500, { c: 0xd1b890 }],
+  ['pt_red', 'pants', 'まっ赤なズボン', 700, { c: 0xc0392b }],
+  ['glasses', 'acc', 'メガネ', 600, { acc: 'glasses' }],
+  ['sunglasses', 'acc', 'サングラス', 900, { acc: 'sun' }],
+  ['backpack', 'acc', 'リュック', 1200, { acc: 'pack' }],
+];
+const OUTFIT = Object.fromEntries(OUTFITS.map(o => [o[0], { id: o[0], slot: o[1], name: o[2], price: o[3], ...o[4] }]));
+
+/* ---------- 機能 38 ---------- */
+const FEATURES = [
+  ['しごとアプリ', 'スマホからどこでも104種類の仕事を始められる（職業案内所でも見られる）'],
+  ['デイリーミッション', '毎朝3つのミッションが届き、クリアするとごほうび'],
+  ['実績アプリ', '30個の実績と、もらえるごほうびを確かめる'],
+  ['統計アプリ', 'かせいだお金・走った距離・仕事の回数などの記録'],
+  ['ハイスコア記録', '仕事ごとのいちばんいい結果を残す'],
+  ['銀行', 'お金をあずけると、毎朝1%の利息がつく'],
+  ['ガソリン', 'マイカーは走るとガソリンが減る'],
+  ['ガソリンスタンド', 'ガソリンを満タンにする'],
+  ['車の傷み', 'ぶつけると車が傷み、ひどいと煙が出て遅くなる'],
+  ['修理工場', '傷んだ車をなおす'],
+  ['洗車機', '走るとよごれる車をピカピカにする'],
+  ['クラクション', 'H キーかボタンで鳴らす。歩いている人がびっくりする'],
+  ['ヘッドライト', 'L キーかボタンで前を照らす'],
+  ['運転席カメラ', 'C キーで運転席からの景色にする'],
+  ['上空カメラ', 'C キーで真上から見下ろす'],
+  ['マップアプリ', '町全体の大きな地図'],
+  ['目的地ピン', '地図をタップすると、そこまで矢印で案内'],
+  ['ファストトラベル', 'お金をはらって行きたい場所へすぐ移動'],
+  ['天気：雨', '雨の日は雨がふり、道がすべりやすい'],
+  ['天気：雪', '雪の日は雪がふり、とてもすべりやすい'],
+  ['天気：霧', '霧の日は遠くが見えにくい'],
+  ['天気予報アプリ', '今日から3日先までの天気'],
+  ['体力', '歩いたり働いたりすると減る。0になると遅くなる'],
+  ['コンビニ', '食べ物で体力を回復。宝くじも買える'],
+  ['自動販売機', '町の10か所でジュースを買って体力回復'],
+  ['ダッシュ', 'Shift キー（スティックをいっぱいに倒す）で走る'],
+  ['ジャンプ', '歩いているときに Space キーかボタンでジャンプ'],
+  ['ペット', 'ペットショップで犬かネコを家族にすると、ついてくる'],
+  ['落とし物イベント', 'ときどき町に落とし物。持ち主に届けるとお礼'],
+  ['隠しコイン50枚', '町のあちこちにかくれた金色のコイン'],
+  ['信号機', '交差点の信号。ほかの車は赤で止まる'],
+  ['ジャンプ台とスタント', '外周の草地のジャンプ台でとぶとボーナス'],
+  ['タイムアタックレース', '外周の道をチェックポイントどおりに1周'],
+  ['宝くじ', '1日1枚。次の朝に当たりが発表される'],
+  ['曜日と週末ボーナス', '土曜と日曜は仕事のお金が1.2倍'],
+  ['週末の花火', '土曜と日曜の夜8時から11時、公園の上に花火'],
+  ['写真モード', 'P キーで画面の表示を消して、好きな角度から町をながめる'],
+  ['設定アプリ', '音の大きさ・影・カメラの速さを変える'],
+];
+
+/* 1 から 200 までの番号つき一覧 */
+function allAdditions() {
+  const list = [];
+  for (const k of KIND_ORDER) for (const g of GIGS.filter(x => x.kind === k)) list.push(['仕事', `${g.e} ${g.name}`, g.desc]);
+  for (const a of ACH) list.push(['実績', a[1], a[2]]);
+  for (const t of Object.keys(NEW_CARS)) list.push(['乗り物', NEW_CARS[t].name, NEW_CARS[t].desc]);
+  for (const o of OUTFITS) list.push(['着せかえ', o[2], `${yen(o[3])}・洋服屋で買える`]);
+  for (const f of FEATURES) list.push(['機能', f[0], f[1]]);
+  return list.map((r, i) => ({ no: i + 1, cat: r[0], name: r[1], desc: r[2] }));
+}
+
+/* =========================================================
+   乗り物の形（乗用車・バン・トラック・バス・バイク）
+   ========================================================= */
+function makeCarMesh(type, colorOverride) {
+  const def = CAR_TYPES[type];
+  const shape = def.shape || 'car';
+  const g = new THREE.Group();
+  const body = lam(colorOverride != null ? colorOverride : def.color);
+  const accent = def.color2 != null ? lam(def.color2) : null;
+  let L = 4.2 * (def.long || 1), W = 2.0, wr = 0.42;
+  const lift = def.bigWheel ? 0.5 : 0;
+  if (shape === 'bus') { L = 9; W = 2.5; }
+  else if (shape === 'truck') { L = def.bed ? 4.6 : 6.2; W = 2.2; }
+  else if (shape === 'van') { L = 4.6 * (def.long || 1); W = 2.1; }
+  else if (shape === 'bike') { L = 2.0; W = 0.7; wr = 0.36; }
+  if (def.bigWheel) wr = 0.85;
+  const box = (w, h, d, mat, x, y, z, shadow) => { const m = new THREE.Mesh(BX(w, h, d), mat); m.position.set(x, y, z); if (shadow !== false) m.castShadow = true; g.add(m); return m; };
+  let roofY = 1.8, frontZ = L / 2, lightY = 0.92 + lift;
+  if (shape === 'car') {
+    const low = def.low ? -0.14 : 0, tall = def.tall ? 0.2 : 0;
+    box(W, 0.72 + tall, L, body, 0, 0.78 + low + tall / 2 + lift, 0);
+    if (accent) box(W + 0.02, 0.34, L + 0.02, accent, 0, 0.6 + low + lift, 0);
+    const cabL = def.low ? L * 0.42 : Math.min(L * 0.54, 2.6);
+    const cz = def.low ? -0.25 : -0.15;
+    if (!def.noRoof) {
+      box(W * 0.84, 0.62, cabL, glassMat, 0, 1.42 + low * 1.4 + tall + lift, cz);
+      box(W * 0.86, 0.1, cabL * 0.95, body, 0, 1.77 + low * 1.4 + tall + lift, cz);
+      roofY = 1.82 + low * 1.4 + tall + lift;
+    } else {
+      box(W * 0.8, 0.35, 0.08, glassMat, 0, 1.35 + low + lift, 0.5);
+      box(0.5, 0.5, 0.5, darkMat, -0.45, 1.25 + low + lift, -0.3); box(0.5, 0.5, 0.5, darkMat, 0.45, 1.25 + low + lift, -0.3);
+      roofY = 1.4 + lift;
+    }
+    lightY = 0.92 + low + tall + lift;
+    box(W * 1.02, 0.25, 0.2, darkMat, 0, 0.55 + low + lift, L / 2); box(W * 1.02, 0.25, 0.2, darkMat, 0, 0.55 + low + lift, -L / 2);
+    if (type === 'sports' || type === 'super' || type === 'hyper' || type === 'rally' || type === 'showcar') {
+      box(W * 0.9, 0.08, 0.5, darkMat, 0, 1.35 + low + lift, -L / 2 + 0.3);
+      box(0.1, 0.4, 0.1, darkMat, -0.6, 1.15 + low + lift, -L / 2 + 0.3); box(0.1, 0.4, 0.1, darkMat, 0.6, 1.15 + low + lift, -L / 2 + 0.3);
+    }
+    if (type === 'suv') box(W * 0.7, 0.12, cabL * 0.7, darkMat, 0, 1.95 + tall, cz);
+  } else if (shape === 'van') {
+    box(W, 1.55, L, body, 0, 1.2 + lift, 0);
+    box(W * 0.9, 0.6, 0.1, glassMat, 0, 1.55 + lift, L / 2 + 0.01, false);
+    box(W + 0.02, 0.45, L * 0.62, glassMat, 0, 1.6 + lift, -0.2, false);
+    if (accent) box(W + 0.03, 0.2, L * 0.98, accent, 0, 1.0 + lift, 0, false);
+    roofY = 1.98 + lift;
+    box(W * 1.02, 0.25, 0.2, darkMat, 0, 0.55 + lift, L / 2); box(W * 1.02, 0.25, 0.2, darkMat, 0, 0.55 + lift, -L / 2);
+  } else if (shape === 'truck') {
+    const cabZ = L / 2 - 0.85;
+    box(W, 1.5, 1.7, body, 0, 1.25 + lift, cabZ);
+    box(W * 0.9, 0.55, 0.1, glassMat, 0, 1.6 + lift, cabZ + 0.86, false);
+    if (def.bed) {
+      box(W, 0.3, L - 1.8, body, 0, 0.75 + lift, -0.9);
+      box(0.1, 0.45, L - 1.8, body, -W / 2 + 0.05, 1.1 + lift, -0.9); box(0.1, 0.45, L - 1.8, body, W / 2 - 0.05, 1.1 + lift, -0.9);
+      box(W, 0.45, 0.1, body, 0, 1.1 + lift, -L / 2 + 0.05);
+      if (type === 'tow') { const arm = box(0.3, 0.3, 2.2, darkMat, 0, 1.6, -L / 2 + 0.6); arm.rotation.x = 0.5; }
+    } else {
+      box(W * 1.02, 2.3, L - 1.9, accent || lam(0xf1f2f6), 0, 1.75 + lift, -0.95);
+    }
+    roofY = 2.05 + lift;
+    box(W * 1.02, 0.25, 0.2, darkMat, 0, 0.55 + lift, L / 2);
+  } else if (shape === 'bus') {
+    const H = def.double ? 4.2 : 2.7;
+    box(W, H, L, body, 0, 0.45 + H / 2, 0);
+    box(W + 0.02, 0.8, L * 0.84, glassMat, 0, 0.45 + H - 0.75, -0.3, false);
+    if (def.double) box(W + 0.02, 0.8, L * 0.84, glassMat, 0, 0.45 + H - 2.15, -0.3, false);
+    box(W * 0.92, 1.0, 0.1, glassMat, 0, 0.45 + H - 0.8, L / 2 + 0.01, false);
+    if (accent) box(W + 0.03, 0.3, L * 0.99, accent, 0, 0.8, 0, false);
+    roofY = 0.45 + H + 0.05; lightY = 0.8;
+  } else if (shape === 'bike') {
+    box(0.26, 0.45, 1.3, body, 0, 0.72, 0);
+    box(0.36, 0.12, 0.6, darkMat, 0, 1.0, -0.2);
+    box(0.8, 0.08, 0.08, darkMat, 0, 1.25, 0.62);
+    box(0.08, 0.5, 0.08, darkMat, 0, 1.0, 0.62);
+    // 運転している人
+    box(0.5, 0.65, 0.32, lam(0xffc928), 0, 1.45, -0.15);
+    box(0.42, 0.42, 0.42, lam(def.siren ? 0xf5f6fa : 0xff5b3a), 0, 2.0, -0.12);
+    roofY = 2.3; lightY = 0.95; frontZ = 0.85;
+  }
+  const hz = frontZ + 0.01;
+  if (shape === 'bike') {
+    box(0.3, 0.2, 0.06, headMat, 0, lightY, hz, false);
+    box(0.26, 0.14, 0.06, tailMat, 0, 0.9, -L / 2 + 0.2, false);
+  } else {
+    box(0.42, 0.18, 0.06, headMat, -W / 2 + 0.38, lightY, hz, false); box(0.42, 0.18, 0.06, headMat, W / 2 - 0.38, lightY, hz, false);
+    box(0.42, 0.16, 0.06, tailMat, -W / 2 + 0.38, lightY, -L / 2 - 0.01, false); box(0.42, 0.16, 0.06, tailMat, W / 2 - 0.38, lightY, -L / 2 - 0.01, false);
+  }
+  const wheels = [], front = [];
+  const wheelAt = (x, z, isFront) => {
+    const piv = new THREE.Group(); piv.position.set(x, wr, z);
+    const w = new THREE.Mesh(wheelGeo, wheelMat); w.castShadow = true;
+    if (wr !== 0.42) w.scale.set(def.bigWheel ? 1.6 : 1, wr / 0.42, wr / 0.42);
+    if (shape === 'bike') w.scale.x = 0.45;
+    piv.add(w); g.add(piv); wheels.push(w); if (isFront) front.push(piv);
+  };
+  if (shape === 'bike') { wheelAt(0, L * 0.36, true); wheelAt(0, -L * 0.36, false); }
+  else {
+    const wz = shape === 'bus' ? L * 0.36 : shape === 'truck' ? L * 0.34 : L * 0.31;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) wheelAt(sx * (W / 2 - 0.02 + (def.bigWheel ? 0.2 : 0)), sz * wz, sz > 0);
+  }
+  let siren = null;
+  if (def.siren) {
+    const m1 = new THREE.MeshBasicMaterial({ color: def.siren[0] }), m2 = new THREE.MeshBasicMaterial({ color: def.siren[1] });
+    if (shape === 'bike') { box(0.2, 0.2, 0.2, m1, -0.3, 1.35, 0.55, false); box(0.2, 0.2, 0.2, m2, 0.3, 1.35, 0.55, false); }
+    else { box(W * 0.35, 0.2, 0.45, m1, -W * 0.2, roofY + 0.1, shape === 'car' ? -0.15 : L / 2 - 1, false); box(W * 0.35, 0.2, 0.45, m2, W * 0.2, roofY + 0.1, shape === 'car' ? -0.15 : L / 2 - 1, false); }
+    siren = [m1, m2, def.siren[0], def.siren[1]];
+  }
+  if (type === 'taxi') {
+    taxiSignTex = taxiSignTex || textTexture('TAXI', '#1d1a10', '#ffc928', 256, 96, 56);
+    const s = new THREE.Mesh(BX(0.9, 0.36, 0.45), [lam(0xffc928), lam(0xffc928), lam(0xffe9a0), lam(0xffc928), new THREE.MeshBasicMaterial({ map: taxiSignTex }), new THREE.MeshBasicMaterial({ map: taxiSignTex })]);
+    s.position.set(0, 2.0, -0.15); g.add(s);
+    box(W + 0.02, 0.14, L * 0.7, darkMat, 0, 0.95, 0, false);
+  }
+  if (type === 'pizza') {
+    pizzaSignTex = pizzaSignTex || textTexture('PIZZA', '#ffffff', '#e2462b', 256, 96, 52);
+    const s = new THREE.Mesh(BX(1.5, 0.5, 0.2), [lam(0xffffff), lam(0xffffff), lam(0xffffff), lam(0xffffff), new THREE.MeshBasicMaterial({ map: pizzaSignTex }), new THREE.MeshBasicMaterial({ map: pizzaSignTex })]);
+    s.position.set(0, 2.1, -0.15); g.add(s);
+    box(1.4, 0.3, 1.4, lam(0xf4e1c1), 0, 0.85, -L / 2 + 0.2, false);
+  }
+  return { g, wheels, front, body, siren };
+}
+
+class Car {
+  constructor(type, x, z, h, color) {
+    this.type = type; this.def = CAR_TYPES[type];
+    const m = makeCarMesh(type, color);
+    this.mesh = m.g; this.wheels = m.wheels; this.front = m.front; this.bodyMat = m.body; this.siren = m.siren;
+    this.baseColor = m.body.color.clone();
+    this.r = this.def.r || 1.7;
+    this.x = x; this.z = z; this.h = h; this.speed = 0; this.steer = 0; this.bumpCd = 0;
+    this.alt = 0; this.vy = 0; this.air = false; this.airT = 0;
+    scene.add(this.mesh); cars.push(this); this.sync();
+  }
+  sync() { this.mesh.position.set(this.x, surf(this.x, this.z) + this.alt, this.z); this.mesh.rotation.y = this.h; }
+  drive(dt, inp) {
+    const d = this.def;
+    if (raceFrozen()) inp = { x: 0, y: 0, brake: true };
+    const grip = carGrip(this);
+    const max = d.max * carSpeedFactor(this);
+    if (inp.brake) {
+      this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), 32 * grip * dt);
+    } else if (inp.y > 0.05) {
+      if (this.speed < -0.3) this.speed += 26 * grip * dt * inp.y;
+      else this.speed += d.acc * inp.y * dt * Math.max(0, 1 - (this.speed / max) ** 2);
+    } else if (inp.y < -0.05) {
+      if (this.speed > 0.3) this.speed += 26 * grip * dt * inp.y;
+      else this.speed = Math.max(-9, this.speed + d.acc * 0.6 * inp.y * dt);
+    } else {
+      this.speed -= Math.sign(this.speed) * Math.min(Math.abs(this.speed), (2.2 + Math.abs(this.speed) * 0.12) * dt);
+    }
+    if (this.speed > max) this.speed = lerp(this.speed, max, Math.min(1, dt * 2));
+    this.steer = lerp(this.steer, inp.x, Math.min(1, dt * 7));
+    const sp = Math.abs(this.speed);
+    let tr = d.turn * this.steer * clamp(sp / 5, 0, 1) * (1 - 0.45 * clamp(sp / d.max, 0, 1)) * (0.55 + 0.45 * grip);
+    if (this.air) tr = 0;
+    this.h -= tr * dt * (this.speed < 0 ? -1 : 1);
+    const nx = this.x + Math.sin(this.h) * this.speed * dt, nz = this.z + Math.cos(this.h) * this.speed * dt;
+    const r = resolve(nx, nz, this.r, this);
+    if (r.hit) {
+      const nl = Math.hypot(r.nx, r.nz) || 1;
+      const vn = (Math.sin(this.h) * r.nx + Math.cos(this.h) * r.nz) / nl * this.speed;
+      const impact = -vn;
+      if (impact > 3) {
+        this.speed *= 0.3;
+        if (this.bumpCd <= 0) { onBump(impact, this); this.bumpCd = 0.6; }
+      } else this.speed *= 0.985;
+    }
+    this.bumpCd -= dt;
+    const moved = Math.hypot(r.x - this.x, r.z - this.z);
+    this.x = r.x; this.z = r.z;
+    carMoved(this, moved);
+    rampStep(this, dt);
+    for (const w of this.wheels) w.rotation.x += this.speed * dt / 0.42;
+    for (const f of this.front) f.rotation.y = this.steer * 0.45;
+    if (this.siren) {
+      const on = Math.floor(elapsed * 6) % 2;
+      this.siren[0].color.setHex(on ? this.siren[2] : 0x222222); this.siren[1].color.setHex(on ? 0x222222 : this.siren[3]);
+    }
+    this.sync();
+    this.mesh.rotation.z = this.steer * clamp(sp / d.max, 0, 1) * 0.06;
+    this.mesh.rotation.x = this.air ? -clamp(this.vy * 0.02, -0.35, 0.35) : this.onRamp ? -0.19 : 0;
+  }
+  remove() { scene.remove(this.mesh); const i = cars.indexOf(this); if (i >= 0) cars.splice(i, 1); }
+}
+
+/* =========================================================
+   町の追加の建物（お店・病院・銀行など）
+   ========================================================= */
+const SERVICES = [
+  { id: 'gas', name: 'ガソリンスタンド', short: 'G', key: '90,-30,-1,1', color: '#e74c3c', prompt: 'ガソリンを入れる' },
+  { id: 'repair', name: 'くるま修理工場', short: '修', key: '30,90,-1,1', color: '#636e72', prompt: '修理・洗車をする' },
+  { id: 'hospital', name: 'ひまわり病院', short: '病', key: '30,90,1,-1', color: '#ff7675', prompt: '診察を受ける（500円・体力が満タン）' },
+  { id: 'bank', name: 'まちなか銀行', short: '銀', key: '-30,-90,1,1', color: '#0984e3', prompt: 'お金をあずける・おろす' },
+  { id: 'konbini', name: 'コンビニ ハッピー', short: 'コ', key: '-30,-30,-1,1', color: '#00b894', prompt: '買い物をする' },
+  { id: 'clothes', name: '洋服屋 ルック', short: '服', key: '30,-30,1,-1', color: '#e84393', prompt: '洋服を見る' },
+  { id: 'petshop', name: 'ペットショップ わんにゃん', short: 'ペ', key: '-90,30,1,1', color: '#e1a700', prompt: 'ペットを見る' },
+  { id: 'hellowork', name: '職業案内所', short: '職', key: '-30,30,1,-1', color: '#6c5ce7', prompt: '仕事をさがす' },
+];
+const SERVICE_AT = Object.fromEntries(SERVICES.map(s => [s.key, s]));
+const SVC = Object.fromEntries(SERVICES.map(s => [s.id, s]));
+function buildService(s, bx, bz, sx, sz) {
+  const cx = bx + sx * 10.5, cz = bz + sz * 10.5;
+  const col = new THREE.Color(s.color);
+  s.mx = bx + sx * 19.5; s.mz = cz; s.sx = sx;
+  s.tx = bx + sx * 21.5; s.tz = cz;
+  if (s.id === 'gas') {
+    const roof = new THREE.Mesh(BX(10, 0.6, 12), lam(0xffffff)); roof.position.set(cx + sx * 1, 5.2, cz); roof.castShadow = true; scene.add(roof);
+    const band = new THREE.Mesh(BX(10.1, 0.5, 12.1), lam(col)); band.position.set(cx + sx * 1, 4.7, cz); scene.add(band);
+    for (const ox of [-4, 4]) for (const oz of [-5, 5]) {
+      const p = new THREE.Mesh(BX(0.4, 4.6, 0.4), lam(0xdfe6e9)); p.position.set(cx + sx * 1 + ox, 2.5, cz + oz); scene.add(p);
+      circles.push({ x: cx + sx * 1 + ox, z: cz + oz, r: 0.35 });
+    }
+    for (const oz of [-2.5, 2.5]) {
+      const pump = new THREE.Mesh(BX(0.8, 1.6, 0.6), lam(col)); pump.position.set(cx + sx * 1, 1.0, cz + oz); pump.castShadow = true; scene.add(pump);
+      circles.push({ x: cx + sx * 1, z: cz + oz, r: 0.6 });
+    }
+    const kiosk = new THREE.Mesh(BX(5, 3.5, 6), lam(0xf5f6fa)); kiosk.position.set(cx - sx * 6, 1.95, cz); kiosk.castShadow = true; scene.add(kiosk);
+    addCollider(cx - sx * 6, cz, 5, 6, 3.5);
+  } else {
+    const h = s.id === 'hospital' ? 14 : s.id === 'bank' ? 11 : 7;
+    const [oA, oB] = facadeTextures(s.id === 'konbini' || s.id === 'clothes' || s.id === 'petshop' ? 'house' : 'office');
+    const side = lam(s.id === 'hospital' ? new THREE.Color(0xf5f6fa) : col.clone().lerp(new THREE.Color(0xffffff), 0.45), { map: oA, emissiveMap: oB, emissive: 0 });
+    winMats.push(side);
+    const roof = lam(0x6b7080);
+    const geo = new THREE.BoxGeometry(11, h, 11); scaleUV(geo, 11, h, 11, 16);
+    const m = new THREE.Mesh(geo, [side, side, roof, roof, side, side]); m.position.set(cx - sx * 1, 0.2 + h / 2, cz); m.castShadow = m.receiveShadow = true; scene.add(m);
+    addCollider(cx - sx * 1, cz, 11, 11, h);
+    const aw = new THREE.Mesh(BX(2, 0.3, 9), lam(col)); aw.position.set(cx + sx * 5.5, 3.2, cz); aw.castShadow = true; scene.add(aw);
+    if (s.id === 'hospital') {
+      const cr1 = new THREE.Mesh(BX(0.2, 3, 1), new THREE.MeshBasicMaterial({ color: 0xe74c3c })); cr1.position.set(cx + sx * 4.62, h - 2.5, cz); scene.add(cr1);
+      const cr2 = new THREE.Mesh(BX(0.2, 1, 3), new THREE.MeshBasicMaterial({ color: 0xe74c3c })); cr2.position.set(cx + sx * 4.62, h - 2.5, cz); scene.add(cr2);
+    }
+  }
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(9, 2.1), new THREE.MeshBasicMaterial({ map: textTexture(s.name, s.color, '#ffffff', 640, 150, 64, '#ffffff') }));
+  sign.position.set(s.id === 'gas' ? cx + sx * 6.05 : cx + sx * 4.56, s.id === 'gas' ? 6.2 : 5.0, cz);
+  sign.rotation.y = Math.atan2(sx, 0);
+  scene.add(sign);
+  s.marker = makeMarker(col, s.name);
+  s.marker.position.set(s.mx, 0, s.mz);
+  s.marker.userData.sprite.scale.set(8, 1.8, 1);
+  markers.push(s.marker);
+  if (s.id !== 'hellowork') landmarks.push({ x: bx + sx * 22.2, z: cz, nx: sx, nz: 0, name: s.name, gx: bx + sx * 25.8, gz: cz });
+}
+
+/* =========================================================
+   信号機・ジャンプ台・自販機・隠しコイン・レース
+   ========================================================= */
+const SIGNALS = [];
+for (const x of [-60, 0, 60]) for (const z of [-60, 0, 60]) SIGNALS.push({ x, z });
+const SIG_CYCLE = 24;
+function sigState(axis) {
+  const t = (elapsed % SIG_CYCLE);
+  if (axis === 'x') return t < 9 ? 'g' : t < 11 ? 'y' : 'r';
+  return t < 12 ? 'r' : t < 21 ? 'g' : t < 23 ? 'y' : 'r';
+}
+const sigMats = {};
+function buildSignals() {
+  const n = SIGNALS.length * 2;
+  const pole = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.12, 0.15, 5.2, 6), lam(0x4a5060), n);
+  const head = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 1.5, 0.5), lam(0x2d3436), n * 2);
+  const bulbGeo = new THREE.BoxGeometry(0.36, 0.36, 0.36);
+  const o = new THREE.Object3D();
+  const bulbs = {};
+  for (const ax of ['x', 'z']) for (const c of ['r', 'y', 'g']) {
+    sigMats[ax + c] = new THREE.MeshBasicMaterial({ color: 0x222222 });
+    bulbs[ax + c] = new THREE.InstancedMesh(bulbGeo, sigMats[ax + c], n);
+  }
+  let i = 0, hi = 0;
+  for (const s of SIGNALS) for (const k of [1, -1]) {
+    const px = s.x + k * 7.6, pz = s.z + k * 11;
+    o.rotation.set(0, 0, 0); o.position.set(px, 2.75, pz); o.updateMatrix(); pole.setMatrixAt(i, o.matrix);
+    // x 方向の車用（東西の面）と z 方向の車用（南北の面）
+    o.position.set(px, 5.5, pz + 0.35); o.updateMatrix(); head.setMatrixAt(hi++, o.matrix);
+    o.position.set(px + 0.35, 5.5, pz - 0.35); o.updateMatrix(); head.setMatrixAt(hi++, o.matrix);
+    ['r', 'y', 'g'].forEach((c, j) => {
+      o.position.set(px, 6.0 - j * 0.48, pz + 0.35); o.updateMatrix(); bulbs['x' + c].setMatrixAt(i, o.matrix);
+      o.position.set(px + 0.35, 6.0 - j * 0.48, pz - 0.35); o.updateMatrix(); bulbs['z' + c].setMatrixAt(i, o.matrix);
+    });
+    circles.push({ x: px, z: pz, r: 0.3 });
+    i++;
+  }
+  scene.add(pole, head, ...Object.values(bulbs));
+}
+let lastSig = '';
+function updateSignals() {
+  const k = sigState('x') + sigState('z');
+  if (k === lastSig) return;
+  lastSig = k;
+  const on = { r: 0xff3b30, y: 0xffcc00, g: 0x34c759 };
+  for (const ax of ['x', 'z']) { const s = sigState(ax); for (const c of ['r', 'y', 'g']) sigMats[ax + c].color.setHex(s === c ? on[c] : 0x2a2a2a); }
+}
+function signalStop(n) {
+  const fx = Math.sin(n.h), fz = Math.cos(n.h);
+  const axis = Math.abs(fx) > Math.abs(fz) ? 'x' : 'z';
+  for (const s of SIGNALS) {
+    const dx = s.x - n.x, dz = s.z - n.z;
+    const along = dx * fx + dz * fz, lat = Math.abs(dx * fz - dz * fx);
+    if (lat < 8 && along > 8 && along < 17) return sigState(axis) !== 'g';
+  }
+  return false;
+}
+
+const RAMPS = [
+  { x: 0, z: -146, dx: 1, dz: 0 }, { x: 146, z: 0, dx: 0, dz: 1 },
+  { x: 0, z: 146, dx: -1, dz: 0 }, { x: -146, z: 0, dx: 0, dz: -1 },
+];
+const RAMP_LEN = 7, RAMP_H = 1.4;
+function nearRampLane(x, z) {
+  for (const r of RAMPS) {
+    const u = (x - r.x) * r.dx + (z - r.z) * r.dz, v = (x - r.x) * -r.dz + (z - r.z) * r.dx;
+    if (u > -25 && u < 50 && Math.abs(v) < 8) return true;
+  }
+  return false;
+}
+function buildRamps() {
+  const mat = lam(0xc0763a), stripe = lam(0xffc928);
+  for (const r of RAMPS) {
+    const g = new THREE.Group();
+    const geo = new THREE.BoxGeometry(4, 0.3, RAMP_LEN + 0.2);
+    const m = new THREE.Mesh(geo, mat); m.rotation.x = -Math.atan2(RAMP_H, RAMP_LEN); m.position.set(0, RAMP_H / 2, 0); m.castShadow = m.receiveShadow = true;
+    const s = new THREE.Mesh(BX(4.05, 0.32, 0.5), stripe); s.position.set(0, RAMP_H - 0.05, RAMP_LEN / 2 - 0.3);
+    g.add(m, s);
+    g.position.set(r.x, 0, r.z); g.rotation.y = Math.atan2(r.dx, r.dz);
+    scene.add(g);
+  }
+}
+function rampStep(car, dt) {
+  if (car.air) {
+    car.vy -= 22 * dt; car.alt += car.vy * dt; car.airT += dt;
+    if (car.alt <= 0) {
+      car.alt = 0; car.air = false;
+      if (car === P.inCar) landed(car.airT);
+    }
+    return;
+  }
+  car.onRamp = false; car.alt = 0;
+  for (const r of RAMPS) {
+    const u = (car.x - r.x) * r.dx + (car.z - r.z) * r.dz, v = (car.x - r.x) * -r.dz + (car.z - r.z) * r.dx;
+    if (Math.abs(v) > 2.3 || u < -RAMP_LEN / 2 || u > RAMP_LEN / 2 + 0.5) continue;
+    const dir = Math.sin(car.h) * r.dx + Math.cos(car.h) * r.dz;
+    if (dir * car.speed < 0) continue;
+    car.onRamp = true;
+    car.alt = clamp((u + RAMP_LEN / 2) / RAMP_LEN, 0, 1) * RAMP_H;
+    if (u > RAMP_LEN / 2 - 0.4 && car.speed * dir > 9) { car.air = true; car.vy = Math.abs(car.speed) * 0.3; car.airT = 0; car.onRamp = false; }
+  }
+}
+
+const VENDING = [];
+function buildVending() {
+  const cols = [0xd63031, 0x0984e3, 0xf5f6fa, 0x00b894, 0xfdcb6e];
+  const step = Math.floor(addresses.length / 10);
+  for (let i = 0; i < 10; i++) {
+    const a = addresses[(i * step + 3) % addresses.length];
+    const along = a.nx ? [0, 1] : [1, 0];
+    const x = a.x - a.nx * 0.6 + along[0] * 4.5, z = a.z - a.nz * 0.6 + along[1] * 4.5;
+    const g = new THREE.Group();
+    const b = new THREE.Mesh(BX(1.1, 1.9, 0.8), lam(cols[i % cols.length])); b.position.y = 1.1; b.castShadow = true;
+    const f = new THREE.Mesh(BX(0.8, 0.9, 0.05), lam(0xffffff, { emissive: 0x555555 })); f.position.set(0, 1.35, 0.42);
+    g.add(b, f); g.position.set(x, 0.15, z); g.rotation.y = Math.atan2(a.nx, a.nz);
+    scene.add(g);
+    circles.push({ x, z, r: 0.7 });
+    VENDING.push({ x, z, name: a.name.split(' ')[0] + 'の自販機', gx: a.gx + along[0] * 4.5, gz: a.gz + along[1] * 4.5, nx: a.nx, nz: a.nz });
+  }
+}
+
+const COINS = [];
+function buildCoins() {
+  const r = mulberry32(777);
+  const geo = new THREE.CylinderGeometry(0.6, 0.6, 0.14, 16); geo.rotateX(Math.PI / 2);
+  const mat = lam(0xffd23f, { emissive: 0x6b4b00 });
+  let tries = 0;
+  while (COINS.length < 50 && tries < 5000) {
+    tries++;
+    const x = (r() * 2 - 1) * 160, z = (r() * 2 - 1) * 160;
+    if (insideBuilding(x, 0.5, z)) continue;
+    if (circles.some(c => Math.hypot(c.x - x, c.z - z) < c.r + 1.2)) continue;
+    if (boxes.some(b => x > b.x0 - 1.5 && x < b.x1 + 1.5 && z > b.z0 - 1.5 && z < b.z1 + 1.5)) continue;
+    if (COINS.some(c => Math.hypot(c.x - x, c.z - z) < 14)) continue;
+    const m = new THREE.Mesh(geo, mat); m.position.set(x, 1.3, z); m.castShadow = true; scene.add(m);
+    COINS.push({ x, z, m });
+  }
+}
+
+const RACE = { x: -40, z: -133, cps: [[40, -120], [120, -120], [120, 0], [120, 120], [0, 120], [-120, 120], [-120, 0], [-120, -120], [-30, -120]] };
+let raceMarker = null;
+function buildRaceStart() {
+  raceMarker = makeMarker(new THREE.Color(0xffffff), 'タイムアタック');
+  raceMarker.position.set(RACE.x, 0, RACE.z);
+  markers.push(raceMarker);
+  // スタートラインの白黒
+  const c = document.createElement('canvas'); c.width = 64; c.height = 16;
+  const g = c.getContext('2d');
+  for (let i = 0; i < 16; i++) for (let j = 0; j < 4; j++) { g.fillStyle = (i + j) % 2 ? '#fff' : '#111'; g.fillRect(i * 4, j * 4, 4, 4); }
+  const t = new THREE.CanvasTexture(c); t.magFilter = THREE.NearestFilter;
+  const line = new THREE.Mesh(new THREE.PlaneGeometry(2, 12), new THREE.MeshBasicMaterial({ map: t }));
+  line.rotation.x = -Math.PI / 2; line.rotation.z = Math.PI / 2; line.position.set(-30, 0.04, -120);
+  scene.add(line);
+}
+
+const BENCHES = [];
+
+function buildExtras() {
+  buildSignals();
+  buildRamps();
+  buildVending();
+  buildCoins();
+  buildRaceStart();
+  buildWeather();
+  buildFireworks();
+  buildPin();
+}
+
+/* =========================================================
+   画面の中でする仕事（お店・クイズ・職人・仕分け・タップ・記憶・レジ）
+   ========================================================= */
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function tone(freq, dur, type = 'triangle', vol = 0.08) {
+  if (!actx) return;
+  const t = actx.currentTime, o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol * sfxVol(), t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+let gig = null;
+function jobState(id) { if (!state.jobs[id]) state.jobs[id] = { lv: 1, xp: 0 }; return state.jobs[id]; }
+
+function openGig(def) {
+  if (job) { toast('いまは別の仕事中です。スマホからやめられます'); return; }
+  const lv = jobState(def.id).lv;
+  const eng = ENGINES[def.kind](def, lv);
+  gig = { def, eng, t: eng.time || 0, pts: 0, on: false, lv, msgT: 0 };
+  job = { id: def.id, overlay: true };
+  $('#gTitle').textContent = `${def.e} ${def.name}`;
+  $('#gIntroTitle').textContent = `${def.e} ${def.name}　レベル${lv}`;
+  $('#gIntroText').textContent = `${KIND_INFO[def.kind].how}。${def.desc}。`;
+  $('#gTimeWrap').hidden = !eng.time;
+  setText($('#gScore'), 0); setText($('#gTime'), Math.ceil(gig.t));
+  const body = $('#gBody'); body.innerHTML = ''; eng.mount(body);
+  $('#gIntro').hidden = false;
+  showScreen('gig');
+  $('#gGo').onclick = () => { initAudio(); $('#gIntro').hidden = true; gig.on = true; if (gig.eng.begin) gig.eng.begin(); sfx('ok'); };
+  $('#gQuit').onclick = () => endGig(true);
+  mini = { update: gigUpdate, key: k => { if (k === 'escape') { endGig(true); return; } if (gig && gig.on && gig.eng.key) gig.eng.key(k); } };
+}
+function gAdd(n) { gig.pts = Math.max(0, gig.pts + n); setText($('#gScore'), Math.round(gig.pts)); }
+function gMsg(m, good) { const el = $('#gMsg'); if (!el) return; el.textContent = m; el.className = 'g-msg ' + (good === true ? 'ok' : good === false ? 'ng' : ''); gig.msgT = 1.4; }
+function gigUpdate(dt) {
+  if (!gig || !gig.on) return;
+  if (gig.eng.time) {
+    gig.t -= dt;
+    setText($('#gTime'), Math.max(0, Math.ceil(gig.t)));
+    if (gig.t <= 0) { endGig(false); return; }
+  }
+  if (gig.msgT > 0) { gig.msgT -= dt; if (gig.msgT <= 0) { const el = $('#gMsg'); if (el) el.textContent = ''; } }
+  gig.eng.update(dt);
+  if (gig && gig.eng.done) endGig(false);
+}
+function endGig(quit) {
+  const g = gig; if (!g) return;
+  gig = null; mini = null; job = null;
+  if (g.eng.stop) g.eng.stop();
+  const pay = Math.round(g.pts * g.eng.rate * payMult(g.def.id) * staminaMult());
+  const rows = (g.eng.rows ? g.eng.rows() : []).concat([['スコア', `${Math.round(g.pts)}点`]]);
+  if (isWeekend()) rows.push(['週末ボーナス', '1.2倍']);
+  if (state.stamina <= 0) rows.push(['つかれていたので', '0.8倍']);
+  if (pay > 0) {
+    addMoney(pay);
+    addXP(g.def.id, 18 + g.pts * 0.06);
+    jobDone(g.def.id, pay, Math.round(g.pts));
+  }
+  showResult(quit ? `${g.def.name}をやめました` : `${g.def.name} おつかれさま！`, rows, pay, g.def.id);
+  save();
+}
+
+/* ---------- お店（材料を順番に） ---------- */
+function engRecipe(def, lv) {
+  const R = def.data, ing = R.ing, keys = Object.keys(ing);
+  const dishes = R.dishes.filter((d, i) => i < 3 || lv >= 3);
+  let orders = [], plate = [], quals = [], spawnT = 0, cooking = null, served = 0, missed = 0, root;
+  const e = { time: 60, rate: 0.6 };
+  const renderOrders = () => {
+    const box = root.querySelector('.k-orders');
+    if (!orders.length) { box.innerHTML = '<div class="k-empty">つぎのお客さんを待っています…</div>'; return; }
+    box.innerHTML = orders.map((o, i) => `<div class="ticket${i === 0 ? ' active' : ''}"><div class="t-name"><span>${o.d[1]}</span>${o.d[0]}</div>
+      <div class="t-steps">${o.d[2].map((s, k) => `<i class="${i === 0 && k < plate.length ? 'done' : i === 0 && k === plate.length ? 'next' : ''}" title="${ing[s][0]}">${ing[s][1]}</i>`).join('')}</div>
+      <div class="t-bar"><b data-pat="${i}"></b></div></div>`).join('');
+  };
+  const renderPlate = () => {
+    root.querySelector('.plate-dish').innerHTML = plate.map(k => `<span>${ing[k][1]}</span>`).join('');
+    root.querySelector('.g-plate-name').textContent = orders[0] ? `いま作っているもの：${orders[0].d[0]}` : 'いちばん左の注文から作ろう';
+  };
+  const spawn = () => { const d = pick(dishes); const pat = Math.max(18, 30 - lv) + d[2].length * 2; orders.push({ d, pat, max: pat }); renderOrders(); };
+  const addToPlate = (k, q) => {
+    plate.push(k); quals.push(q);
+    const o = orders[0];
+    if (plate.length >= o.d[2].length) {
+      const avg = quals.reduce((a, b) => a + b, 0) / quals.length;
+      const p = o.d[3] * avg * (0.7 + 0.3 * o.pat / o.max);
+      gAdd(p); served++; gMsg(`${o.d[1]} できあがり！`, true); sfx('ok');
+      orders.shift(); plate = []; quals = [];
+      if (!orders.length) spawnT = Math.min(spawnT, 0.8);
+    }
+    renderOrders(); renderPlate();
+  };
+  const press = k => {
+    if (!gig || !gig.on || cooking) return;
+    const o = orders[0];
+    if (!o) { gMsg('まだ注文がありません'); return; }
+    const need = o.d[2][plate.length];
+    if (k !== need) {
+      o.pat = Math.max(1, o.pat - 3); sfx('bad'); gMsg(`ちがうよ！つぎは「${ing[need][0]}」`, false);
+      const pl = root.querySelector('.plate-dish'); pl.classList.remove('shake'); void pl.offsetWidth; pl.classList.add('shake');
+      return;
+    }
+    if (ing[k][2]) {
+      cooking = { k, p: 0, dir: 1, sp: 1.1 + lv * 0.08 };
+      root.querySelector('.g-cook-name').textContent = `${ing[k][1]} ${ing[k][0]}を${ing[k][2]}！`;
+      root.querySelector('.k-cook').hidden = false; return;
+    }
+    addToPlate(k, 1); sfx('click');
+  };
+  const stopCook = () => {
+    if (!cooking) return;
+    const p = cooking.p; let q;
+    if (p >= 0.42 && p <= 0.58) { q = 1.25; gMsg('パーフェクト！', true); sfx('coin'); }
+    else if (p >= 0.28 && p <= 0.72) { q = 1; gMsg('いい感じ！', true); sfx('click'); }
+    else { q = 0.6; gMsg(p < 0.28 ? 'ちょっと早かった…' : 'やりすぎちゃった…', false); sfx('bad'); }
+    const k = cooking.k; cooking = null; root.querySelector('.k-cook').hidden = true;
+    addToPlate(k, q);
+  };
+  e.mount = r => {
+    root = r;
+    r.innerHTML = `<div class="k-orders"></div>
+      <div class="k-mid"><div class="muted g-plate-name"></div><div class="plate-dish"></div><div class="g-msg" id="gMsg"></div>
+      <div class="k-cook" hidden><div><div class="g-cook-name" style="font-size:18px"></div><div class="k-bar"><div class="z1"></div><div class="z2"></div><div class="needle"></div></div>
+      <button class="btn primary g-stop" type="button" style="font-size:20px;padding:12px 40px">ストップ！</button><div class="muted" style="font-size:12px">緑で止めるとパーフェクト（Space でも止められます）</div></div></div></div>
+      <div class="k-ingr">${keys.map(k => `<button class="ing" data-x="${k}" type="button"><span>${ing[k][1]}</span>${ing[k][0]}${ing[k][2] ? `<small>${ing[k][2]}</small>` : ''}</button>`).join('')}</div>`;
+    r.querySelectorAll('[data-x]').forEach(b => b.onclick = () => press(b.dataset.x));
+    r.querySelector('.g-stop').onclick = stopCook;
+    renderOrders(); renderPlate();
+  };
+  e.begin = () => spawn();
+  e.key = k => { if (k === ' ' && cooking) stopCook(); };
+  e.update = dt => {
+    if (cooking) {
+      cooking.p += cooking.dir * cooking.sp * dt;
+      if (cooking.p > 1) { cooking.p = 1; cooking.dir = -1; } if (cooking.p < 0) { cooking.p = 0; cooking.dir = 1; }
+      root.querySelector('.needle').style.left = (cooking.p * 100) + '%';
+      return;
+    }
+    spawnT -= dt;
+    if (spawnT <= 0 && orders.length < 3) { spawn(); spawnT = Math.max(5, 10 - lv * 0.5); }
+    orders.forEach((o, i) => {
+      o.pat -= dt;
+      const b = root.querySelector(`[data-pat="${i}"]`);
+      if (b) { b.style.width = clamp(o.pat / o.max * 100, 0, 100) + '%'; b.style.background = o.pat / o.max < 0.3 ? '#e2462b' : '#2fae73'; }
+    });
+    let changed = false;
+    for (let i = orders.length - 1; i >= 0; i--) if (orders[i].pat <= 0) { if (i === 0) { plate = []; quals = []; } orders.splice(i, 1); missed++; changed = true; gMsg('お客さんが帰ってしまった…', false); sfx('bad'); }
+    if (changed) { renderOrders(); renderPlate(); }
+  };
+  e.rows = () => [['できた料理', `${served}品`], ['帰ったお客さん', `${missed}人`]];
+  return e;
+}
+
+/* ---------- クイズ ---------- */
+const KANJI = [['山', 'やま'], ['川', 'かわ'], ['花', 'はな'], ['空', 'そら'], ['雨', 'あめ'], ['森', 'もり'], ['車', 'くるま'], ['海', 'うみ'], ['星', 'ほし'], ['雪', 'ゆき'], ['犬', 'いぬ'], ['町', 'まち'], ['道', 'みち'], ['林', 'はやし'], ['石', 'いし'], ['竹', 'たけ'], ['虫', 'むし'], ['貝', 'かい'], ['糸', 'いと'], ['音', 'おと']];
+const EIGO = [['apple', 'りんご'], ['dog', '犬'], ['cat', 'ねこ'], ['car', '車'], ['book', '本'], ['water', '水'], ['red', '赤'], ['blue', '青'], ['sun', '太陽'], ['moon', '月'], ['school', '学校'], ['friend', '友だち'], ['money', 'お金'], ['house', '家'], ['fish', '魚'], ['bird', '鳥']];
+const BOOKS = [['走れメロス', '太宰治'], ['坊っちゃん', '夏目漱石'], ['吾輩は猫である', '夏目漱石'], ['銀河鉄道の夜', '宮沢賢治'], ['注文の多い料理店', '宮沢賢治'], ['羅生門', '芥川龍之介'], ['蜘蛛の糸', '芥川龍之介'], ['ごんぎつね', '新美南吉'], ['手袋を買いに', '新美南吉'], ['舞姫', '森鴎外'], ['雪国', '川端康成'], ['たけくらべ', '樋口一葉']];
+function choicesFrom(answer, pool) { return shuffle([answer, ...shuffle(pool.filter(x => x !== answer).filter((x, i, a) => a.indexOf(x) === i)).slice(0, 3)]); }
+function makeQuestions(data, lv) {
+  const qs = [];
+  if (data.list) for (const q of shuffle(data.list.slice()).slice(0, 10)) qs.push({ q: q.q, a: q.a, c: shuffle([q.a, ...q.w]) });
+  else if (data.gen === 'math') {
+    for (let i = 0; i < 10; i++) {
+      let q, a;
+      const t = lv <= 3 ? i % 2 : lv <= 6 ? i % 3 : i % 4;
+      if (t === 0) { const x = 2 + Math.floor(Math.random() * (lv * 6 + 10)), y = 2 + Math.floor(Math.random() * (lv * 6 + 10)); q = `${x} ＋ ${y} ＝ ？`; a = x + y; }
+      else if (t === 1) { const x = 10 + Math.floor(Math.random() * (lv * 8 + 15)), y = 1 + Math.floor(Math.random() * x); q = `${x} － ${y} ＝ ？`; a = x - y; }
+      else if (t === 2) { const x = 2 + Math.floor(Math.random() * 8), y = 2 + Math.floor(Math.random() * 8); q = `${x} × ${y} ＝ ？`; a = x * y; }
+      else { const y = 2 + Math.floor(Math.random() * 8), a0 = 2 + Math.floor(Math.random() * 9); q = `${y * a0} ÷ ${y} ＝ ？`; a = a0; }
+      const w = new Set(); for (const d of shuffle([1, 2, 3, 10, -1, -2, -3, -10])) { if (w.size >= 3) break; if (a + d > 0) w.add(a + d); }
+      qs.push({ q, a: String(a), c: shuffle([String(a), ...[...w].map(String)]) });
+    }
+  } else if (data.gen === 'kanji') {
+    for (const [k, y] of shuffle(KANJI.slice()).slice(0, 10)) qs.push({ q: `「${k}」の読みかたは？`, a: y, c: choicesFrom(y, KANJI.map(x => x[1])) });
+  } else if (data.gen === 'eigo') {
+    for (const [en, ja] of shuffle(EIGO.slice()).slice(0, 10)) qs.push({ q: `「${en}」の意味は？`, a: ja, c: choicesFrom(ja, EIGO.map(x => x[1])) });
+  } else if (data.gen === 'books') {
+    for (const [t, au] of shuffle(BOOKS.slice()).slice(0, 10)) qs.push({ q: `「${t}」を書いた人は？`, a: au, c: choicesFrom(au, BOOKS.map(x => x[1])) });
+  } else if (data.gen === 'clock') {
+    for (let i = 0; i < 10; i++) {
+      const h = 1 + Math.floor(Math.random() * 10), m = Math.floor(Math.random() * 12) * 5, add = pick([10, 15, 20, 25, 30, 40, 45, 50]);
+      const fmt = mins => { const hh = Math.floor(mins / 60), mm = mins % 60; return `${hh}時${mm ? mm + '分' : ''}`; };
+      const a = fmt(h * 60 + m + add);
+      const w = [fmt(h * 60 + m + add + 5), fmt(h * 60 + m + add - 5), fmt(h * 60 + m + add + 60), fmt(h * 60 + m + add + 10)].filter(x => x !== a);
+      qs.push({ q: `${fmt(h * 60 + m)}から${add}分たつと、何時何分？`, a, c: shuffle([a, ...[...new Set(w)].slice(0, 3)]) });
+    }
+  } else if (data.gen === 'town') {
+    const blockNo = p => (BC.indexOf(p.bz) * 4 + BC.indexOf(p.bx) + 1);
+    const role = { pizza: 'ピザを配達しているお店は？', taxi: 'タクシーの会社は？', chef: 'シェフが働くレストランは？', engineer: 'ゲームを作る会社は？', dealer: '車を売っているお店は？' };
+    const names = PLACES.filter(p => role[p.id]).map(p => p.name).concat(SERVICES.map(s => s.name));
+    for (const p of PLACES.filter(p => role[p.id])) {
+      qs.push({ q: role[p.id], a: p.name, c: choicesFrom(p.name, names) });
+      const n = blockNo(p);
+      qs.push({ q: `「${p.name}」があるのは何丁目？`, a: `${n}丁目`, c: choicesFrom(`${n}丁目`, Array.from({ length: 16 }, (_, i) => `${i + 1}丁目`)) });
+    }
+    qs.push({ q: '中央公園のまん中にあるものは？', a: '噴水', c: shuffle(['噴水', '銅像', '時計台', 'すべり台']) });
+    qs.push({ q: 'ガソリンを入れられるお店は？', a: 'ガソリンスタンド', c: choicesFrom('ガソリンスタンド', names) });
+    qs.push({ q: '土曜と日曜の夜、公園の上で見られるものは？', a: '花火', c: shuffle(['花火', 'オーロラ', '流れ星', 'にじ']) });
+    shuffle(qs); qs.length = 10;
+  }
+  return qs.slice(0, 10);
+}
+function engQuiz(def, lv) {
+  const qs = makeQuestions(def.data, lv);
+  let i = -1, left = 0, wait = 0, streak = 0, right = 0, root, answered = false;
+  const e = { rate: 2 };
+  const show = () => {
+    i++;
+    if (i >= qs.length) { e.done = true; return; }
+    const q = qs[i]; left = Math.max(7, 12 - lv * 0.3); answered = false;
+    root.querySelector('.qz-no').textContent = `第${i + 1}問 / ${qs.length}問`;
+    root.querySelector('.qz-q').textContent = q.q;
+    root.querySelector('.qz-c').innerHTML = q.c.map((c, k) => `<button class="btn qz-b" data-k="${k}" type="button"><small>${k + 1}</small>${esc(c)}</button>`).join('');
+    root.querySelectorAll('.qz-b').forEach(b => b.onclick = () => answer(+b.dataset.k));
+  };
+  const answer = k => {
+    if (answered || i < 0 || i >= qs.length) return;
+    answered = true;
+    const q = qs[i], ok = k >= 0 && q.c[k] === q.a;
+    root.querySelectorAll('.qz-b').forEach((b, j) => { if (q.c[j] === q.a) b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
+    if (ok) { right++; streak++; gAdd(20 + Math.ceil(left) + (streak >= 3 ? 5 : 0)); gMsg(streak >= 3 ? `正解！${streak}問連続` : '正解！', true); sfx('coin'); }
+    else { streak = 0; gMsg(k < 0 ? `時間切れ…答えは「${q.a}」` : `ざんねん…答えは「${q.a}」`, false); sfx('bad'); }
+    wait = 1.1;
+  };
+  e.mount = r => { root = r; r.innerHTML = `<div class="qz"><div class="qz-no muted"></div><div class="qz-q"></div><div class="qz-timer"><b></b></div><div class="qz-c"></div><div class="g-msg" id="gMsg"></div></div>`; };
+  e.begin = () => show();
+  e.key = k => { if (/^[1-4]$/.test(k)) answer(+k - 1); };
+  e.update = dt => {
+    if (wait > 0) { wait -= dt; if (wait <= 0) show(); return; }
+    if (i < 0 || answered) return;
+    left -= dt;
+    root.querySelector('.qz-timer b').style.width = clamp(left / 12 * 100, 0, 100) + '%';
+    if (left <= 0) answer(-1);
+  };
+  e.rows = () => [['正解', `${right}問 / ${qs.length}問`]];
+  return e;
+}
+
+/* ---------- 職人（タイミング） ---------- */
+function engTiming(def, lv) {
+  const o = def.data, ROUNDS = 8;
+  let round = 0, p = 0, dir = 1, center = 0.5, t = 0, wait = 0, perfect = 0, root;
+  const e = { rate: 3 };
+  const zone = () => o.zone * (1 - (lv - 1) * 0.025);
+  const next = () => {
+    round++;
+    if (round > ROUNDS) { e.done = true; return; }
+    p = 0; dir = 1; t = 0;
+    center = o.jump ? 0.2 + Math.random() * 0.6 : 0.5;
+    root.querySelector('.tm-round').textContent = `${round}回目 / ${ROUNDS}回`;
+    place();
+  };
+  const place = () => {
+    const z = zone();
+    const z2 = root.querySelector('.z2'), z1 = root.querySelector('.z1');
+    z2.style.left = ((center - z / 2) * 100) + '%'; z2.style.width = (z * 100) + '%';
+    z1.style.left = ((center - z) * 100) + '%'; z1.style.width = (z * 200) + '%';
+  };
+  const hit = () => {
+    if (!gig || !gig.on || wait > 0 || round < 1 || round > ROUNDS) return;
+    const d = Math.abs(p - center), z = zone();
+    if (d <= z / 2) { gAdd(30); perfect++; gMsg('パーフェクト！', true); sfx('coin'); root.querySelector('.tm-target').classList.add('pop'); }
+    else if (d <= z) { gAdd(15); gMsg('いいね！', true); sfx('click'); }
+    else { gMsg('おしい…', false); sfx('bad'); }
+    wait = 0.7;
+  };
+  e.mount = r => {
+    root = r;
+    r.innerHTML = `<div class="tm"><div class="tm-round muted"></div><div class="tm-target">${def.e}</div>
+      <div class="k-bar tm-bar"><div class="z1"></div><div class="z2"></div><div class="needle"></div></div>
+      <button class="btn primary tm-hit" type="button">${esc(def.verb)}！</button><div class="g-msg" id="gMsg"></div>
+      <div class="muted" style="font-size:12px">Space キーでも押せます</div></div>`;
+    r.querySelector('.tm-hit').onclick = hit;
+  };
+  e.begin = () => next();
+  e.key = k => { if (k === ' ' || k === 'enter') hit(); };
+  e.update = dt => {
+    if (wait > 0) { wait -= dt; if (wait <= 0) { root.querySelector('.tm-target').classList.remove('pop'); next(); } return; }
+    t += dt;
+    const sp = o.sp * (1 + (lv - 1) * 0.03) * (1 + (o.ramp || 0) * (round - 1));
+    p += dir * sp * dt;
+    if (p > 1) { p = 1; dir = -1; } if (p < 0) { p = 0; dir = 1; }
+    if (o.move) { center = 0.5 + Math.sin(t * o.move * Math.PI * 2) * 0.28; place(); }
+    root.querySelector('.needle').style.left = (p * 100) + '%';
+  };
+  e.rows = () => [['パーフェクト', `${perfect}回 / ${ROUNDS}回`]];
+  return e;
+}
+
+/* ---------- 仕分け ---------- */
+function engSort(def, lv) {
+  const s = def.data;
+  let item = null, combo = 0, right = 0, wrong = 0, root;
+  const e = { time: 40, rate: 1.6 };
+  const gen = () => {
+    if (s.items) { const it = pick(s.items); return { name: s.tags ? `タグ：${it[0]}` : it[0], e: it[1], bin: it[2] }; }
+    if (s.gen === 'mail') { const b = Math.floor(Math.random() * 4); return { name: `〒 ${s.bins[b]} ${1 + Math.floor(Math.random() * 9)}-${1 + Math.floor(Math.random() * 20)}`, e: '✉️', bin: b }; }
+    if (s.gen === 'size') { const b = Math.floor(Math.random() * 4), w = pick([['Tシャツ', '👕'], ['ズボン', '👖'], ['パーカー', '🧥'], ['スカート', '👗']]); return { name: `${w[0]}（${s.bins[b]}サイズ）`, e: w[1], bin: b }; }
+    const b = Math.floor(Math.random() * 3); return { name: `${'ABC'[b]}-${10 + Math.floor(Math.random() * 90)}`, e: '📦', bin: b };
+  };
+  const show = () => { item = gen(); root.querySelector('.st-item').innerHTML = `<span>${item.e}</span><b>${esc(item.name)}</b>`; };
+  const put = b => {
+    if (!gig || !gig.on || !item) return;
+    if (b === item.bin) { combo++; right++; gAdd(10 + Math.min(5, combo)); sfx('coin'); gMsg(combo >= 5 ? `${combo}れんぞく！` : 'OK！', true); }
+    else { combo = 0; wrong++; gAdd(-5); sfx('bad'); gMsg(`ちがうよ！「${s.bins[item.bin]}」`, false); const el = root.querySelector('.st-item'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }
+    show();
+  };
+  e.mount = r => {
+    root = r;
+    const hintTags = s.tags ? `<div class="muted" style="font-size:12px">HND＝東京・KIX＝大阪・CTS＝札幌・FUK＝福岡</div>` : '';
+    r.innerHTML = `<div class="st"><div class="st-item"></div><div class="g-msg" id="gMsg"></div>${hintTags}
+      <div class="st-bins" style="--n:${s.bins.length}">${s.bins.map((b, i) => `<button class="btn st-bin" data-b="${i}" type="button"><small>${i + 1}</small>${esc(b)}</button>`).join('')}</div></div>`;
+    r.querySelectorAll('[data-b]').forEach(b => b.onclick = () => put(+b.dataset.b));
+  };
+  e.begin = () => show();
+  e.key = k => { if (/^[1-4]$/.test(k) && +k <= s.bins.length) put(+k - 1); };
+  e.update = () => {};
+  e.rows = () => [['正しく分けた', `${right}個`], ['まちがい', `${wrong}個`]];
+  return e;
+}
+
+/* ---------- タップ ---------- */
+function engTap(def, lv) {
+  const d = def.data, N = 12;
+  let cells = [], spawnT = 0, hits = 0, mistakes = 0, root;
+  const e = { time: 35, rate: 2 };
+  e.mount = r => {
+    root = r;
+    r.innerHTML = `<div class="tp"><div class="tp-grid">${Array.from({ length: N }, (_, i) => `<button class="tp-cell" data-c="${i}" type="button" aria-label="${i + 1}"></button>`).join('')}</div><div class="g-msg" id="gMsg"></div>
+      <div class="muted" style="font-size:12px">${d.bad ? `${d.hit} をタップ。${d.bad} はさわらないでね` : `${d.hit} をタップ`}</div></div>`;
+    cells = Array.from({ length: N }, () => ({ k: null, t: 0 }));
+    r.querySelectorAll('[data-c]').forEach(b => b.addEventListener('pointerdown', ev => { ev.preventDefault(); tap(+b.dataset.c); }));
+  };
+  const draw = i => { const el = root.querySelector(`[data-c="${i}"]`); const c = cells[i]; el.textContent = c.k === 'hit' ? d.hit : c.k === 'bad' ? d.bad : ''; el.className = 'tp-cell' + (c.k ? ' on' : ''); };
+  const tap = i => {
+    if (!gig || !gig.on) return;
+    const c = cells[i];
+    if (c.k === 'hit') { hits++; gAdd(10); sfx('coin'); c.k = null; }
+    else if (c.k === 'bad') { mistakes++; gAdd(-15); sfx('bad'); gMsg('それはさわっちゃだめ！', false); c.k = null; }
+    draw(i);
+  };
+  e.update = dt => {
+    spawnT -= dt;
+    if (spawnT <= 0) {
+      spawnT = Math.max(0.35, 0.75 - lv * 0.03);
+      const free = cells.map((c, i) => c.k ? -1 : i).filter(i => i >= 0);
+      if (free.length) { const i = pick(free); cells[i] = { k: d.bad && Math.random() < 0.28 ? 'bad' : 'hit', t: Math.max(0.7, 1.3 - lv * 0.04) }; draw(i); }
+    }
+    cells.forEach((c, i) => { if (c.k) { c.t -= dt; if (c.t <= 0) { c.k = null; draw(i); } } });
+  };
+  e.rows = () => [['タップした', `${hits}回`], ['まちがい', `${mistakes}回`]];
+  return e;
+}
+
+/* ---------- 記憶 ---------- */
+function engMemory(def, lv) {
+  const d = def.data, MAX = 10;
+  let seq = [], step = 0, phase = 'show', showT = 0, showI = 0, round = 0, root;
+  const e = { rate: 1.1 };
+  const flash = i => { const el = root.querySelector(`[data-m="${i}"]`); el.classList.add('lit'); tone(d.tones[i], 0.3); setTimeout(() => el.classList.remove('lit'), 280); };
+  const next = () => {
+    round++;
+    if (round > MAX) { e.done = true; return; }
+    seq.push(Math.floor(Math.random() * 4));
+    if (seq.length < 3) { seq.push(Math.floor(Math.random() * 4)); }
+    if (seq.length < 3) { seq.push(Math.floor(Math.random() * 4)); }
+    phase = 'show'; showI = 0; showT = 0.6; step = 0;
+    root.querySelector('.mm-info').textContent = `${round}回目：${seq.length}こ おぼえよう`;
+  };
+  const press = i => {
+    if (!gig || !gig.on || phase !== 'input') return;
+    flash(i);
+    if (i !== seq[step]) { phase = 'over'; showT = 0.9; gMsg('まちがえた！ここまで', false); sfx('bad'); return; }
+    step++;
+    if (step >= seq.length) { gAdd(25 + seq.length * 5); gMsg('せいかい！', true); phase = 'wait'; showT = 0.9; }
+  };
+  e.mount = r => {
+    root = r;
+    r.innerHTML = `<div class="mm"><div class="mm-info muted"></div><div class="mm-grid">${d.pads.map((p, i) => `<button class="mm-pad mm${i}" data-m="${i}" type="button"><small>${i + 1}</small>${esc(p)}</button>`).join('')}</div><div class="g-msg" id="gMsg"></div></div>`;
+    r.querySelectorAll('[data-m]').forEach(b => b.addEventListener('pointerdown', ev => { ev.preventDefault(); press(+b.dataset.m); }));
+  };
+  e.begin = () => next();
+  e.key = k => { if (/^[1-4]$/.test(k)) press(+k - 1); };
+  e.update = dt => {
+    const sp = Math.max(0.3, 0.55 - lv * 0.02);
+    if (phase === 'show') {
+      showT -= dt;
+      if (showT <= 0) {
+        if (showI < seq.length) { flash(seq[showI]); showI++; showT = sp; }
+        else { phase = 'input'; root.querySelector('.mm-info').textContent = `${round}回目：同じ順番で押そう`; }
+      }
+    } else if (phase === 'wait') { showT -= dt; if (showT <= 0) next(); }
+    else if (phase === 'over') { showT -= dt; if (showT <= 0) e.done = true; }
+  };
+  e.rows = () => [['クリアした回数', `${Math.max(0, phase === 'over' ? round - 1 : round)}回`]];
+  return e;
+}
+
+/* ---------- レジ ---------- */
+function engCashier(def, lv) {
+  const items = def.data.items, N = 10, bank = def.id === 'ginko';
+  let i = 0, left = 0, wait = 0, right = 0, cur = null, root, answered = false;
+  const e = { rate: 1.2 };
+  const next = () => {
+    i++;
+    if (i > N) { e.done = true; return; }
+    const n = lv >= 7 ? 4 : lv >= 4 ? 3 : 2;
+    const buy = Array.from({ length: n }, () => pick(items));
+    const total = buy.reduce((a, b) => a + b[2], 0);
+    let mode = bank ? 'total' : (i % 2 ? 'total' : 'change'), paid = 0, ans = total;
+    if (mode === 'change') {
+      paid = [1000, 2000, 5000, 10000, 20000, 50000].find(v => v > total) || Math.ceil((total + 1) / 10000) * 10000;
+      ans = paid - total;
+    }
+    const opts = new Set([ans]);
+    for (const dlt of shuffle([10, -10, 100, -100, 50, -50, 1000, -1000])) { if (opts.size >= 4) break; if (ans + dlt > 0) opts.add(ans + dlt); }
+    cur = { buy, total, mode, paid, ans, opts: shuffle([...opts]) };
+    left = 15; answered = false;
+    root.querySelector('.cs-no').textContent = `${i}人目 / ${N}人`;
+    root.querySelector('.cs-items').innerHTML = buy.map(b => `<div><span>${b[1]}</span>${esc(b[0])}<b>${yen(b[2])}</b></div>`).join('');
+    root.querySelector('.cs-q').textContent = mode === 'total' ? (bank ? 'あずかるお金は合計いくら？' : 'お会計は合計いくら？') : `${yen(paid)}もらいました。おつりはいくら？`;
+    root.querySelector('.cs-c').innerHTML = cur.opts.map((v, k) => `<button class="btn qz-b" data-k="${k}" type="button"><small>${k + 1}</small>${yen(v)}</button>`).join('');
+    root.querySelectorAll('.cs-c .qz-b').forEach(b => b.onclick = () => answer(+b.dataset.k));
+  };
+  const answer = k => {
+    if (answered || !cur) return;
+    answered = true;
+    const ok = k >= 0 && cur.opts[k] === cur.ans;
+    root.querySelectorAll('.cs-c .qz-b').forEach((b, j) => { if (cur.opts[j] === cur.ans) b.classList.add('right'); else if (j === k) b.classList.add('wrong'); });
+    if (ok) { right++; gAdd(30 + Math.ceil(left) * 2); gMsg('ありがとうございました！', true); sfx('coin'); }
+    else { gMsg(`正しくは ${yen(cur.ans)}`, false); sfx('bad'); }
+    wait = 1.1;
+  };
+  e.mount = r => { root = r; r.innerHTML = `<div class="qz cs"><div class="cs-no muted"></div><div class="cs-items"></div><div class="qz-q cs-q"></div><div class="qz-timer"><b></b></div><div class="qz-c cs-c"></div><div class="g-msg" id="gMsg"></div></div>`; };
+  e.begin = () => next();
+  e.key = k => { if (/^[1-4]$/.test(k)) answer(+k - 1); };
+  e.update = dt => {
+    if (wait > 0) { wait -= dt; if (wait <= 0) next(); return; }
+    if (!cur || answered) return;
+    left -= dt;
+    root.querySelector('.qz-timer b').style.width = clamp(left / 15 * 100, 0, 100) + '%';
+    if (left <= 0) answer(-1);
+  };
+  e.rows = () => [['正しく計算', `${right}人 / ${N}人`]];
+  return e;
+}
+const ENGINES = { recipe: engRecipe, quiz: engQuiz, timing: engTiming, sort: engSort, tap: engTap, memory: engMemory, cashier: engCashier };
+
+/* =========================================================
+   運転する仕事（ルート巡回・運ぶ・追いかける・駐車）とレース
+   ========================================================= */
+function roadSpawn(x, z) {
+  let best = null, bd = 1e9;
+  for (const r of ROADS) {
+    // 南北の道（x = r）
+    let t = clamp(z, -114, 114); if (ROADS.some(q => Math.abs(t - q) < 9)) t += 12;
+    let d = Math.abs(x - r) + Math.abs(t - z) * 0.3;
+    if (d < bd) { bd = d; const hd = t < z ? 0 : Math.PI; best = { x: r + (hd === 0 ? 3 : -3), z: t, h: hd }; }
+    // 東西の道（z = r）
+    t = clamp(x, -114, 114); if (ROADS.some(q => Math.abs(t - q) < 9)) t += 12;
+    d = Math.abs(z - r) + Math.abs(t - x) * 0.3;
+    if (d < bd) { bd = d; const hd = t < x ? Math.PI / 2 : -Math.PI / 2; best = { x: t, z: r + (hd > 0 ? -3 : 3), h: hd }; }
+  }
+  return best;
+}
+function gigVehicle(type) {
+  for (const c of [...cars]) if (c.jobCar && c !== P.inCar) c.remove();
+  if (P.inCar) exitCar(true);
+  const sp = roadSpawn(P.x, P.z);
+  const r = resolve(sp.x, sp.z, CAR_TYPES[type].r || 1.7, null);
+  const car = new Car(type, r.x, r.z, sp.h); car.jobCar = true;
+  enterCar(car); cam.yaw = sp.h;
+  return car;
+}
+const gigObjs = [];   // 仕事中だけ置く物（逃げる車・動物・駐車枠など）
+function gigAdd(o) { scene.add(o); gigObjs.push(o); return o; }
+function gigClear() { for (const o of gigObjs) { if (o.parent) o.parent.remove(o); } gigObjs.length = 0; }
+function farAddresses(from, minD, maxD, n) {
+  const pool = shuffle(addresses.filter(a => { const d = Math.hypot(a.gx - from.x, a.gz - from.z); return d > minD && d < maxD; }));
+  return pool.slice(0, n);
+}
+
+function startGigDrive(def) {
+  if (job) { toast('いまは別の仕事中です。スマホからやめられます'); return; }
+  const lv = jobState(def.id).lv;
+  if (def.foot) { if (P.inCar) exitCar(true); }
+  else gigVehicle(def.veh);
+  job = { id: def.id, kind: def.kind, def, lv, n: 0, total: 1, earn: 0, xp: 0, log: [], t: 0, cond: 100 };
+  const from = playerPos();
+  if (def.kind === 'route') {
+    let stops;
+    if (def.vending) stops = shuffle(VENDING.slice()).slice(0, def.stops);
+    else if (def.landmarks) stops = shuffle(landmarks.slice()).slice(0, def.stops);
+    else stops = farAddresses(from, 25, 170, def.stops);
+    // 近い順に並べる
+    const ordered = []; let cur = from; const rest = stops.slice();
+    while (rest.length) { rest.sort((a, b) => Math.hypot(a.gx - cur.x, a.gz - cur.z) - Math.hypot(b.gx - cur.x, b.gz - cur.z)); cur = { x: rest[0].gx, z: rest[0].gz }; ordered.push(rest.shift()); }
+    let dist = 0; cur = from; for (const s of ordered) { dist += Math.hypot(s.gx - cur.x, s.gz - cur.z); cur = { x: s.gx, z: s.gz }; }
+    Object.assign(job, { stops: ordered, total: ordered.length, limit: Math.round(dist / 8.5 + ordered.length * ((def.wait || 0) + 6) + 15), w: 0, pen: 0 });
+    setGoal(ordered[0].gx, ordered[0].gz, 0xff9f43);
+  } else if (def.kind === 'carry') {
+    job.total = def.runs + (lv >= 6 && def.runs >= 3 ? 1 : 0);
+    nextCarry();
+  } else if (def.kind === 'chase') {
+    job.total = def.targets;
+    nextChase();
+  } else if (def.kind === 'park') {
+    job.total = def.count;
+    nextPark();
+  }
+  toast(`${def.e} ${def.name}スタート！`, 'big'); sfx('ok');
+  buildJobPanel();
+}
+
+/* ---- 運ぶ ---- */
+function carryDest(from) {
+  const d = job.def;
+  if (d.toHospital) return { ...SVC.hospital, gx: SVC.hospital.tx, gz: SVC.hospital.tz, name: SVC.hospital.name };
+  if (d.toRepair) return { ...SVC.repair, gx: SVC.repair.tx, gz: SVC.repair.tz, name: SVC.repair.name };
+  if (d.toLandmark) return pick(landmarks.filter(l => Math.hypot(l.gx - from.x, l.gz - from.z) > 50));
+  return farAddresses(from, d.short ? 35 : 60, d.short ? 100 : 210, 1)[0] || pick(addresses);
+}
+function nextCarry() {
+  const d = job.def, from = playerPos();
+  gigClear();
+  if (d.pick) {
+    const a = farAddresses(from, 40, 150, 1)[0] || pick(addresses);
+    Object.assign(job, { stage: 'pick', pickA: a, w: 0 });
+    setGoal(a.gx, a.gz, 0xee5253);
+    if (d.towCar) {
+      const m = makeCarMesh('basic', 0x8395a7).g;
+      m.position.set(a.gx - a.nx * 1.2, 0.02, a.gz - a.nz * 1.2); m.rotation.set(0, Math.atan2(a.nz, -a.nx) , 0.08);
+      job.towMesh = gigAdd(m);
+    } else placeCustomer(a);
+  } else startDrop(from);
+}
+function startDrop(from) {
+  const dest = carryDest(from);
+  const dist = Math.hypot(dest.gx - from.x, dest.gz - from.z);
+  Object.assign(job, { stage: 'drop', dest, dist, t: 0, cond: 100, w: 0, limit: Math.round((dist / 8.5 + 22) * (job.def.tight || 1) * (job.def.slow ? 1.6 : 1)) });
+  setGoal(dest.gx, dest.gz, 0xee5253);
+  buildJobPanel();
+}
+
+/* ---- 追いかける ---- */
+function makeAnimal(kind) {
+  const g = new THREE.Group();
+  if (kind === 'dog') {
+    const c = lam(0xc49a6c), d = lam(0x4a3524);
+    const b = new THREE.Mesh(BX(0.5, 0.45, 1.0), c); b.position.y = 0.6;
+    const h = new THREE.Mesh(BX(0.4, 0.4, 0.45), c); h.position.set(0, 0.9, 0.62);
+    const ear1 = new THREE.Mesh(BX(0.1, 0.2, 0.12), d); ear1.position.set(-0.15, 1.15, 0.6); const ear2 = ear1.clone(); ear2.position.x = 0.15;
+    const tail = new THREE.Mesh(BX(0.08, 0.08, 0.4), c); tail.position.set(0, 0.85, -0.6); tail.rotation.x = -0.6;
+    g.add(b, h, ear1, ear2, tail);
+    for (const [x, z] of [[-0.18, 0.35], [0.18, 0.35], [-0.18, -0.35], [0.18, -0.35]]) { const l = new THREE.Mesh(BX(0.12, 0.4, 0.12), c); l.position.set(x, 0.2, z); g.add(l); }
+  } else if (kind === 'cat') {
+    const c = lam(0x8d8d8d), w = lam(0xf5f6fa);
+    const b = new THREE.Mesh(BX(0.36, 0.34, 0.75), c); b.position.y = 0.42;
+    const h = new THREE.Mesh(BX(0.34, 0.32, 0.32), c); h.position.set(0, 0.68, 0.45);
+    const e1 = new THREE.Mesh(BX(0.08, 0.14, 0.06), c); e1.position.set(-0.11, 0.9, 0.45); const e2 = e1.clone(); e2.position.x = 0.11;
+    const mz = new THREE.Mesh(BX(0.18, 0.1, 0.05), w); mz.position.set(0, 0.62, 0.62);
+    const tail = new THREE.Mesh(BX(0.06, 0.06, 0.5), c); tail.position.set(0, 0.7, -0.5); tail.rotation.x = -0.9;
+    g.add(b, h, e1, e2, mz, tail);
+    for (const [x, z] of [[-0.12, 0.25], [0.12, 0.25], [-0.12, -0.25], [0.12, -0.25]]) { const l = new THREE.Mesh(BX(0.09, 0.28, 0.09), c); l.position.set(x, 0.14, z); g.add(l); }
+  } else {
+    const k = lam(0x1e272e), w = lam(0xf5f6fa), o = lam(0xff9f1a);
+    const b = new THREE.Mesh(BX(0.55, 0.85, 0.45), k); b.position.y = 0.6;
+    const belly = new THREE.Mesh(BX(0.42, 0.65, 0.05), w); belly.position.set(0, 0.55, 0.23);
+    const h = new THREE.Mesh(BX(0.4, 0.35, 0.38), k); h.position.y = 1.2;
+    const beak = new THREE.Mesh(BX(0.12, 0.08, 0.18), o); beak.position.set(0, 1.18, 0.25);
+    const f1 = new THREE.Mesh(BX(0.15, 0.06, 0.25), o); f1.position.set(-0.12, 0.05, 0.1); const f2 = f1.clone(); f2.position.x = 0.12;
+    g.add(b, belly, h, beak, f1, f2);
+  }
+  g.traverse(m => { if (m.isMesh) m.castShadow = true; });
+  return g;
+}
+function nextChase() {
+  const d = job.def, from = playerPos();
+  gigClear();
+  if (d.foot) {
+    const park = { x: 30, z: 30 };
+    const m = gigAdd(makeAnimal(d.animal));
+    const a = Math.random() * Math.PI * 2;
+    job.tg = { x: park.x + Math.cos(a) * 15, z: park.z + Math.sin(a) * 15, h: 0, m, wanderT: 0, dir: Math.random() * 6 };
+    Object.assign(job, { t: 0, limit: 60 });
+    setGoal(job.tg.x, job.tg.z, 0x5f27cd);
+  } else {
+    // 外周や中の道のループのどれかを走らせる
+    let tries = 0, tg = null;
+    while (tries++ < 40) {
+      const li = Math.floor(Math.random() * LOOPS.length), lane = lanePath(LOOPS[li]);
+      const segs = []; let total = 0;
+      for (let i = 0; i < lane.length; i++) { const a = lane[i], b = lane[(i + 1) % lane.length]; const len = Math.hypot(b[0] - a[0], b[1] - a[1]); segs.push({ a, b, len, start: total, h: Math.atan2(b[0] - a[0], b[1] - a[1]) }); total += len; }
+      const n = { segs, total, s: Math.random() * total, x: 0, z: 0, h: 0, v: d.tv * (1 + job.lv * 0.02) };
+      placeNpc(n, true);
+      const dd = Math.hypot(n.x - from.x, n.z - from.z);
+      if (dd > 50 && dd < 140) { tg = n; break; }
+      tg = n;
+    }
+    tg.m = gigAdd(makeCarMesh('basic', d.tail ? 0x2d3436 : 0xc0392b).g);
+    job.tg = tg;
+    Object.assign(job, { t: 0, limit: d.tail ? 120 : 75, prog: 0, near: 0 });
+    setGoal(tg.x, tg.z, 0x5f27cd);
+    goalRing.visible = false;
+  }
+  buildJobPanel();
+}
+
+/* ---- 駐車 ---- */
+function nextPark() {
+  gigClear();
+  const from = playerPos();
+  const used = VENDING.map(v => [v.x, v.z]);
+  let a = null;
+  for (const c of farAddresses(from, 30, 150, 30)) { if (used.every(([x, z]) => Math.hypot(x - c.x, z - c.z) > 7)) { a = c; break; } }
+  a = a || pick(addresses);
+  const cx = a.x + a.nx * 0.2, cz = a.z + a.nz * 0.2, ang = a.nx ? 0 : Math.PI / 2;
+  const g = new THREE.Group();
+  const lineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const W = 2.8, L = 5.6;
+  for (const [w, l, x, z] of [[W, 0.15, 0, L / 2], [W, 0.15, 0, -L / 2], [0.15, L, W / 2, 0], [0.15, L, -W / 2, 0]]) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, l), lineMat); m.rotation.x = -Math.PI / 2; m.position.set(x, 0.2, z); g.add(m);
+  }
+  const fill = new THREE.Mesh(new THREE.PlaneGeometry(W, L), new THREE.MeshBasicMaterial({ color: 0x10ac84, transparent: true, opacity: 0.35, depthWrite: false }));
+  fill.rotation.x = -Math.PI / 2; fill.position.y = 0.19; g.add(fill);
+  g.position.set(cx, 0, cz); g.rotation.y = ang;
+  job.box = { x: cx, z: cz, a: ang, fill };
+  gigAdd(g);
+  Object.assign(job, { t: 0, limit: 60, hold: 0, dmg: job.dmg || 0 });
+  setGoal(cx, cz, 0x10ac84);
+  goalRing.visible = false;
+  buildJobPanel();
+}
+
+/* ---- 毎フレーム ---- */
+function updateGigDrive(dt) {
+  if (!job || !job.kind) return;
+  const d = job.def, m = payMult(job.id) * staminaMult();
+  const { x, z } = playerPos();
+  const car = P.inCar, speed = car ? Math.abs(car.speed) : 0;
+  job.t += dt;
+  if (job.kind === 'race') { updateRace(dt); return; }
+  if (job.kind === 'route') {
+    const s = job.stops[job.n];
+    const dd = Math.hypot(s.gx - x, s.gz - z);
+    if (d.limit && speed * 3.6 > d.limit) { job.pen += dt; hint(`時速${d.limit}kmまで！`); }
+    if (dd < 6) {
+      if (!car) { hint('車で来てね'); return; }
+      if (speed > (d.wait ? 1.5 : 4)) { hint(d.wait ? '止まってね' : 'スピードを落として'); job.w = 0; return; }
+      if (d.wait) { job.w += dt; hint(`${d.msg}… あと${Math.max(0, Math.ceil(d.wait - job.w))}秒`); if (job.w < d.wait) return; }
+      const hr = state.time / 60;
+      let k = 1;
+      if (d.early && hr >= 4 && hr < 7) k *= 1.3;
+      if (d.night && (hr >= 19 || hr < 5)) k *= 1.3;
+      if (d.fragile) k *= 0.4 + 0.6 * job.cond / 100;
+      const pay = Math.round(d.per * m * k);
+      addMoney(pay); job.earn += pay; job.xp += 14;
+      job.log.push([`${job.n + 1}か所目 ${s.name}`, yen(pay)]);
+      toast(`${d.msg}（+${yen(pay)}）`, 'money'); sfx('coin');
+      job.n++; job.w = 0;
+      if (job.n >= job.total) {
+        const bonus = Math.max(0, Math.round(((job.limit - job.t) * 3 - job.pen * 10) * m));
+        if (bonus > 0) { addMoney(bonus); job.earn += bonus; job.log.push(['早くまわれたボーナス', yen(bonus)]); }
+        finishGigDrive(); return;
+      }
+      const nx = job.stops[job.n]; setGoal(nx.gx, nx.gz, 0xff9f43);
+    }
+  } else if (job.kind === 'carry') {
+    if (job.stage === 'pick') {
+      const a = job.pickA, dd = Math.hypot(a.gx - x, a.gz - z);
+      if (dd < 6) {
+        if (!car) { hint('車で来てね'); return; }
+        if (speed > 2.5) { hint('止まって積みこもう'); return; }
+        if (d.wait) { job.w += dt; hint(`積みこみ中… あと${Math.max(0, Math.ceil(d.wait - job.w))}秒`); if (job.w < d.wait) return; }
+        customer.g.visible = false;
+        if (job.towMesh) { scene.remove(job.towMesh); car.mesh.add(job.towMesh); job.towMesh.position.set(0, 0.6, -5.2); job.towMesh.rotation.set(0.12, 0, 0); }
+        toast(d.towCar ? 'こわれた車をつないだ' : d.toHospital ? '患者さんを乗せた。病院へ急ごう' : '荷物を積んだ'); sfx('click');
+        startDrop({ x, z });
+      }
+      return;
+    }
+    if (d.melt) job.cond = Math.max(0, job.cond - d.melt * dt);
+    const dest = job.dest, dd = Math.hypot(dest.gx - x, dest.gz - z);
+    if (dd < 6.5) {
+      if (!car) { hint('車で来てね'); return; }
+      if (speed > 4) { hint('スピードを落として'); return; }
+      let pay = (d.base + job.dist * 0.7) * m * (0.3 + 0.7 * job.cond / 100);
+      if (job.t < job.limit) pay += (job.limit - job.t) * 2 * m; else if (d.tight) pay *= 0.6;
+      pay = Math.round(pay);
+      addMoney(pay); job.earn += pay; job.xp += 22;
+      job.log.push([`${job.n + 1}件目 ${dest.name}`, yen(pay)]);
+      toast(`届けた！ +${yen(pay)}`, 'money'); sfx('coin');
+      if (job.towMesh) { car.mesh.remove(job.towMesh); job.towMesh = null; }
+      job.n++;
+      if (job.n >= job.total) { finishGigDrive(); return; }
+      nextCarry();
+    }
+  } else if (job.kind === 'chase') {
+    const tg = job.tg;
+    if (d.foot) {
+      if (car) hint('車をおりて追いかけよう');
+      tg.wanderT -= dt;
+      const pdx = tg.x - x, pdz = tg.z - z, pd = Math.hypot(pdx, pdz);
+      let vx, vz, v;
+      if (pd < 7 && !car) { vx = pdx / pd; vz = pdz / pd; v = d.tv * (1 + job.lv * 0.02); }
+      else { if (tg.wanderT <= 0) { tg.dir = Math.random() * Math.PI * 2; tg.wanderT = 1 + Math.random() * 2; } vx = Math.sin(tg.dir); vz = Math.cos(tg.dir); v = 1.6; }
+      tg.x += vx * v * dt; tg.z += vz * v * dt;
+      if (Math.abs(tg.x - 30) > 22) { tg.x = 30 + Math.sign(tg.x - 30) * 22; tg.dir = Math.random() * 6; }
+      if (Math.abs(tg.z - 30) > 22) { tg.z = 30 + Math.sign(tg.z - 30) * 22; tg.dir = Math.random() * 6; }
+      const fd = Math.hypot(tg.x - 30, tg.z - 30); if (fd < 6.2) { tg.x = 30 + (tg.x - 30) / fd * 6.2; tg.z = 30 + (tg.z - 30) / fd * 6.2; }
+      tg.h += angDiff(tg.h, Math.atan2(vx, vz)) * Math.min(1, dt * 8);
+      tg.m.position.set(tg.x, 0.2 + Math.abs(Math.sin(elapsed * 14)) * 0.08 * (v > 2 ? 1 : 0.3), tg.z); tg.m.rotation.y = tg.h;
+      setGoal(tg.x, tg.z, 0x5f27cd); goalRing.visible = false;
+      if (!car && pd < 1.5) {
+        const pay = Math.round(200 * m + Math.max(0, job.limit - job.t) * 3 * m);
+        addMoney(pay); job.earn += pay; job.xp += 20;
+        job.log.push([`${job.n + 1}ひき目をつかまえた`, yen(pay)]); toast(`つかまえた！ +${yen(pay)}`, 'money'); sfx('coin');
+        job.n++; if (job.n >= job.total) { finishGigDrive(); return; } nextChase(); return;
+      }
+    } else {
+      const pd = Math.hypot(tg.x - x, tg.z - z);
+      const flee = !d.tail && pd < 28 ? 1.3 : 1;
+      tg.s = (tg.s + tg.v * flee * dt) % tg.total;
+      placeNpc(tg, false); tg.h = tg.segs.find(sg => tg.s >= sg.start && tg.s < sg.start + sg.len)?.h ?? tg.h;
+      tg.m.position.set(tg.x, 0.02, tg.z); tg.m.rotation.y = tg.h;
+      setGoal(tg.x, tg.z, 0x5f27cd); goalRing.visible = false;
+      if (d.tail) {
+        if (pd >= 12 && pd <= 50) job.prog += dt;
+        if (pd < 8) { job.near += dt; hint('近すぎる！気づかれちゃう'); if (job.near > 1.5) return chaseFail('気づかれてしまった…'); } else job.near = 0;
+        if (pd > 90) return chaseFail('見うしなった…');
+        if (job.prog >= 25) {
+          const pay = Math.round(650 * m);
+          addMoney(pay); job.earn += pay; job.xp += 40; job.log.push(['尾行に成功', yen(pay)]); toast(`尾行成功！ +${yen(pay)}`, 'money'); sfx('coin');
+          job.n++; finishGigDrive(); return;
+        }
+      } else if (car && pd < d.catchR) {
+        const pay = Math.round(260 * m + Math.max(0, job.limit - job.t) * 3 * m);
+        addMoney(pay); job.earn += pay; job.xp += 26;
+        job.log.push([`${job.n + 1}台目をつかまえた`, yen(pay)]); toast(`確保！ +${yen(pay)}`, 'money'); sfx('coin');
+        job.n++; if (job.n >= job.total) { finishGigDrive(); return; } nextChase(); return;
+      }
+    }
+    if (job.t > job.limit) chaseFail(d.foot ? 'にげられてしまった…' : 'にげられてしまった…');
+  } else if (job.kind === 'park') {
+    const b = job.box;
+    if (!car) { if (job.t > job.limit) parkFail(); return; }
+    const ax = Math.sin(b.a), az = Math.cos(b.a);
+    const ox = car.x - b.x, oz = car.z - b.z;
+    const along = ox * ax + oz * az, across = ox * az - oz * ax;
+    let da = Math.abs(angDiff(car.h, b.a)); da = Math.min(da, Math.PI - da) * 180 / Math.PI;
+    const inside = Math.abs(across) < d.tol * 0.6 && Math.abs(along) < d.tol && da < d.tolA;
+    b.fill.material.color.setHex(inside ? 0xffc928 : 0x10ac84);
+    if (inside && speed < 0.5) {
+      job.hold += dt; hint('そのまま…');
+      if (job.hold > 1) {
+        const acc = clamp(1 - (Math.abs(across) / (d.tol * 0.6) + Math.abs(along) / d.tol + da / d.tolA) / 3, 0, 1);
+        const pay = Math.round(d.per * (0.5 + 0.5 * acc) * m);
+        addMoney(pay); job.earn += pay; job.xp += 18;
+        job.log.push([`${job.n + 1}台目（ぴったり度 ${Math.round(acc * 100)}%）`, yen(pay)]);
+        toast(acc > 0.8 ? `ぴったり！ +${yen(pay)}` : `止められた +${yen(pay)}`, 'money'); sfx('coin');
+        job.n++; if (job.n >= job.total) { finishGigDrive(); return; } nextPark();
+      }
+    } else job.hold = 0;
+    if (job.t > job.limit) parkFail();
+  }
+}
+function chaseFail(msg) {
+  toast(msg); sfx('bad'); job.log.push([`${job.n + 1}件目`, 'しっぱい']);
+  job.n++;
+  if (job.n >= job.total) finishGigDrive(); else nextChase();
+}
+function parkFail() {
+  toast('時間切れ…'); sfx('bad'); job.log.push([`${job.n + 1}台目`, '時間切れ']);
+  job.n++;
+  if (job.n >= job.total) finishGigDrive(); else nextPark();
+}
+function gigBump(impact) {
+  if (!job || !job.kind) return;
+  const d = job.def;
+  if (job.kind === 'route' && d.fragile) { job.cond = Math.max(0, job.cond - clamp(impact * 2 * d.fragile, 5, 30)); hint('ガチャン！'); }
+  if (job.kind === 'carry' && job.stage === 'drop' && d.fragile) { job.cond = Math.max(0, job.cond - clamp(impact * 2 * d.fragile, 4, 40)); hint(d.toHospital ? '患者さんがいたがっている！' : '荷物が傷んじゃう！'); }
+  if (job.kind === 'park' && d.fragile) { const p = Math.round(impact * 4); job.dmg = (job.dmg || 0) + p; hint(`車に傷が！ -${yen(p)}`); }
+}
+function finishGigDrive() {
+  const j = job;
+  gigClear(); clearGoal(); goalRing.visible = true; customer.g.visible = false;
+  if (P.inCar && j.towMesh) P.inCar.mesh.remove(j.towMesh);
+  if (j.dmg) { const p = Math.min(j.earn, j.dmg); addMoney(-p); j.earn -= p; j.log.push(['車の傷の弁償', `-${yen(p)}`]); }
+  addXP(j.id, j.xp);
+  job = null; $('#jobPanel').hidden = true;
+  if (j.earn > 0) jobDone(j.id, j.earn, j.earn);
+  showResult(`${j.def.name} おつかれさま！`, j.log, j.earn, j.id);
+  save();
+}
+function gigPanelBuild() {
+  const m = $('#jpMeters'), d = job.def;
+  let html = '';
+  if ((job.kind === 'route' && d.fragile) || (job.kind === 'carry' && (d.fragile || d.melt))) html = `<div class="meter"><span>${d.meter || '荷物の無事'}</span><i><b id="m1"></b></i></div>`;
+  if (job.kind === 'chase' && d.tail) html = '<div class="meter"><span>尾行</span><i><b id="m1"></b></i></div>';
+  m.innerHTML = html;
+}
+function gigPanelUpdate() {
+  const d = job.def, { x, z } = playerPos(), t = $('#jpTimer');
+  setText($('#jpDist'), `あと ${Math.round(Math.hypot(goal.x - x, goal.z - z))}m`);
+  const unit = job.kind === 'route' ? 'か所' : job.kind === 'park' ? '台' : '件';
+  setText($('#jpCount'), `${Math.min(job.n + 1, job.total)}${unit}目 / ${job.total}${unit}`);
+  let task = '', left = null;
+  if (job.kind === 'route') { task = `つぎ：${job.stops[job.n].name}`; left = job.limit - job.t; }
+  else if (job.kind === 'carry') { task = job.stage === 'pick' ? `${d.towCar ? 'こわれた車' : d.toHospital ? '患者さん' : '荷物'}のところへ：${job.pickA.name}` : `届け先：${job.dest.name}`; if (job.stage === 'drop') left = job.limit - job.t; }
+  else if (job.kind === 'chase') { task = d.tail ? '12〜50mの間でついていこう' : d.foot ? '公園でつかまえよう' : '赤い車にタッチしてつかまえよう'; left = job.limit - job.t; }
+  else if (job.kind === 'park') { task = '黄色になったら止まって1秒まつ'; left = job.limit - job.t; }
+  setText($('#jpTask'), task);
+  if (left == null) { setText(t, ''); t.className = ''; } else { setText(t, left >= 0 ? `のこり ${Math.ceil(left)}秒` : `${Math.ceil(-left)}秒オーバー`); t.className = left < 10 ? 'late' : ''; }
+  const m1 = $('#m1');
+  if (m1) {
+    const v = job.kind === 'chase' ? job.prog / 25 * 100 : job.cond;
+    m1.style.width = clamp(v, 0, 100) + '%';
+    m1.style.background = job.kind === 'chase' ? 'var(--sky)' : v > 60 ? 'var(--mint)' : v > 30 ? 'var(--signal)' : 'var(--tomato)';
+  }
+}
+
+/* ---- タイムアタック ---- */
+function startRace() {
+  if (job) { toast('いまは別の仕事中です'); return; }
+  if (!P.inCar) { toast('車に乗ってスタートしよう'); return; }
+  const c = P.inCar;
+  c.x = -34; c.z = -123; c.h = Math.PI / 2; c.speed = 0; c.sync(); cam.yaw = c.h;
+  job = { id: 'race', kind: 'race', def: { name: 'タイムアタック', e: '🏁' }, ci: 0, t: 0, cd: 3, n: 0, total: RACE.cps.length, earn: 0, log: [] };
+  setGoal(RACE.cps[0][0], RACE.cps[0][1], 0xffffff);
+  $('#jobPanel').hidden = false; $('#jobPanel').style.setProperty('--job', '#ffffff');
+  setText($('#jpTitle'), '🏁 タイムアタック'); $('#jpMeters').innerHTML = '';
+  toast('3'); sfx('click');
+}
+function raceFrozen() { return job && job.kind === 'race' && job.cd > 0; }
+function updateRace(dt) {
+  if (job.cd > 0) {
+    const before = Math.ceil(job.cd); job.cd -= dt; job.t = 0;
+    const after = Math.ceil(job.cd);
+    if (after !== before) { if (after > 0) { toast(String(after)); sfx('click'); } else { toast('スタート！', 'big'); sfx('ok'); } }
+    return;
+  }
+  if (!P.inCar) { toast('車をおりたのでレースは中止です'); clearGoal(); job = null; $('#jobPanel').hidden = true; return; }
+  const { x, z } = playerPos(), cp = RACE.cps[job.ci];
+  if (Math.hypot(cp[0] - x, cp[1] - z) < 10) {
+    job.ci++; job.n = job.ci; sfx('coin');
+    if (job.ci >= RACE.cps.length) {
+      const t = Math.round(job.t * 10) / 10;
+      const first = !state.raceBest, best = !state.raceBest || t < state.raceBest;
+      let pay = first ? 300 : 100; if (best && !first) pay += 500; if (t <= 50) pay += 500;
+      if (best) state.raceBest = t;
+      addMoney(pay); clearGoal(); job = null; $('#jobPanel').hidden = true;
+      showResult('タイムアタック ゴール！', [['タイム', `${t.toFixed(1)}秒`], ['ベストタイム', `${state.raceBest.toFixed(1)}秒${best ? '（新記録！）' : ''}`]], pay);
+      achCheck(); save();
+      return;
+    }
+    const n = RACE.cps[job.ci]; setGoal(n[0], n[1], 0xffffff);
+  }
+  setText($('#jpTask'), `チェックポイント ${job.ci + 1} / ${RACE.cps.length}`);
+  setText($('#jpCount'), state.raceBest ? `ベスト ${state.raceBest.toFixed(1)}秒` : 'はじめての挑戦');
+  setText($('#jpTimer'), `${job.t.toFixed(1)}秒`); $('#jpTimer').className = '';
+  setText($('#jpDist'), `あと ${Math.round(Math.hypot(cp[0] - x, cp[1] - z))}m`);
+}
+
+/* =========================================================
+   セーブデータの追加分・統計・実績・デイリーミッション
+   ========================================================= */
+const WD = ['月', '火', '水', '木', '金', '土', '日'];
+const weekday = (day = state.day) => WD[(day - 1) % 7];
+const isWeekend = (day = state.day) => (day - 1) % 7 >= 5;
+const staminaMult = () => state.stamina <= 0 ? 0.8 : 1;
+const sfxVol = () => (state.settings ? state.settings.vol : 7) / 7;
+function migrateState() {
+  const s = state;
+  s.stats = Object.assign({ jobs: 0, earned: 0, dist: 0, wetDist: 0, lost: 0, air: 0, lottoWins: 0, daily: 0, hanabi: 0, bumps: 0, redLights: 0, vend: 0 }, s.stats || {});
+  s.tried = s.tried || {}; s.best = s.best || {}; s.ach = s.ach || {};
+  s.coins = Array.isArray(s.coins) ? s.coins : [];
+  s.owned = Array.isArray(s.owned) ? s.owned : [];
+  s.outfit = Object.assign({ hat: null, shirt: null, pants: null, acc: null }, s.outfit || {});
+  s.settings = Object.assign({ vol: 7, shadow: true, sens: 5 }, s.settings || {});
+  s.car = Object.assign({ fuel: 100, dmg: 0, dirt: 0 }, s.car || {});
+  if (typeof s.stamina !== 'number') s.stamina = 100;
+  if (typeof s.bank !== 'number') s.bank = 0;
+  if (typeof s.raceBest !== 'number') s.raceBest = 0;
+  s.pet = s.pet || null; s.lotto = s.lotto || null;
+  for (const g of GIGS) jobState(g.id);
+  ensureDaily();
+}
+function jobDone(id, pay, score) {
+  const st = state.stats;
+  st.jobs++; state.tried[id] = 1;
+  if (score != null && (!state.best[id] || score > state.best[id])) state.best[id] = score;
+  dailyProg('jobs', 1); dailyProg('earn', pay);
+  if (GIG[id]) dailyProg('kind', 1, GIG[id].kind);
+  dailyProg('orig', 1, id);
+  state.stamina = Math.max(0, state.stamina - 8);
+  achCheck();
+}
+let achT = 0;
+function achCheck() {
+  for (const [id, name, , cond, reward] of ACH) {
+    if (state.ach[id]) continue;
+    let ok = false; try { ok = cond(state); } catch (e) { ok = false; }
+    if (!ok) continue;
+    state.ach[id] = 1; addMoney(reward);
+    toast(`実績「${name}」を達成！ +${yen(reward)}`, 'big'); sfx('lvl');
+  }
+}
+const DAILY_T = [
+  { k: 'earn', make: () => { const n = pick([1000, 2000, 3000]); return { n, text: `仕事で${yen(n)}かせぐ`, reward: n / 5 + 200 }; } },
+  { k: 'jobs', make: () => { const n = pick([2, 3, 5]); return { n, text: `仕事を${n}回やりとげる`, reward: n * 100 }; } },
+  { k: 'kind', make: () => { const a = pick(KIND_ORDER); return { n: 1, arg: a, text: `「${KIND_INFO[a].name}」をどれか1回やる`, reward: 300 }; } },
+  { k: 'dist', make: () => { const n = pick([1000, 2000, 3000]); return { n, text: `${n / 1000}km運転する`, reward: n / 10 + 100 }; } },
+  { k: 'coin', make: () => ({ n: 1, text: '隠しコインを1枚見つける', reward: 400 }) },
+  { k: 'vend', make: () => ({ n: 1, text: '自動販売機で飲み物を買う', reward: 200 }) },
+  { k: 'orig', make: () => { const id = pick(['pizza', 'taxi', 'chef']); return { n: 1, arg: id, text: `${JOBS[id].name}の仕事をする`, reward: 350 }; } },
+];
+function ensureDaily() {
+  if (state.daily && state.daily.day === state.day) return;
+  const ts = shuffle(DAILY_T.slice()).filter(t => t.k !== 'coin' || state.coins.length < 50).slice(0, 3);
+  state.daily = { day: state.day, list: ts.map(t => Object.assign({ k: t.k, prog: 0, claimed: false }, t.make())) };
+}
+function dailyProg(k, amt, arg) {
+  ensureDaily();
+  for (const m of state.daily.list) {
+    if (m.k !== k || (m.arg && m.arg !== arg) || m.prog >= m.n) continue;
+    m.prog = Math.min(m.n, m.prog + amt);
+    if (m.prog >= m.n) toast(`ミッション達成：${m.text}（スマホで受け取れます）`);
+  }
+}
+
+/* =========================================================
+   天気・花火
+   ========================================================= */
+const WX = [['sunny', '晴れ', '☀️'], ['cloudy', 'くもり', '☁️'], ['rain', '雨', '☔'], ['snow', '雪', '❄️'], ['fog', '霧', '🌫️']];
+function weatherOf(day) { const r = mulberry32(day * 7919 + 13)(); return r < 0.42 ? 0 : r < 0.62 ? 1 : r < 0.82 ? 2 : r < 0.9 ? 3 : 4; }
+const curWx = () => weatherOf(state.day);
+let rainObj = null, snowObj = null, groundMat = null;
+const RAIN_N = 1400, SNOW_N = 1200, WBOX = 90;
+function buildWeather() {
+  const rp = new Float32Array(RAIN_N * 6);
+  for (let i = 0; i < RAIN_N; i++) { const x = rnd(-WBOX / 2, WBOX / 2), y = rnd(0, 40), z = rnd(-WBOX / 2, WBOX / 2); rp.set([x, y, z, x + 0.15, y - 0.9, z], i * 6); }
+  const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(rp, 3));
+  rainObj = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0xb4c6e7, transparent: true, opacity: 0.55 }));
+  rainObj.frustumCulled = false; rainObj.visible = false; scene.add(rainObj);
+  const sp = new Float32Array(SNOW_N * 3);
+  for (let i = 0; i < SNOW_N; i++) sp.set([rnd(-WBOX / 2, WBOX / 2), rnd(0, 40), rnd(-WBOX / 2, WBOX / 2)], i * 3);
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
+  snowObj = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 0.35, transparent: true, opacity: 0.9 }));
+  snowObj.frustumCulled = false; snowObj.visible = false; scene.add(snowObj);
+}
+function updateWeather(dt) {
+  const w = curWx();
+  rainObj.visible = w === 2; snowObj.visible = w === 3;
+  const cx = camera.position.x, cz = camera.position.z;
+  if (w === 2) {
+    rainObj.position.set(cx, 0, cz);
+    const a = rainObj.geometry.attributes.position.array;
+    for (let i = 0; i < RAIN_N; i++) { const k = i * 6; a[k + 1] -= 38 * dt; a[k + 4] -= 38 * dt; if (a[k + 4] < 0) { a[k + 1] += 40; a[k + 4] += 40; } }
+    rainObj.geometry.attributes.position.needsUpdate = true;
+  }
+  if (w === 3) {
+    snowObj.position.set(cx, 0, cz);
+    const a = snowObj.geometry.attributes.position.array;
+    for (let i = 0; i < SNOW_N; i++) { const k = i * 3; a[k + 1] -= 2.6 * dt; a[k] += Math.sin(elapsed + i) * 0.4 * dt; if (a[k + 1] < 0) a[k + 1] += 40; }
+    snowObj.geometry.attributes.position.needsUpdate = true;
+  }
+}
+const grayC = new THREE.Color(0x8d97a8), whiteGround = new THREE.Color(0xe8eef3), baseGround = new THREE.Color(0x86c06a);
+let lastWx = -1;
+function weatherSky() {
+  const w = curWx();
+  if (w !== 0) {
+    const k = w === 4 ? 0.7 : 0.5;
+    scene.background.lerp(tmpC.copy(grayC).multiplyScalar(0.25 + 0.75 * clamp(hemi.intensity / 0.83, 0, 1)), k);
+    scene.fog.color.copy(scene.background);
+    hemi.intensity *= w === 4 ? 0.85 : 0.75; sun.intensity *= w === 1 || w === 4 ? 0.55 : 0.4;
+  }
+  scene.fog.near = w === 4 ? 20 : w === 2 ? 70 : w === 3 ? 55 : 140;
+  scene.fog.far = w === 4 ? 130 : w === 2 ? 300 : w === 3 ? 230 : 420;
+  if (w !== lastWx && groundMat) { lastWx = w; groundMat.color.copy(w === 3 ? whiteGround : baseGround); }
+}
+let fwObj = null, fwT = 0;
+const FW_N = 900, fwP = [];
+function buildFireworks() {
+  const pos = new Float32Array(FW_N * 3).fill(-999), col = new Float32Array(FW_N * 3);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  fwObj = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.8, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+  fwObj.frustumCulled = false; scene.add(fwObj);
+  for (let i = 0; i < FW_N; i++) fwP.push({ vx: 0, vy: 0, vz: 0, l: 0, c: new THREE.Color() });
+}
+function updateFireworks(dt) {
+  const h = state.time / 60;
+  const on = isWeekend() && h >= 20 && h < 23;
+  const pos = fwObj.geometry.attributes.position.array, col = fwObj.geometry.attributes.color.array;
+  if (on) {
+    fwT -= dt;
+    if (fwT <= 0) {
+      fwT = 1.1 + Math.random() * 0.8;
+      const cx = 30 + rnd(-20, 20), cy = rnd(26, 42), cz = 30 + rnd(-20, 20), c = new THREE.Color().setHSL(Math.random(), 1, 0.6);
+      let n = 0;
+      for (let i = 0; i < FW_N && n < 80; i++) {
+        const p = fwP[i]; if (p.l > 0) continue;
+        const a = Math.random() * Math.PI * 2, b = Math.acos(2 * Math.random() - 1), v = 14 + Math.random() * 6;
+        p.vx = Math.sin(b) * Math.cos(a) * v; p.vy = Math.cos(b) * v; p.vz = Math.sin(b) * Math.sin(a) * v; p.l = 1.6 + Math.random() * 0.6; p.c.copy(c);
+        pos[i * 3] = cx; pos[i * 3 + 1] = cy; pos[i * 3 + 2] = cz; n++;
+      }
+      const { x, z } = playerPos();
+      if (Math.hypot(x - 30, z - 30) < 260) { tone(80 + Math.random() * 40, 0.4, 'sawtooth', 0.03); if (!state.stats.hanabi) { state.stats.hanabi = 1; toast('公園の上で花火が上がっている！', 'big'); achCheck(); } }
+    }
+  }
+  let any = false;
+  for (let i = 0; i < FW_N; i++) {
+    const p = fwP[i]; if (p.l <= 0) continue;
+    any = true; p.l -= dt; p.vy -= 5 * dt; p.vx *= 0.985; p.vz *= 0.985;
+    pos[i * 3] += p.vx * dt; pos[i * 3 + 1] += p.vy * dt; pos[i * 3 + 2] += p.vz * dt;
+    const f = clamp(p.l / 1.2, 0, 1); col[i * 3] = p.c.r * f; col[i * 3 + 1] = p.c.g * f; col[i * 3 + 2] = p.c.b * f;
+    if (p.l <= 0) pos[i * 3 + 1] = -999;
+  }
+  if (any || on) { fwObj.geometry.attributes.position.needsUpdate = true; fwObj.geometry.attributes.color.needsUpdate = true; }
+}
+
+/* =========================================================
+   ピン・落とし物
+   ========================================================= */
+let side = null, sideBeam = null, lost = null, lastHour = -1;
+function buildPin() {
+  sideBeam = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 60, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }));
+  sideBeam.position.y = 30; sideBeam.visible = false; scene.add(sideBeam);
+}
+function setPin(x, z) { side = { type: 'pin', x, z, color: 0xffffff }; toast('ピンを立てました。矢印が案内します'); }
+function sideTarget() {
+  if (lost && lost.stage === 'return') return { x: lost.owner.gx, z: lost.owner.gz, color: 0xffd23f };
+  return side;
+}
+function spawnLost() {
+  const a = pick(addresses);
+  const g = new THREE.Group();
+  const b = new THREE.Mesh(BX(0.6, 0.4, 0.45), lam(0x8e5b2e, { emissive: 0x332200 })); b.position.y = 0.4; g.add(b);
+  const s = labelSprite('落とし物', '#ffd23f'); s.scale.set(5, 1.1, 1); s.position.y = 2.2; g.add(s);
+  g.position.set(a.x - a.nx * 0.5, 0.15, a.z - a.nz * 0.5); scene.add(g);
+  lost = { stage: 'find', x: g.position.x, z: g.position.z, m: g, item: pick(['さいふ', 'かぎ', 'スマホ', 'ぬいぐるみ', '手帳', 'かさ']), hours: 0 };
+  toast(`町のどこかに${lost.item}の落とし物があるみたい（地図の★）`, 'big');
+}
+function updateLost(dt) {
+  const hr = Math.floor(state.time / 60);
+  if (hr !== lastHour) {
+    if (lastHour >= 0) {
+      if (!lost && !job && Math.random() < 0.22) spawnLost();
+      else if (lost) { lost.hours++; if (lost.hours > 8) { if (lost.m) scene.remove(lost.m); toast('落とし物は持ち主が見つけたようです'); lost = null; } }
+    }
+    lastHour = hr;
+  }
+  if (!lost) return;
+  const { x, z } = playerPos(), slow = !P.inCar || Math.abs(P.inCar.speed) < 5;
+  if (lost.stage === 'find') {
+    lost.m.rotation.y += dt;
+    if (slow && Math.hypot(lost.x - x, lost.z - z) < (P.inCar ? 4 : 2.2)) {
+      scene.remove(lost.m); lost.m = null;
+      lost.stage = 'return'; lost.owner = farAddresses({ x, z }, 50, 200, 1)[0] || pick(addresses);
+      toast(`${lost.item}を拾った！持ち主「${lost.owner.name}」へ届けよう（金色の光）`, 'big'); sfx('click');
+    }
+  } else if (slow && Math.hypot(lost.owner.gx - x, lost.owner.gz - z) < 6) {
+    const pay = 300 + Math.floor(Math.random() * 6) * 100;
+    addMoney(pay); state.stats.lost++;
+    toast(`「${lost.item}を届けてくれてありがとう！」 お礼 +${yen(pay)}`, 'money'); sfx('ok');
+    lost = null; achCheck();
+  }
+}
+
+/* =========================================================
+   体力・ジャンプ・ダッシュ・ベンチ・ペット・着せかえ
+   ========================================================= */
+let tiredT = 0;
+function walkSpeed(l) {
+  const run = (keys.shift || Math.hypot(joy.x, joy.y) > 0.96) && state.stamina > 0;
+  P.running = run;
+  return (run ? 11.5 : 7.5) * Math.min(1, l) * (state.stamina <= 0 ? 0.6 : 1);
+}
+function playerJump() { if (P.inCar || P.jy > 0.01 || P.sit) return; P.jv = 6.5; state.stamina = Math.max(0, state.stamina - 0.5); sfx('jump'); }
+function toggleSit(b) {
+  if (P.sit) { P.sit = false; return; }
+  P.sit = true; P.x = b.x; P.z = b.z + (b.r ? 0 : 0); toast('ベンチで休んでいます（動くと立ちます）');
+}
+function updateBody(dt) {
+  if (P.inCar) { P.jy = 0; P.jv = 0; P.sit = false; return; }
+  if (P.jy > 0 || P.jv > 0) { P.jv -= 22 * dt; P.jy = Math.max(0, P.jy + P.jv * dt); if (P.jy === 0) P.jv = 0; }
+  const mv = readMove();
+  if (P.sit && Math.hypot(mv.x, mv.y) > 0.3) P.sit = false;
+  const g = P.person.g;
+  g.position.y += P.jy - (P.sit ? 0.45 : 0);
+  if (P.sit) { P.person.legL.rotation.x = P.person.legR.rotation.x = -1.4; state.stamina = Math.min(100, state.stamina + 5 * dt); }
+  const moving = Math.hypot(mv.x, mv.y) > 0.08;
+  state.stamina = Math.max(0, state.stamina - (moving ? (P.running ? 1.4 : 0.22) : 0) * dt);
+}
+function stripeTex(c) {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 16;
+  const g = cv.getContext('2d'); g.fillStyle = '#ffffff'; g.fillRect(0, 0, 16, 16);
+  g.fillStyle = '#' + new THREE.Color(c).getHexString(); g.fillRect(0, 0, 16, 4); g.fillRect(0, 8, 16, 4);
+  const t = new THREE.CanvasTexture(cv); t.magFilter = THREE.NearestFilter; return t;
+}
+function applyOutfit() {
+  const o = state.outfit;
+  const hat = o.hat && OUTFIT[o.hat], sh = o.shirt && OUTFIT[o.shirt], pt = o.pants && OUTFIT[o.pants], ac = o.acc && OUTFIT[o.acc];
+  const person = makePerson({ shirt: sh ? sh.c : 0xffc928, pants: pt ? pt.c : 0x2b3a67, hair: 0x2a1d14, hat: !hat ? 0xff5b3a : hat.hat === 'cap' ? hat.c : undefined });
+  const g = person.g;
+  if (sh && sh.stripe) { const m = g.children[0].material; m.map = stripeTex(sh.stripe); m.color.set(0xffffff); m.needsUpdate = true; }
+  const add = (geo, color, x, y, z) => { const m = new THREE.Mesh(geo, lam(color)); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+  if (hat && hat.hat === 'straw') { add(new THREE.CylinderGeometry(0.62, 0.62, 0.05, 16), hat.c, 0, 2.36, 0); add(new THREE.CylinderGeometry(0.3, 0.32, 0.22, 12), hat.c, 0, 2.47, 0); }
+  if (hat && hat.hat === 'silk') { add(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 16), hat.c, 0, 2.36, 0); add(new THREE.CylinderGeometry(0.29, 0.29, 0.55, 14), hat.c, 0, 2.65, 0); }
+  if (hat && hat.hat === 'helmet') { add(new THREE.SphereGeometry(0.36, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), hat.c, 0, 2.28, 0); }
+  if (hat && hat.hat === 'crown') {
+    add(BX(0.5, 0.16, 0.5), hat.c, 0, 2.42, 0);
+    for (const [x, z] of [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]]) add(new THREE.ConeGeometry(0.07, 0.2, 4), hat.c, x, 2.58, z);
+  }
+  if (ac && ac.acc === 'glasses') add(BX(0.46, 0.09, 0.04), 0x2d3436, 0, 2.0, 0.27);
+  if (ac && ac.acc === 'sun') add(BX(0.5, 0.13, 0.05), 0x111111, 0, 2.0, 0.27);
+  if (ac && ac.acc === 'pack') add(BX(0.52, 0.62, 0.26), 0x8e5b2e, 0, 1.35, -0.34);
+  const vis = P.person ? P.person.g.visible : true;
+  if (P.person) scene.remove(P.person.g);
+  P.person = person; g.visible = vis; scene.add(g);
+}
+let petObj = null;
+function updatePet(dt) {
+  if (!state.pet) { if (petObj) { scene.remove(petObj.m); petObj = null; } return; }
+  if (!petObj || petObj.kind !== state.pet) {
+    if (petObj) scene.remove(petObj.m);
+    const m = makeAnimal(state.pet); scene.add(m);
+    petObj = { kind: state.pet, m, x: P.x - 1.5, z: P.z, h: 0 };
+  }
+  const p = petObj;
+  if (P.inCar) { p.m.visible = false; p.x = P.inCar.x; p.z = P.inCar.z; return; }
+  p.m.visible = true;
+  const tx = P.x - Math.sin(P.h) * 1.6 + Math.cos(P.h) * 0.7, tz = P.z - Math.cos(P.h) * 1.6 - Math.sin(P.h) * 0.7;
+  const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz);
+  if (d > 30) { p.x = tx; p.z = tz; }
+  else if (d > 0.3) { const v = Math.min(d * 3, 12) * dt; p.x += dx / d * v; p.z += dz / d * v; p.h += angDiff(p.h, Math.atan2(dx, dz)) * Math.min(1, dt * 8); }
+  p.m.position.set(p.x, surf(p.x, p.z) - 0.02 + (d > 0.6 ? Math.abs(Math.sin(elapsed * 12)) * 0.08 : 0), p.z);
+  p.m.rotation.y = p.h;
+}
+
+/* =========================================================
+   マイカー（ガソリン・傷み・よごれ）とクラクション・ライト
+   ========================================================= */
+function carGrip(car) {
+  if (car.def.grip) return 1;
+  const w = curWx();
+  return w === 3 ? 0.62 : w === 2 ? 0.8 : 1;
+}
+function carSpeedFactor(car) {
+  if (car !== myCar) return 1;
+  let f = 1;
+  if (!car.def.ev && state.car.fuel <= 0) f = 0.12;
+  if (state.car.dmg >= 70) f *= 0.6;
+  return f;
+}
+let dirtShown = -1, fuelWarnT = 0;
+function carMoved(car, m) {
+  if (car !== P.inCar || m <= 0) return;
+  const st = state.stats, w = curWx();
+  st.dist += m; dailyProg('dist', m);
+  if (w === 2 || w === 3) st.wetDist += m;
+  if (car === myCar) {
+    if (!car.def.ev) {
+      const before = state.car.fuel;
+      state.car.fuel = Math.max(0, state.car.fuel - m * 0.02 * (car.def.fuelUse || 1));
+      if (before > 15 && state.car.fuel <= 15) toast('ガソリンが少なくなってきた。ガソリンスタンドへ（地図の G）');
+      if (state.car.fuel <= 0) { fuelWarnT -= 1; if (fuelWarnT <= 0) { hint('ガス欠！ガソリンスタンドへ'); fuelWarnT = 120; } }
+    }
+    state.car.dirt = Math.min(100, state.car.dirt + m * 0.004 * (w === 2 || w === 3 ? 3 : 1));
+  }
+}
+function paintDirt() {
+  if (!myCar) return;
+  const d = Math.round(state.car.dirt / 5);
+  if (d === dirtShown && myCar.bodyMat.userData.d === d) return;
+  dirtShown = d; myCar.bodyMat.userData.d = d;
+  myCar.bodyMat.color.copy(myCar.baseColor).lerp(tmpC.set(0x6b5a45), d / 20 * 0.55);
+}
+function damageCar(impact) {
+  if (P.inCar !== myCar || !myCar || myCar.def.tough) return;
+  state.car.dmg = Math.min(100, state.car.dmg + impact * 1.4);
+  if (state.car.dmg >= 70) hint('車が傷んでいる！修理工場へ');
+}
+const smoke = [];
+function updateSmoke(dt) {
+  if (myCar && state.car.dmg >= 55 && Math.random() < dt * 8) {
+    let s = smoke.find(q => q.l <= 0);
+    if (!s && smoke.length < 16) { const m = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x555555, transparent: true, opacity: 0.6, depthWrite: false })); scene.add(m); s = { m, l: 0 }; smoke.push(s); }
+    if (s) { s.l = 1.4; s.m.position.set(myCar.x + Math.sin(myCar.h) * 1.8, 1.4, myCar.z + Math.cos(myCar.h) * 1.8); s.m.visible = true; }
+  }
+  for (const s of smoke) { if (s.l <= 0) continue; s.l -= dt; s.m.position.y += dt * 1.5; const k = 1.5 + (1.4 - s.l) * 2; s.m.scale.set(k, k, 1); s.m.material.opacity = clamp(s.l / 1.4, 0, 1) * 0.55; if (s.l <= 0) s.m.visible = false; }
+}
+function honk() {
+  if (!P.inCar) return;
+  initAudio(); tone(392, 0.35, 'square', 0.06); tone(494, 0.35, 'square', 0.05);
+  for (const d of peds) if (Math.hypot(d.p.g.position.x - P.inCar.x, d.p.g.position.z - P.inCar.z) < 18) d.jumpT = 0.6;
+}
+const headLight = new THREE.SpotLight(0xfff1c9, 0, 70, 0.55, 0.6, 1.2);
+headLight.target = new THREE.Object3D();
+scene.add(headLight, headLight.target);
+let lightsOn = false;
+function toggleLights() { lightsOn = !lightsOn; toast(lightsOn ? 'ライトをつけた' : 'ライトを消した'); }
+function updateLights() {
+  const c = P.inCar;
+  headLight.intensity = lightsOn && c ? 2.4 : 0;
+  if (!c) return;
+  const fx = Math.sin(c.h), fz = Math.cos(c.h);
+  headLight.position.set(c.x + fx * 2, 1.3 + c.alt, c.z + fz * 2);
+  headLight.target.position.set(c.x + fx * 25, 0, c.z + fz * 25);
+}
+
+/* =========================================================
+   カメラのモード・写真モード
+   ========================================================= */
+cam.mode = 0; cam.photo = false;
+const CAM_NAMES = ['ふつうのカメラ', '運転席カメラ', '上空カメラ'];
+function cycleCam() { cam.mode = (cam.mode + 1) % 3; toast(CAM_NAMES[cam.mode]); }
+function togglePhoto() {
+  cam.photo = !cam.photo;
+  $('#hud').hidden = cam.photo; $('#photoBar').hidden = !cam.photo;
+  if (cam.photo) toast('写真モード：ドラッグで向きを変えられます');
+}
+function camExtra(dt) {
+  const c = P.inCar;
+  const tx = c ? c.x : P.x, tz = c ? c.z : P.z;
+  for (const car of cars) car.mesh.visible = !(cam.mode === 1 && car === c && !cam.photo);
+  P.person.g.visible = !c && !(cam.mode === 1 && !cam.photo);
+  if (cam.photo) {
+    if (cam.dragT <= 0) cam.yaw += dt * 0.15;
+    cam.dragT -= dt;
+    const dist = 16, p = clamp(cam.pitch, 0.05, 1.2);
+    camera.position.set(tx - Math.sin(cam.yaw) * dist * Math.cos(p), 2 + dist * Math.sin(p), tz - Math.cos(cam.yaw) * dist * Math.cos(p));
+    camera.lookAt(tx, 1.5, tz);
+    return true;
+  }
+  if (cam.mode === 1) {
+    if (c) {
+      const fx = Math.sin(c.h), fz = Math.cos(c.h);
+      const eye = c.def.shape === 'bus' ? 2.6 : c.def.shape === 'truck' || c.def.shape === 'van' ? 2.0 : c.def.shape === 'bike' ? 2.2 : 1.45;
+      camera.position.set(c.x + fx * 0.4, surf(c.x, c.z) + eye + c.alt, c.z + fz * 0.4);
+      camera.lookAt(c.x + fx * 30, eye * 0.8 + c.alt, c.z + fz * 30);
+      cam.yaw = c.h;
+    } else {
+      cam.dragT -= dt;
+      const p = cam.pitch - 0.32;
+      camera.position.set(P.x, surf(P.x, P.z) + 1.75 + P.jy, P.z);
+      camera.lookAt(P.x + Math.sin(cam.yaw) * 10, 1.75 - p * 10, P.z + Math.cos(cam.yaw) * 10);
+    }
+    return true;
+  }
+  if (cam.mode === 2) {
+    if (c && cam.dragT <= 0) cam.yaw += angDiff(cam.yaw, c.h) * Math.min(1, dt * 2);
+    cam.dragT -= dt;
+    tmpV.set(tx - Math.sin(cam.yaw) * 0.5, 75, tz - Math.cos(cam.yaw) * 0.5);
+    camera.position.lerp(tmpV, Math.min(1, dt * 6));
+    camera.lookAt(tx, 0, tz);
+    return true;
+  }
+  return false;
+}
+
+/* =========================================================
+   お店の画面
+   ========================================================= */
+function svcScreen(title, html, bind) {
+  const body = $('#svcBody');
+  body.innerHTML = `<div class="row" style="justify-content:space-between"><h2>${esc(title)}</h2><button class="btn" id="svClose" type="button">とじる</button></div>
+    <div class="muted">もっているお金：<b style="color:var(--signal)">${yen(state.money)}</b></div>${html}`;
+  showScreen('svc');
+  $('#svClose').onclick = closeScreen;
+  if (bind) bind(body);
+}
+function pay(n, what) {
+  if (state.money < n) { toast('お金がたりません'); sfx('bad'); return false; }
+  state.money -= n; sfx('coin'); if (what) toast(what);
+  return true;
+}
+const meterHtml = (label, v, col) => `<div class="meter big"><span>${label}</span><i><b style="width:${clamp(v, 0, 100)}%;background:${col}"></b></i><em>${Math.round(v)}%</em></div>`;
+function useService(s) {
+  initAudio();
+  const nearMyCar = myCar && (P.inCar === myCar || Math.hypot(myCar.x - s.mx, myCar.z - s.mz) < 18);
+  if (s.id === 'gas') {
+    const need = Math.ceil(100 - state.car.fuel), cost = need * 4;
+    const ev = myCar && myCar.def.ev;
+    svcScreen(s.name, `${meterHtml('ガソリン', state.car.fuel, 'var(--signal)')}
+      <div class="muted">${ev ? '電気自動車はガソリンがいりません。' : !nearMyCar ? 'マイカーに乗って来てね（マイカーはスマホでよべます）。' : `満タンまで ${need}リットル`}</div>
+      <button class="btn primary" id="svGo" type="button" ${ev || !nearMyCar || need <= 0 ? 'disabled' : ''}>満タンにする（${yen(cost)}）</button>`, b => {
+      b.querySelector('#svGo').onclick = () => { if (pay(cost, 'ガソリン満タン！')) { state.car.fuel = 100; useService(s); } };
+    });
+  } else if (s.id === 'repair') {
+    const rc = Math.ceil(state.car.dmg * 15);
+    svcScreen(s.name, `${meterHtml('車の傷み', state.car.dmg, 'var(--tomato)')}${meterHtml('車のよごれ', state.car.dirt, '#a1866f')}
+      <div class="muted">${nearMyCar ? 'マイカーをなおしたり、洗ったりできます。' : 'マイカーに乗って来てね。'}</div>
+      <div class="row"><button class="btn primary" id="svFix" type="button" ${!nearMyCar || rc <= 0 ? 'disabled' : ''}>修理する（${yen(rc)}）</button><button class="btn" id="svWash" type="button" ${!nearMyCar || state.car.dirt < 1 ? 'disabled' : ''}>洗車する（300円）</button></div>`, b => {
+      b.querySelector('#svFix').onclick = () => { if (pay(rc, '車がなおった！')) { state.car.dmg = 0; useService(s); } };
+      b.querySelector('#svWash').onclick = () => { if (pay(300, '車がピカピカになった！')) { state.car.dirt = 0; paintDirt(); useService(s); } };
+    });
+  } else if (s.id === 'hospital') {
+    svcScreen(s.name, `${meterHtml('体力', state.stamina, 'var(--mint)')}<div class="muted">診察を受けると体力が満タンになります。</div>
+      <button class="btn primary" id="svGo" type="button" ${state.stamina >= 100 ? 'disabled' : ''}>診察を受ける（500円）</button>`, b => {
+      b.querySelector('#svGo').onclick = () => { if (pay(500, '元気になった！')) { state.stamina = 100; useService(s); } };
+    });
+  } else if (s.id === 'bank') {
+    svcScreen(s.name, `<div class="bank"><span>あずけているお金</span><b>${yen(state.bank)}</b></div>
+      <div class="muted">家で休んで朝になるたび、あずけたお金に1%の利息がつきます（1日3,000円まで）。</div>
+      <h3>あずける</h3><div class="row">${[1000, 10000].map(v => `<button class="btn" data-in="${v}" type="button">${yen(v)}</button>`).join('')}<button class="btn primary" data-in="all" type="button">全部</button></div>
+      <h3>おろす</h3><div class="row">${[1000, 10000].map(v => `<button class="btn" data-out="${v}" type="button">${yen(v)}</button>`).join('')}<button class="btn" data-out="all" type="button">全部</button></div>`, b => {
+      b.querySelectorAll('[data-in]').forEach(x => x.onclick = () => { const v = x.dataset.in === 'all' ? state.money : +x.dataset.in; if (v <= 0 || state.money < v) { toast('お金がたりません'); return; } state.money -= v; state.bank += v; sfx('coin'); achCheck(); useService(s); });
+      b.querySelectorAll('[data-out]').forEach(x => x.onclick = () => { const v = x.dataset.out === 'all' ? state.bank : +x.dataset.out; if (v <= 0 || state.bank < v) { toast('あずけているお金がたりません'); return; } state.bank -= v; state.money += v; sfx('coin'); useService(s); });
+    });
+  } else if (s.id === 'konbini') {
+    const food = [['おにぎり', '🍙', 120, 15], ['サンドイッチ', '🥪', 250, 25], ['お弁当', '🍱', 500, 50], ['栄養ドリンク', '🧃', 300, 35]];
+    const bought = state.lotto && state.lotto.day === state.day;
+    svcScreen(s.name, `${meterHtml('体力', state.stamina, 'var(--mint)')}
+      <div class="list">${food.map((f, i) => `<div class="item"><div class="name">${f[1]} ${f[0]}<span class="sub">　体力 +${f[3]}</span></div><button class="btn" data-f="${i}" type="button">${yen(f[2])}</button></div>`).join('')}
+      <div class="item"><div><div class="name">🎫 宝くじ</div><div class="sub">1日1枚。家で休んで朝になると発表（1等 10万円）</div></div><button class="btn primary" id="svLotto" type="button" ${bought ? 'disabled' : ''}>${bought ? `${state.lotto.no}番を買った` : '300円'}</button></div></div>`, b => {
+      b.querySelectorAll('[data-f]').forEach(x => x.onclick = () => { const f = food[+x.dataset.f]; if (pay(f[2], `${f[0]}を食べた！体力 +${f[3]}`)) { state.stamina = Math.min(100, state.stamina + f[3]); useService(s); } });
+      const lb = b.querySelector('#svLotto'); if (lb && !bought) lb.onclick = () => { if (pay(300)) { state.lotto = { day: state.day, no: String(Math.floor(Math.random() * 900000) + 100000) }; toast(`宝くじ ${state.lotto.no}番を買った。明日の朝に発表！`); useService(s); } };
+    });
+  } else if (s.id === 'clothes') {
+    const slots = { hat: '帽子', shirt: 'シャツ', pants: 'ズボン', acc: 'こもの' };
+    svcScreen(s.name, Object.entries(slots).map(([slot, label]) => `<h3>${label}</h3><div class="list">${OUTFITS.filter(o => o[1] === slot).map(o => {
+      const it = OUTFIT[o[0]], owned = state.owned.includes(it.id), wearing = state.outfit[slot] === it.id;
+      return `<div class="item"><div class="row"><span class="swatch" style="background:#${new THREE.Color(it.c != null ? it.c : 0x2d3436).getHexString()}"></span><div class="name">${esc(it.name)}</div></div>
+        ${wearing ? `<button class="btn" data-off="${slot}" type="button">はずす</button>` : owned ? `<button class="btn" data-wear="${it.id}" type="button">着る</button>` : `<button class="btn primary" data-buy="${it.id}" type="button" ${state.money < it.price ? 'disabled' : ''}>${yen(it.price)}</button>`}</div>`;
+    }).join('')}</div>`).join(''), b => {
+      b.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => { const it = OUTFIT[x.dataset.buy]; if (pay(it.price, `${it.name}を買った！`)) { state.owned.push(it.id); state.outfit[it.slot] = it.id; applyOutfit(); achCheck(); useService(s); } });
+      b.querySelectorAll('[data-wear]').forEach(x => x.onclick = () => { const it = OUTFIT[x.dataset.wear]; state.outfit[it.slot] = it.id; applyOutfit(); useService(s); });
+      b.querySelectorAll('[data-off]').forEach(x => x.onclick = () => { state.outfit[x.dataset.off] = null; applyOutfit(); useService(s); });
+    });
+  } else if (s.id === 'petshop') {
+    const pets = [['dog', '🐕 犬', 3000], ['cat', '🐈 ネコ', 3000]];
+    svcScreen(s.name, `<div class="muted">家族になったペットは、歩いているあなたについてきます。</div><div class="list">${pets.map(p => `<div class="item"><div class="name">${p[1]}</div>${state.pet === p[0] ? '<span class="muted">いっしょにいます</span>' : `<button class="btn primary" data-pet="${p[0]}" type="button">${state.pet ? '1,000円で交代' : yen(p[2])}</button>`}</div>`).join('')}</div>`, b => {
+      b.querySelectorAll('[data-pet]').forEach(x => x.onclick = () => { if (pay(state.pet ? 1000 : 3000, 'あたらしい家族ができた！')) { state.pet = x.dataset.pet; achCheck(); useService(s); } });
+    });
+  } else if (s.id === 'hellowork') openPhone('jobs');
+}
+function buyDrink() {
+  if (!pay(130, 'ジュースを飲んだ！体力 +15')) return;
+  state.stamina = Math.min(100, state.stamina + 15); state.stats.vend++; dailyProg('vend', 1);
+}
+function extraInteraction(x, z) {
+  const inCar = !!P.inCar;
+  if (inCar && Math.abs(P.inCar.speed) > 3) return null;
+  for (const s of SERVICES) { const r = inCar ? 4.8 : 3.3; if ((x - s.mx) ** 2 + (z - s.mz) ** 2 < r * r) return { label: s.prompt, fn: () => useService(s) }; }
+  for (const v of VENDING) { const r = inCar ? 3.8 : 2.4; if ((x - v.x) ** 2 + (z - v.z) ** 2 < r * r) return { label: 'ジュースを買う（130円）', fn: buyDrink }; }
+  if ((x - RACE.x) ** 2 + (z - RACE.z) ** 2 < (inCar ? 7 : 3.3) ** 2 && !job) return { label: 'タイムアタックに挑戦', fn: startRace };
+  if (!inCar) for (const b of BENCHES) if ((x - b.x) ** 2 + (z - b.z) ** 2 < 2.6 ** 2) return { label: P.sit ? 'たちあがる' : 'ベンチで休む', fn: () => toggleSit(b) };
+  return null;
+}
+
+/* =========================================================
+   スマホのアプリ
+   ========================================================= */
+const APPS = [
+  ['jobs', '💼', 'しごと'], ['map', '🗺️', 'マップ'], ['mission', '✅', 'ミッション'], ['ach', '🏆', '実績'],
+  ['levels', '📈', 'レベル'], ['stats', '📊', '統計'], ['weather', '🌤️', '天気'], ['cars', '🚗', 'マイカー'],
+  ['games', '🎮', 'マイゲーム'], ['settings', '⚙️', '設定'], ['list', '🆕', '追加要素200'], ['save', '💾', 'セーブ'],
+];
+let jobFilter = 'all', listFilter = 'all';
+function phoneHead(title, back = true) {
+  return `<div class="row" style="justify-content:space-between"><div class="row">${back ? '<button class="btn" data-home type="button">もどる</button>' : ''}<h2>${esc(title)}</h2></div><button class="btn" data-close type="button">とじる</button></div>`;
+}
+function openPhone(view = 'home') {
+  const body = $('#phoneBody');
+  ensureDaily();
+  const curJobName = job ? (job.def ? job.def.name : JOBS[job.id] ? JOBS[job.id].name : '') : '';
+  let html = '';
+  if (view === 'home') {
+    const claim = state.daily.list.filter(m => m.prog >= m.n && !m.claimed).length;
+    html = `${phoneHead('スマホ', false)}
+      <div class="row" style="justify-content:space-between"><span style="font-family:var(--display);font-size:24px;color:var(--signal)">${yen(state.money)}</span><span class="muted">${state.day}日目（${weekday()}） ${clockStr()} ${WX[curWx()][2]}${isWeekend() ? '　週末ボーナス中' : ''}</span></div>
+      ${meterHtml('体力', state.stamina, 'var(--mint)')}
+      ${job && !job.overlay ? `<div class="item"><div><div class="name">いまの仕事：${esc(curJobName)}</div><div class="sub">${job.n || 0} / ${job.total || 1} 終わった</div></div><button class="btn danger" id="phQuit" type="button">やめる</button></div>` : ''}
+      ${P.inCar && P.inCar.def.camper && Math.abs(P.inCar.speed) < 1 && !job ? '<button class="btn primary" id="phCamp" type="button">キャンピングカーで休む（朝になる）</button>' : ''}
+      <div class="apps">${APPS.map(a => `<button class="app" data-app="${a[0]}" type="button"><span>${a[1]}</span>${a[2]}${a[0] === 'mission' && claim ? `<i>${claim}</i>` : ''}</button>`).join('')}</div>`;
+  } else if (view === 'jobs') {
+    const chips = [['all', 'すべて'], ['orig', 'はじめの4つ'], ...KIND_ORDER.map(k => [k, KIND_INFO[k].name])];
+    const orig = PLACES.filter(p => JOBS[p.id]).map(p => ({ id: p.id, e: { pizza: '🍕', taxi: '🚕', chef: '👨‍🍳', engineer: '🎮' }[p.id], name: JOBS[p.id].name, desc: `${p.name}で働く（地図の「${p.short}」）`, orig: p }));
+    const list = jobFilter === 'orig' ? orig : jobFilter === 'all' ? orig.concat(GIGS) : GIGS.filter(g => g.kind === jobFilter);
+    html = `${phoneHead('しごと（104種類）')}
+      <div class="chips">${chips.map(c => `<button class="chipb${jobFilter === c[0] ? ' on' : ''}" data-jf="${c[0]}" type="button">${c[1]}</button>`).join('')}</div>
+      ${jobFilter !== 'all' && jobFilter !== 'orig' ? `<div class="muted">${KIND_INFO[jobFilter].how}</div>` : ''}
+      <div class="list">${list.map(g => { const j = jobState(g.id); return `<div class="item"><div style="min-width:0"><div class="name">${g.e} ${esc(g.name)} <span class="lv">Lv${j.lv}</span>${state.tried[g.id] ? '<span class="done">体験ずみ</span>' : ''}</div><div class="sub">${esc(g.desc)}${state.best[g.id] ? `・ベスト ${state.best[g.id]}` : ''}</div></div>
+        ${g.orig ? `<button class="btn" data-pin="${g.id}" type="button">場所へ案内</button>` : `<button class="btn primary" data-gig="${g.id}" type="button" ${job ? 'disabled' : ''}>はたらく</button>`}</div>`; }).join('')}</div>`;
+  } else if (view === 'map') {
+    html = `${phoneHead('マップ')}<canvas id="bigmap" width="600" height="600"></canvas>
+      <div class="row"><span class="muted">地図をタップするとピンを立てられます。</span>${side && side.type === 'pin' ? '<button class="btn" id="unpin" type="button">ピンを消す</button>' : ''}</div>
+      <h3>ファストトラベル（お金をはらって移動）</h3><div class="list">${travelSpots().map((t, i) => `<div class="item"><div class="name">${esc(t.name)}</div><button class="btn" data-tr="${i}" type="button" ${job && !job.overlay ? 'disabled' : ''}>${yen(t.cost)}で行く</button></div>`).join('')}</div>`;
+  } else if (view === 'mission') {
+    html = `${phoneHead('デイリーミッション')}<div class="muted">${state.day}日目（${weekday()}）のミッション。家で休んで朝になると新しくなります。</div>
+      <div class="list">${state.daily.list.map((m, i) => `<div class="item"><div style="flex:1;min-width:0"><div class="name">${esc(m.text)}</div><div class="xpbar" style="--c:var(--mint)"><b style="width:${m.prog / m.n * 100}%"></b></div><div class="sub">${m.k === 'dist' ? `${(m.prog / 1000).toFixed(1)} / ${m.n / 1000}km` : m.k === 'earn' ? `${yen(m.prog)} / ${yen(m.n)}` : `${Math.floor(m.prog)} / ${m.n}`}・ごほうび ${yen(m.reward)}</div></div>
+        ${m.claimed ? '<span class="muted">受け取りずみ</span>' : `<button class="btn primary" data-claim="${i}" type="button" ${m.prog >= m.n ? '' : 'disabled'}>受け取る</button>`}</div>`).join('')}</div>`;
+  } else if (view === 'ach') {
+    const n = ACH.filter(a => state.ach[a[0]]).length;
+    html = `${phoneHead(`実績（${n} / ${ACH.length}）`)}<div class="list">${ACH.map((a, i) => `<div class="item${state.ach[a[0]] ? ' got' : ''}"><div><div class="name">${i + 1}. ${state.ach[a[0]] ? '🏆' : '🔒'} ${esc(a[1])}</div><div class="sub">${esc(a[2])}・ごほうび ${yen(a[4])}</div></div></div>`).join('')}</div>`;
+  } else if (view === 'levels') {
+    const ids = Object.keys(JOBS).filter(id => !JOBS[id].gig || state.tried[id]);
+    html = `${phoneHead('仕事のレベル（1から10まで）')}<div class="muted">はじめの4つと、やったことのある仕事を表示しています。</div>${ids.map(levelBlock).join('')}`;
+  } else if (view === 'stats') {
+    const s = state.stats;
+    const rows = [['かせいだお金（合計）', yen(s.earned)], ['やりとげた仕事', `${s.jobs}回`], ['体験した仕事の種類', `${Object.keys(state.tried).length} / 104種類`], ['運転した距離', `${(s.dist / 1000).toFixed(1)}km`], ['雨や雪の日に運転した距離', `${(s.wetDist / 1000).toFixed(1)}km`], ['見つけた隠しコイン', `${state.coins.length} / 50枚`], ['届けた落とし物', `${s.lost}回`], ['いちばん長いジャンプ', `${s.air.toFixed(1)}秒`], ['タイムアタックのベスト', state.raceBest ? `${state.raceBest.toFixed(1)}秒` : 'まだ'], ['クリアしたミッション', `${s.daily}個`], ['宝くじの当たり', `${s.lottoWins}回`], ['自販機で買った飲み物', `${s.vend}本`], ['ぶつけた回数', `${s.bumps}回`], ['信号無視', `${s.redLights}回`], ['銀行の残高', yen(state.bank)], ['発売したゲーム', `${state.games.length}本`]];
+    html = `${phoneHead('統計')}<div class="res-rows">${rows.map(r => `<div><span>${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`;
+  } else if (view === 'weather') {
+    html = `${phoneHead('天気予報')}<div class="wx">${[0, 1, 2, 3].map(i => { const d = state.day + i, w = WX[weatherOf(d)]; return `<div><small>${i === 0 ? '今日' : i === 1 ? '明日' : `${i}日後`}</small><b>${w[2]}</b><span>${w[1]}</span><small>${d}日目（${weekday(d)}）</small></div>`; }).join('')}</div>
+      <div class="muted" style="line-height:1.7">雨の日はすべりやすく、雪の日はもっとすべります。霧の日は遠くが見えません。ラリーカーは天気に強い車です。</div>`;
+  } else if (view === 'cars') {
+    html = `${phoneHead('マイカー')}${meterHtml('ガソリン', state.car.fuel, 'var(--signal)')}${meterHtml('車の傷み', state.car.dmg, 'var(--tomato)')}${meterHtml('車のよごれ', state.car.dirt, '#a1866f')}
+      <div class="list">${state.cars.map(t => `<div class="item"><div class="row"><span class="swatch" style="background:#${CAR_TYPES[t].color.toString(16).padStart(6, '0')}"></span><div><div class="name">${CAR_TYPES[t].name}</div><div class="sub">${CAR_TYPES[t].desc}</div></div></div><button class="btn" data-car="${t}" type="button">ここによぶ</button></div>`).join('')}</div>
+      <div class="row"><button class="btn" id="phLights" type="button">ライト ${lightsOn ? 'ON' : 'OFF'}</button><button class="btn" id="phCam" type="button">${CAM_NAMES[cam.mode]}</button></div>`;
+  } else if (view === 'games') {
+    html = `${phoneHead('マイゲーム')}<div class="list">${state.games.length ? state.games.map((g, i) => `<div class="item"><div><div class="name">${esc(g.title)}</div><div class="sub">${TPL[g.type].name}・${'★'.repeat(g.stars)}${'☆'.repeat(5 - g.stars)}</div></div><button class="btn" data-play="${i}" type="button">あそぶ</button></div>`).join('') : '<div class="muted">まだありません。ピクセルスタジオでゲームを作って発売しよう。</div>'}</div>`;
+  } else if (view === 'settings') {
+    const st = state.settings;
+    const ticks10 = '<div class="ticks">' + Array.from({ length: 10 }, (_, i) => `<span>${i + 1}</span>`).join('') + '</div>';
+    html = `${phoneHead('設定')}
+      <div class="field"><label for="setVol">音の大きさ<b>${st.vol}</b></label><input type="range" id="setVol" min="0" max="10" step="1" value="${st.vol}"><div class="muted" style="font-size:11px">0 にすると音が消えます</div></div>
+      <div class="field"><label for="setSens">カメラの速さ<b>${st.sens}</b></label><input type="range" id="setSens" min="1" max="10" step="1" value="${st.sens}">${ticks10}</div>
+      <div class="field"><span>影</span><div class="seg"><button type="button" data-sh="1" class="${st.shadow ? 'on' : ''}">あり</button><button type="button" data-sh="0" class="${!st.shadow ? 'on' : ''}">なし（軽くなる）</button></div></div>
+      <div class="muted" style="line-height:1.7">キー操作：H クラクション、L ライト、C カメラ、P 写真モード、Shift ダッシュ、Space ジャンプ（歩いているとき）</div>
+      <button class="btn danger" id="phReset" type="button">データを消す</button>`;
+  } else if (view === 'list') {
+    const all = allAdditions(), cats = ['all', '仕事', '実績', '乗り物', '着せかえ', '機能'];
+    const shown = listFilter === 'all' ? all : all.filter(r => r.cat === listFilter);
+    html = `${phoneHead('追加要素 200')}<div class="muted">今回ふえた200個を、1から200まで番号順にならべています。</div>
+      <div class="chips">${cats.map(c => `<button class="chipb${listFilter === c ? ' on' : ''}" data-lf="${c}" type="button">${c === 'all' ? 'すべて' : c}（${c === 'all' ? all.length : all.filter(r => r.cat === c).length}）</button>`).join('')}</div>
+      <ol class="add-list">${shown.map(r => `<li value="${r.no}"><b>${r.no}. ${esc(r.name)}</b><span>${esc(r.cat)}・${esc(r.desc)}</span></li>`).join('')}</ol>`;
+  } else if (view === 'save') {
+    save();
+    html = `${phoneHead('セーブ')}<div class="muted">セーブしました。このブラウザに保存されています（15秒ごとにも自動でセーブします）。</div>`;
+  }
+  body.innerHTML = html;
+  showScreen('phone');
+  body.querySelectorAll('[data-close]').forEach(b => b.onclick = closeScreen);
+  body.querySelectorAll('[data-home]').forEach(b => b.onclick = () => openPhone('home'));
+  body.querySelectorAll('[data-app]').forEach(b => b.onclick = () => { sfx('click'); openPhone(b.dataset.app); });
+  if ($('#phQuit')) $('#phQuit').onclick = () => { quitJob(); closeScreen(); };
+  if ($('#phCamp')) $('#phCamp').onclick = () => { closeScreen(); rest(); };
+  body.querySelectorAll('[data-jf]').forEach(b => b.onclick = () => { jobFilter = b.dataset.jf; openPhone('jobs'); });
+  body.querySelectorAll('[data-lf]').forEach(b => b.onclick = () => { listFilter = b.dataset.lf; openPhone('list'); });
+  body.querySelectorAll('[data-gig]').forEach(b => b.onclick = () => { closeScreen(); startGig(GIG[b.dataset.gig]); });
+  body.querySelectorAll('[data-pin]').forEach(b => b.onclick = () => { const p = PLACES.find(q => q.id === b.dataset.pin); setPin(p.mx, p.mz); closeScreen(); });
+  body.querySelectorAll('[data-claim]').forEach(b => b.onclick = () => { const m = state.daily.list[+b.dataset.claim]; if (m.claimed || m.prog < m.n) return; m.claimed = true; addMoney(m.reward); state.stats.daily++; sfx('lvl'); toast(`ミッションのごほうび +${yen(m.reward)}`, 'money'); achCheck(); openPhone('mission'); });
+  body.querySelectorAll('[data-car]').forEach(b => b.onclick = () => { closeScreen(); summonCar(b.dataset.car); });
+  body.querySelectorAll('[data-play]').forEach(b => b.onclick = () => { const g = state.games[+b.dataset.play]; openStudio(); openPlay(g, false); });
+  body.querySelectorAll('[data-tr]').forEach(b => b.onclick = () => { const t = travelSpots()[+b.dataset.tr]; travel(t); });
+  if ($('#unpin')) $('#unpin').onclick = () => { side = null; openPhone('map'); };
+  if ($('#phLights')) $('#phLights').onclick = () => { toggleLights(); openPhone('cars'); };
+  if ($('#phCam')) $('#phCam').onclick = () => { cycleCam(); openPhone('cars'); };
+  if ($('#setVol')) $('#setVol').oninput = e => { state.settings.vol = +e.target.value; e.target.previousElementSibling.querySelector('b').textContent = e.target.value; };
+  if ($('#setVol')) $('#setVol').onchange = () => sfx('coin');
+  if ($('#setSens')) $('#setSens').oninput = e => { state.settings.sens = +e.target.value; e.target.previousElementSibling.querySelector('b').textContent = e.target.value; };
+  body.querySelectorAll('[data-sh]').forEach(b => b.onclick = () => { state.settings.shadow = b.dataset.sh === '1'; applyShadows(); openPhone('settings'); });
+  if ($('#phReset')) $('#phReset').onclick = e => {
+    const b = e.currentTarget;
+    if (b.dataset.sure) { try { localStorage.removeItem(SAVE_KEY); } catch (er) { /* ignore */ } location.reload(); }
+    else { b.dataset.sure = '1'; b.textContent = 'もう一度押すと全部消えます'; }
+  };
+  const bm = $('#bigmap');
+  if (bm) {
+    drawBigMap(bm);
+    bm.addEventListener('pointerdown', ev => {
+      const r = bm.getBoundingClientRect();
+      const wx = (ev.clientX - r.left) / r.width * 360 - 180, wz = (ev.clientY - r.top) / r.height * 360 - 180;
+      setPin(clamp(wx, -WORLD, WORLD), clamp(wz, -WORLD, WORLD)); drawBigMap(bm);
+      if (!$('#unpin')) openPhone('map');
+    });
+  }
+}
+function startGig(def) { if (def.kind === 'route' || def.kind === 'carry' || def.kind === 'chase' || def.kind === 'park') startGigDrive(def); else openGig(def); }
+function applyShadows() { sun.castShadow = !!state.settings.shadow; renderer.shadowMap.enabled = !!state.settings.shadow; }
+function drawBigMap(cv) {
+  const c = cv.getContext('2d');
+  c.imageSmoothingEnabled = true;
+  c.drawImage(mmBg, 0, 0, 600, 600);
+  const k = 600 / 360, m = v => (v + 180) * k;
+  if (side && side.type === 'pin') { c.fillStyle = '#fff'; c.strokeStyle = '#111'; c.lineWidth = 3; c.beginPath(); c.arc(m(side.x), m(side.z), 9, 0, 7); c.fill(); c.stroke(); }
+  if (lost && lost.stage === 'find') { c.fillStyle = '#ffd23f'; c.font = '26px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('★', m(lost.x), m(lost.z)); }
+  if (goal.active) { c.fillStyle = '#' + goalRingMat.color.getHexString(); c.beginPath(); c.arc(m(goal.x), m(goal.z), 10, 0, 7); c.fill(); }
+  const { x, z } = playerPos();
+  c.fillStyle = '#ffc928'; c.strokeStyle = '#1d1a10'; c.lineWidth = 3; c.beginPath(); c.arc(m(x), m(z), 10, 0, 7); c.fill(); c.stroke();
+}
+function travelSpots() {
+  const { x, z } = playerPos();
+  const spots = PLACES.map(p => ({ name: p.name, x: p.mx, z: p.mz })).concat(SERVICES.map(s => ({ name: s.name, x: s.mx, z: s.mz })), [{ name: 'タイムアタックのスタート', x: RACE.x, z: RACE.z }]);
+  return spots.map(s => Object.assign(s, { cost: 100 + Math.round(Math.hypot(s.x - x, s.z - z) * 0.6) }));
+}
+function travel(t) {
+  if (job && !job.overlay) { toast('仕事中は使えません'); return; }
+  if (!pay(t.cost)) return;
+  closeScreen();
+  if (P.inCar) {
+    const sp = roadSpawn(t.x, t.z); const r = resolve(sp.x, sp.z, P.inCar.r, P.inCar);
+    P.inCar.x = r.x; P.inCar.z = r.z; P.inCar.h = sp.h; P.inCar.speed = 0; P.inCar.sync(); cam.yaw = sp.h;
+  } else {
+    const r = resolve(t.x + rnd(-1, 1), t.z + rnd(-1, 1), 0.45, P); P.x = r.x; P.z = r.z;
+    if (petObj) { petObj.x = P.x; petObj.z = P.z; }
+  }
+  camera.position.set(playerPos().x, 40, playerPos().z);
+  toast(`${t.name}に着きました`);
+}
+
+/* =========================================================
+   朝になったとき
+   ========================================================= */
+function onNewDay() {
+  state.stamina = 100;
+  const it = Math.min(3000, Math.floor(state.bank * 0.01));
+  if (it > 0) { state.bank += it; toast(`銀行の利息 +${yen(it)}`, 'money'); }
+  if (state.lotto && state.lotto.day < state.day) {
+    const r = Math.random();
+    const prize = r < 0.005 ? [100000, '1等'] : r < 0.035 ? [10000, '2等'] : r < 0.155 ? [1000, '3等'] : r < 0.405 ? [300, '4等'] : null;
+    if (prize) { addMoney(prize[0]); state.stats.lottoWins++; toast(`宝くじ ${state.lotto.no}番が${prize[1]}！ +${yen(prize[0])}`, 'big'); sfx('lvl'); }
+    else toast(`宝くじ ${state.lotto.no}番ははずれでした`);
+    state.lotto = null;
+  }
+  ensureDaily();
+  setTimeout(() => toast(`今日の天気：${WX[curWx()][2]} ${WX[curWx()][1]}${isWeekend() ? '・週末ボーナスの日' : ''}`), 1500);
+  achCheck();
+}
+
+/* =========================================================
+   毎フレームの更新と HUD
+   ========================================================= */
+let redKey = '', redCd = 0;
+function updateExtras(dt) {
+  updateSignals();
+  updateBody(dt);
+  updatePet(dt);
+  updateLost(dt);
+  updateSmoke(dt);
+  updateLights();
+  paintDirt();
+  const { x, z } = playerPos();
+  for (let i = 0; i < COINS.length; i++) {
+    const c = COINS[i];
+    if (!c.m.visible) continue;
+    if (state.coins.includes(i)) { c.m.visible = false; continue; }
+    c.m.rotation.y += dt * 3;
+    if (Math.hypot(c.x - x, c.z - z) < (P.inCar ? 2.8 : 1.6)) {
+      state.coins.push(i); c.m.visible = false; addMoney(50); sfx('coin');
+      toast(`隠しコイン ${state.coins.length} / 50枚 +50円`, 'money'); dailyProg('coin', 1); achCheck();
+    }
+  }
+  for (const d of peds) if (d.jumpT > 0) { d.jumpT -= dt; d.p.g.position.y = 0.15 + Math.sin((0.6 - d.jumpT) / 0.6 * Math.PI) * 0.7; }
+  // 信号無視
+  redCd -= dt;
+  if (P.inCar && Math.abs(P.inCar.speed) > 5 && !(job && job.kind === 'race')) {
+    const c = P.inCar;
+    const s = SIGNALS.find(q => Math.abs(q.x - c.x) < 6 && Math.abs(q.z - c.z) < 6);
+    const key = s ? `${s.x},${s.z}` : '';
+    if (s && key !== redKey && redCd <= 0) {
+      const axis = Math.abs(Math.sin(c.h)) > Math.abs(Math.cos(c.h)) ? 'x' : 'z';
+      if (sigState(axis) === 'r') { const f = Math.min(50, state.money); state.money -= f; state.stats.redLights++; toast(`信号無視！ 罰金${yen(f)}`); sfx('bad'); redCd = 5; }
+    }
+    redKey = key;
+  } else redKey = '';
+  // 矢印（仕事がないときはピンや落とし物へ）
+  const st = sideTarget();
+  sideBeam.visible = !!st;
+  if (st) { sideBeam.position.set(st.x, 30, st.z); sideBeam.material.color.setHex(st.color); }
+  if (!goal.active && st) {
+    arrow.material.color.setHex(st.color);
+    arrow.position.set(x, P.inCar ? 3.6 : 3.4, z); arrow.rotation.y = Math.atan2(st.x - x, st.z - z);
+    const d = Math.hypot(st.x - x, st.z - z);
+    arrow.visible = d > 8;
+    if (side && side.type === 'pin' && d < 6) { side = null; toast('ピンの場所に着きました'); }
+  } else if (!goal.active) arrow.visible = false;
+  if (state.stamina < 15) { tiredT -= dt; if (tiredT <= 0) { tiredT = 60; toast(state.stamina <= 0 ? 'くたくた…。休むか、何か食べよう' : 'つかれてきた…。コンビニや自販機で回復しよう'); } }
+  if (P.inCar && !P.inCar.air && P.inCar.airShown) P.inCar.airShown = false;
+  achT -= dt; if (achT <= 0) { achT = 2; achCheck(); }
+}
+function landed(t) {
+  if (t > state.stats.air) state.stats.air = t;
+  if (t >= 0.5) { const p = Math.round(t * 120); addMoney(p); toast(`スタント！ ${t.toFixed(1)}秒 +${yen(p)}`, 'money'); sfx('coin'); achCheck(); }
+}
+function hudExtra() {
+  const hr = state.time / 60, wi = curWx();
+  setText($('#clock'), `${state.day}日目（${weekday()}） ${clockStr()} ${wi === 0 && (hr < 5 || hr >= 19) ? '🌙' : WX[wi][2]}`);
+  const sb = $('#stamBar'); sb.style.width = state.stamina + '%'; sb.style.background = state.stamina > 40 ? 'var(--mint)' : state.stamina > 15 ? 'var(--signal)' : 'var(--tomato)';
+  const mine = P.inCar && P.inCar === myCar;
+  $('#gauges').hidden = !mine;
+  if (mine) {
+    $('#fuelBar').style.width = (myCar.def.ev ? 100 : state.car.fuel) + '%';
+    $('#fuelLabel').textContent = myCar.def.ev ? '⚡' : '⛽';
+    $('#dmgBar').style.width = (100 - state.car.dmg) + '%';
+  }
+  $('#tHorn').hidden = !P.inCar; $('#tLight').hidden = !P.inCar;
+  $('#bJump').hidden = !!P.inCar;
+}
+function drawMinimapExtra() {
+  if (side && side.type === 'pin') { mctx.fillStyle = '#fff'; mctx.strokeStyle = '#111'; mctx.lineWidth = 2; mctx.beginPath(); mctx.arc(w2m(side.x), w2m(side.z), 6, 0, 7); mctx.fill(); mctx.stroke(); }
+  if (lost && lost.stage === 'find' && Math.floor(elapsed * 3) % 2) { mctx.fillStyle = '#ffd23f'; mctx.font = '18px sans-serif'; mctx.textAlign = 'center'; mctx.textBaseline = 'middle'; mctx.fillText('★', w2m(lost.x), w2m(lost.z)); }
+  if (lost && lost.stage === 'return') { mctx.fillStyle = '#ffd23f'; mctx.beginPath(); mctx.arc(w2m(lost.owner.gx), w2m(lost.owner.gz), 6, 0, 7); mctx.fill(); }
+  if (job && job.kind === 'route') { mctx.fillStyle = '#ff9f43'; for (let i = job.n + 1; i < job.stops.length; i++) { mctx.beginPath(); mctx.arc(w2m(job.stops[i].gx), w2m(job.stops[i].gz), 4, 0, 7); mctx.fill(); } }
+}
+function drawMinimapServices(g) {
+  for (const s of SERVICES) {
+    g.fillStyle = s.color; rrect(g, w2m(s.mx) - 11, w2m(s.mz) - 11, 22, 22, 6); g.fill();
+    g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+    g.fillStyle = '#fff'; g.font = '13px "Mochiy Pop One", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillText(s.short, w2m(s.mx), w2m(s.mz) + 1);
+  }
+  g.fillStyle = '#fff'; g.font = '16px sans-serif'; g.fillText('🏁', w2m(RACE.x), w2m(RACE.z));
+}
+
+/* =========================================================
    boot
    ========================================================= */
 function startGame(fresh) {
@@ -2796,6 +5212,9 @@ function startGame(fresh) {
   if (fresh) {
     try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
     state = DEFAULT_STATE();
+    migrateState();
+    for (const c of COINS) c.m.visible = true;
+    applyOutfit(); lost = null; side = null;
     const home = PLACES.find(p => p.id === 'home');
     placeAtHome();
     if (myCar) myCar.remove();
@@ -2812,8 +5231,12 @@ function startGame(fresh) {
 }
 function boot() {
   hasSave = loadSave();
+  migrateState();
   buildWorld();
   spawnPlayer();
+  applyOutfit();
+  applyShadows();
+  lastHour = Math.floor(state.time / 60);
   buildTraffic();
   buildPeds();
   drawMinimapStatic();
