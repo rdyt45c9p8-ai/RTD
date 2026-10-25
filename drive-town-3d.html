@@ -302,7 +302,7 @@
   .field { display: grid; gap: 4px; font-size: 13px; }
   .field label { display: flex; justify-content: space-between; }
   .field label b { color: var(--sky); font-variant-numeric: tabular-nums; }
-  .field input[type="text"] { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; color: var(--text); font: inherit; }
+  .field input[type="text"], #setCheat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; color: var(--text); font: inherit; }
   .field input[type="range"] { width: 100%; accent-color: var(--sky); }
   .ticks { display: grid; grid-template-columns: repeat(10, 1fr); font-size: 10px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
   .colors { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -643,7 +643,7 @@ const JOBS = {
 };
 const MAX_LV = 10;
 const xpNeed = lv => 60 + lv * 40;
-const payMult = id => (1 + (jobState(id).lv - 1) * 0.15) * (isWeekend() ? 1.2 : 1);
+const payMult = id => (1 + (jobState(id).lv - 1) * 0.15) * (isWeekend() ? 1.2 : 1) * (state.buffDay === state.day ? 1.1 : 1);
 function addMoney(n) { state.money += Math.round(n); if (n > 0 && state.stats) state.stats.earned += Math.round(n); }
 function addXP(id, xp) {
   const j = jobState(id);
@@ -786,7 +786,7 @@ const PLACES = [
   { id: 'chef', name: 'レストラン こぐま亭', short: 'シ', bx: 90, bz: 30, face: [-1, 0], color: '#2f9e6e', h: 9, label: 'シェフの仕事', prompt: 'シェフの仕事をする' },
   { id: 'engineer', name: 'ピクセルスタジオ', short: 'ゲ', bx: -30, bz: 90, face: [0, -1], color: '#3b7dd8', h: 28, label: 'ゲームを作る仕事', prompt: 'ゲームを作る' },
   { id: 'dealer', name: 'カーショップ ブーン', short: '車', bx: 90, bz: -90, face: [-1, 0], color: '#8b5cf6', h: 8, label: '車を買う', prompt: '車を見る・買う' },
-  { id: 'home', name: 'わが家', short: '家', bx: -90, bz: 90, face: [1, 0], color: '#f3e3c3', h: 7, label: '家で休む', prompt: '休む（セーブして朝になる）' },
+  { id: 'home', name: 'わが家', short: '家', bx: -90, bz: 90, face: [1, 0], color: '#f3e3c3', h: 7, label: 'わが家', prompt: '家に入る' },
 ];
 const SURNAMES = ['さとう', 'すずき', 'たかはし', 'たなか', 'いとう', 'わたなべ', 'やまもと', 'なかむら', 'こばやし', 'かとう', 'よしだ', 'やまだ', 'ささき', 'やまぐち', 'まつもと', 'いのうえ', 'きむら', 'はやし', 'しみず', 'やまざき', 'もり', 'いけだ', 'はしもと', 'あべ', 'いしかわ', 'おがわ', 'ふじた', 'おかだ'];
 const BLDG = ['ひかり', 'あおば', 'さくら', 'みなと', 'つばさ', 'ほしぞら', 'かぜ', 'みどり', 'にじいろ', 'そよかぜ', 'あさひ', 'うみかぜ', 'こもれび', 'しらかば', 'ゆうひ', 'はなみずき'];
@@ -902,6 +902,7 @@ function buildWorld() {
     const x = Math.cos(a) * r, z = Math.sin(a) * r;
     if (Math.abs(x) < 132 && Math.abs(z) < 132) continue;
     if (nearRampLane(x, z) || Math.hypot(x - RACE.x, z - RACE.z) < 8) continue;
+    if (x > -142 && x < -122 && z > 52 && z < 138) continue;
     addTree(x, z, rs(0.9, 1.6));
   }
   // trees
@@ -1024,6 +1025,8 @@ function buildPlace(p, roofCols) {
   p.sx = p.mx - fz * 9; p.sz = p.mz + fx * 9; p.sh = rotY;
   const col = new THREE.Color(p.color);
   if (p.id === 'home') {
+    /* 家は rebuildHome() が建てる */
+  } else if (false) {
     const [hA, hB] = facadeTextures('house');
     const side = lam(col, { map: hA, emissiveMap: hB, emissive: 0 }); winMats.push(side);
     const roof = lam(0x6b7080);
@@ -1048,13 +1051,13 @@ function buildPlace(p, roofCols) {
   const sy = p.id === 'home' ? 5.2 : Math.min(p.h - 1.8, 7);
   sign.position.set(cx + fx * (p.id === 'home' ? 8.06 : 10.06), sy, cz + fz * (p.id === 'home' ? 8.06 : 10.06));
   sign.rotation.y = rotY;
-  scene.add(sign);
+  if (p.id !== 'home') scene.add(sign);
   // marker
   p.marker = makeMarker(new THREE.Color(p.color), p.label);
   p.marker.position.set(p.mx, 0, p.mz);
   markers.push(p.marker);
   // trees at the back corners
-  for (const s of [-1, 1]) addTree(p.bx - fx * 18 + (fz ? s * 18 : 0), p.bz - fz * 18 + (fx ? s * 18 : 0), 1.1);
+  if (p.id !== 'home') for (const s of [-1, 1]) addTree(p.bx - fx * 18 + (fz ? s * 18 : 0), p.bz - fz * 18 + (fx ? s * 18 : 0), 1.1);
   if (p.id === 'dealer') {
     ['suv', 'sports', 'super'].forEach((t, i) => {
       const k = (i - 1) * 7;
@@ -1302,6 +1305,7 @@ addEventListener('keydown', e => {
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 function onKeyPress(k) {
+  if (running) cheatKey(k);
   if (mini && mini.key) { mini.key(k); return; }
   if (!running) return;
   if (cam.photo) { if (k === 'p' || k === 'escape') togglePhoto(); return; }
@@ -1404,7 +1408,7 @@ function usePlace(p) {
   else if (p.id === 'chef') openChef();
   else if (p.id === 'engineer') openStudio();
   else if (p.id === 'dealer') openDealer();
-  else if (p.id === 'home') rest();
+  else if (p.id === 'home') openHome();
 }
 
 /* =========================================================
@@ -2750,7 +2754,7 @@ function updateCamera(dt) {
   camera.lookAt(tx, ty + 0.8, tz);
 }
 function updateHud(dt) {
-  setText($('#money'), yen(state.money));
+  setText($('#money'), state.cheat ? '∞円' : yen(state.money));
   const it = getInteraction();
   const pr = $('#prompt');
   if (it) { pr.hidden = false; setText($('#promptText'), it.label); } else pr.hidden = true;
@@ -3383,6 +3387,7 @@ const SERVICES = [
   { id: 'clothes', name: '洋服屋 ルック', short: '服', key: '30,-30,1,-1', color: '#e84393', prompt: '洋服を見る' },
   { id: 'petshop', name: 'ペットショップ わんにゃん', short: 'ペ', key: '-90,30,1,1', color: '#e1a700', prompt: 'ペットを見る' },
   { id: 'hellowork', name: '職業案内所', short: '職', key: '-30,30,1,-1', color: '#6c5ce7', prompt: '仕事をさがす' },
+  { id: 'realestate', name: '不動産屋 すまいる', short: '不', key: '-30,-90,1,-1', color: '#16a085', prompt: '家やオプションを買う' },
 ];
 const SERVICE_AT = Object.fromEntries(SERVICES.map(s => [s.key, s]));
 const SVC = Object.fromEntries(SERVICES.map(s => [s.id, s]));
@@ -3596,6 +3601,7 @@ function buildExtras() {
   buildWeather();
   buildFireworks();
   buildPin();
+  rebuildHome();
 }
 
 /* =========================================================
@@ -4482,6 +4488,11 @@ function migrateState() {
   if (typeof s.bank !== 'number') s.bank = 0;
   if (typeof s.raceBest !== 'number') s.raceBest = 0;
   s.pet = s.pet || null; s.lotto = s.lotto || null;
+  s.houses = Array.isArray(s.houses) ? s.houses : ['start'];
+  if (!s.houses.includes('start')) s.houses.unshift('start');
+  s.houseOpts = s.houseOpts || { start: [] };
+  if (!HOUSE[s.house] || !s.houses.includes(s.house)) s.house = 'start';
+  s.cheat = s.cheat || null;
   for (const g of GIGS) jobState(g.id);
   ensureDaily();
 }
@@ -4579,7 +4590,7 @@ function weatherSky() {
   scene.fog.far = w === 4 ? 130 : w === 2 ? 300 : w === 3 ? 230 : 420;
   if (w !== lastWx && groundMat) { lastWx = w; groundMat.color.copy(w === 3 ? whiteGround : baseGround); }
 }
-let fwObj = null, fwT = 0;
+let fwObj = null, fwT = 0, fwForceT = 0;
 const FW_N = 900, fwP = [];
 function buildFireworks() {
   const pos = new Float32Array(FW_N * 3).fill(-999), col = new Float32Array(FW_N * 3);
@@ -4590,13 +4601,16 @@ function buildFireworks() {
 }
 function updateFireworks(dt) {
   const h = state.time / 60;
-  const on = isWeekend() && h >= 20 && h < 23;
+  fwForceT = Math.max(0, fwForceT - dt);
+  const forced = fwForceT > 0;
+  const on = (isWeekend() && h >= 20 && h < 23) || forced;
   const pos = fwObj.geometry.attributes.position.array, col = fwObj.geometry.attributes.color.array;
   if (on) {
     fwT -= dt;
     if (fwT <= 0) {
       fwT = 1.1 + Math.random() * 0.8;
-      const cx = 30 + rnd(-20, 20), cy = rnd(26, 42), cz = 30 + rnd(-20, 20), c = new THREE.Color().setHSL(Math.random(), 1, 0.6);
+      const ox = forced ? -97 : 30, oz = forced ? 90 : 30;
+      const cx = ox + rnd(-20, 20), cy = rnd(26, 42), cz = oz + rnd(-20, 20), c = new THREE.Color().setHSL(Math.random(), 1, 0.6);
       let n = 0;
       for (let i = 0; i < FW_N && n < 80; i++) {
         const p = fwP[i]; if (p.l > 0) continue;
@@ -4605,7 +4619,7 @@ function updateFireworks(dt) {
         pos[i * 3] = cx; pos[i * 3 + 1] = cy; pos[i * 3 + 2] = cz; n++;
       }
       const { x, z } = playerPos();
-      if (Math.hypot(x - 30, z - 30) < 260) { tone(80 + Math.random() * 40, 0.4, 'sawtooth', 0.03); if (!state.stats.hanabi) { state.stats.hanabi = 1; toast('公園の上で花火が上がっている！', 'big'); achCheck(); } }
+      if (Math.hypot(x - ox, z - oz) < 260 && !forced) { tone(80 + Math.random() * 40, 0.4, 'sawtooth', 0.03); if (!state.stats.hanabi) { state.stats.hanabi = 1; toast('公園の上で花火が上がっている！', 'big'); achCheck(); } }
     }
   }
   let any = false;
@@ -4660,7 +4674,7 @@ function updateLost(dt) {
       toast(`${lost.item}を拾った！持ち主「${lost.owner.name}」へ届けよう（金色の光）`, 'big'); sfx('click');
     }
   } else if (slow && Math.hypot(lost.owner.gx - x, lost.owner.gz - z) < 6) {
-    const pay = 300 + Math.floor(Math.random() * 6) * 100;
+    const pay = (300 + Math.floor(Math.random() * 6) * 100) * (hasOpt('security') ? 2 : 1);
     addMoney(pay); state.stats.lost++;
     toast(`「${lost.item}を届けてくれてありがとう！」 お礼 +${yen(pay)}`, 'money'); sfx('ok');
     lost = null; achCheck();
@@ -4676,7 +4690,7 @@ function walkSpeed(l) {
   P.running = run;
   return (run ? 11.5 : 7.5) * Math.min(1, l) * (state.stamina <= 0 ? 0.6 : 1);
 }
-function playerJump() { if (P.inCar || P.jy > 0.01 || P.sit) return; P.jv = 6.5; state.stamina = Math.max(0, state.stamina - 0.5); sfx('jump'); }
+function playerJump() { if (P.inCar || P.jy > 0.01 || P.sit) return; P.jv = hasOpt('trampoline') && nearHome() ? 9.5 : 6.5; state.stamina = Math.max(0, state.stamina - 0.5); sfx('jump'); }
 function toggleSit(b) {
   if (P.sit) { P.sit = false; return; }
   P.sit = true; P.x = b.x; P.z = b.z + (b.r ? 0 : 0); toast('ベンチで休んでいます（動くと立ちます）');
@@ -4690,7 +4704,7 @@ function updateBody(dt) {
   g.position.y += P.jy - (P.sit ? 0.45 : 0);
   if (P.sit) { P.person.legL.rotation.x = P.person.legR.rotation.x = -1.4; state.stamina = Math.min(100, state.stamina + 5 * dt); }
   const moving = Math.hypot(mv.x, mv.y) > 0.08;
-  state.stamina = Math.max(0, state.stamina - (moving ? (P.running ? 1.4 : 0.22) : 0) * dt);
+  state.stamina = Math.max(0, state.stamina - (moving ? (P.running ? 1.4 : 0.22) : 0) * drainMult() * dt);
 }
 function stripeTex(c) {
   const cv = document.createElement('canvas'); cv.width = cv.height = 16;
@@ -4934,6 +4948,7 @@ function useService(s) {
       b.querySelectorAll('[data-pet]').forEach(x => x.onclick = () => { if (pay(state.pet ? 1000 : 3000, 'あたらしい家族ができた！')) { state.pet = x.dataset.pet; achCheck(); useService(s); } });
     });
   } else if (s.id === 'hellowork') openPhone('jobs');
+  else if (s.id === 'realestate') openRealEstate();
 }
 function buyDrink() {
   if (!pay(130, 'ジュースを飲んだ！体力 +15')) return;
@@ -4962,6 +4977,7 @@ function phoneHead(title, back = true) {
   return `<div class="row" style="justify-content:space-between"><div class="row">${back ? '<button class="btn" data-home type="button">もどる</button>' : ''}<h2>${esc(title)}</h2></div><button class="btn" data-close type="button">とじる</button></div>`;
 }
 function openPhone(view = 'home') {
+  if (view === 'home' && openScreen !== 'phone') phoneOpenedAt = performance.now();
   const body = $('#phoneBody');
   ensureDaily();
   const curJobName = job ? (job.def ? job.def.name : JOBS[job.id] ? JOBS[job.id].name : '') : '';
@@ -5017,6 +5033,7 @@ function openPhone(view = 'home') {
       <div class="field"><label for="setVol">音の大きさ<b>${st.vol}</b></label><input type="range" id="setVol" min="0" max="10" step="1" value="${st.vol}"><div class="muted" style="font-size:11px">0 にすると音が消えます</div></div>
       <div class="field"><label for="setSens">カメラの速さ<b>${st.sens}</b></label><input type="range" id="setSens" min="1" max="10" step="1" value="${st.sens}">${ticks10}</div>
       <div class="field"><span>影</span><div class="seg"><button type="button" data-sh="1" class="${st.shadow ? 'on' : ''}">あり</button><button type="button" data-sh="0" class="${!st.shadow ? 'on' : ''}">なし（軽くなる）</button></div></div>
+      <div class="field"><label for="setCheat">チートコード</label><div class="row"><input type="text" id="setCheat" maxlength="12" placeholder="コードを入力" autocomplete="off" style="flex:1;min-width:0"><button class="btn" id="setCheatGo" type="button">決定</button></div><div class="muted" style="font-size:11px">${state.cheat ? 'お金むげんモード中（同じコードでもとにもどる）' : 'パソコンなら、遊んでいるときにキーボードで打っても使えます'}</div></div>
       <div class="muted" style="line-height:1.7">キー操作：H クラクション、L ライト、C カメラ、P 写真モード、Shift ダッシュ、Space ジャンプ（歩いているとき）</div>
       <button class="btn danger" id="phReset" type="button">データを消す</button>`;
   } else if (view === 'list') {
@@ -5049,6 +5066,7 @@ function openPhone(view = 'home') {
   if ($('#phCam')) $('#phCam').onclick = () => { cycleCam(); openPhone('cars'); };
   if ($('#setVol')) $('#setVol').oninput = e => { state.settings.vol = +e.target.value; e.target.previousElementSibling.querySelector('b').textContent = e.target.value; };
   if ($('#setVol')) $('#setVol').onchange = () => sfx('coin');
+  if ($('#setCheatGo')) $('#setCheatGo').onclick = () => { if (enterCheat($('#setCheat').value)) openPhone('settings'); };
   if ($('#setSens')) $('#setSens').oninput = e => { state.settings.sens = +e.target.value; e.target.previousElementSibling.querySelector('b').textContent = e.target.value; };
   body.querySelectorAll('[data-sh]').forEach(b => b.onclick = () => { state.settings.shadow = b.dataset.sh === '1'; applyShadows(); openPhone('settings'); });
   if ($('#phReset')) $('#phReset').onclick = e => {
@@ -5083,7 +5101,7 @@ function drawBigMap(cv) {
 function travelSpots() {
   const { x, z } = playerPos();
   const spots = PLACES.map(p => ({ name: p.name, x: p.mx, z: p.mz })).concat(SERVICES.map(s => ({ name: s.name, x: s.mx, z: s.mz })), [{ name: 'タイムアタックのスタート', x: RACE.x, z: RACE.z }]);
-  return spots.map(s => Object.assign(s, { cost: 100 + Math.round(Math.hypot(s.x - x, s.z - z) * 0.6) }));
+  return spots.map(s => Object.assign(s, { cost: Math.round((100 + Math.hypot(s.x - x, s.z - z) * 0.6) * (hasOpt('heliport') ? 0.5 : 1)) }));
 }
 function travel(t) {
   if (job && !job.overlay) { toast('仕事中は使えません'); return; }
@@ -5105,6 +5123,7 @@ function travel(t) {
    ========================================================= */
 function onNewDay() {
   state.stamina = 100;
+  homeDaily();
   const it = Math.min(3000, Math.floor(state.bank * 0.01));
   if (it > 0) { state.bank += it; toast(`銀行の利息 +${yen(it)}`, 'money'); }
   if (state.lotto && state.lotto.day < state.day) {
@@ -5124,6 +5143,8 @@ function onNewDay() {
    ========================================================= */
 let redKey = '', redCd = 0;
 function updateExtras(dt) {
+  cheatTick();
+  animateHome(dt);
   updateSignals();
   updateBody(dt);
   updatePet(dt);
@@ -5203,6 +5224,547 @@ function drawMinimapServices(g) {
   }
   g.fillStyle = '#fff'; g.font = '16px sans-serif'; g.fillText('🏁', w2m(RACE.x), w2m(RACE.z));
 }
+
+
+/* =========================================================
+   不動産屋・家 50 種類・家のオプション 40 種類・おうちごはん・チートコード
+   ========================================================= */
+const HOUSE_TIERS = ['', '小さな家', '一戸建て', 'こだわりの家', '高級住宅', '大豪邸'];
+const HSE = (id, name, tier, price, style, w, d, h, wall, roof, o) => Object.assign({ id, name, tier, price, style, w, d, h, wall, roof }, o || {});
+const HOUSES = [
+  HSE('apt_one', 'ワンルームアパート', 1, 5000, 'apt', 12, 9, 6.5, 0xd9c7a8, 0x6d6d6d),
+  HSE('apt_old', '古いアパート', 1, 7000, 'apt', 13, 10, 6.5, 0xb8a990, 0x5d5d5d),
+  HSE('apt_wood', '木造アパート', 1, 9000, 'apt', 13, 10, 6.5, 0xa47148, 0x4e342e),
+  HSE('tiny', 'タイニーハウス', 1, 12000, 'gable', 6, 5, 3.2, 0xe8d5b5, 0x3d6b4a),
+  HSE('hiraya_s', '小さな平屋', 1, 15000, 'house', 9, 8, 3.5, 0xf2ead8, 0x7a4b2a),
+  HSE('trailer', 'トレーラーハウス', 1, 10000, 'trailer', 10, 4, 3, 0xdfe6e9, 0x95a5a6),
+  HSE('container', 'コンテナハウス', 1, 18000, 'container', 12, 6, 5.4, 0x2e86de, 0xe67e22),
+  HSE('logkoya', 'ログ小屋', 1, 20000, 'log', 8, 7, 3.6, 0x9c6b3c, 0x4f7a3a),
+  HSE('machiya', '町家', 1, 25000, 'jp', 10, 8, 5, 0xe8e2d4, 0x3b3f46),
+  HSE('nagaya', '長屋', 1, 22000, 'jp', 8, 16, 4, 0xd8cfc0, 0x4a4f57),
+  HSE('red_roof', '赤い屋根の家', 2, 40000, 'house', 12, 10, 6, 0xfaf3e3, 0xc0392b),
+  HSE('blue_roof', '青い屋根の家', 2, 42000, 'house', 12, 10, 6, 0xf5f6fa, 0x2e5e9e),
+  HSE('twostory', '2階建ての家', 2, 55000, 'gable', 12, 10, 6.5, 0xf0e2c8, 0x5d4037),
+  HSE('hiraya', '平屋の一戸建て', 2, 48000, 'house', 15, 11, 4, 0xe9dcc4, 0x6d4c41),
+  HSE('niwa', '庭つき一戸建て', 2, 65000, 'gable', 13, 11, 6.5, 0xfff8e7, 0x2f6f4f),
+  HSE('kado', '角地の家', 2, 70000, 'house', 14, 12, 6.5, 0xd6e4f0, 0x34495e),
+  HSE('nisetai', '二世帯住宅', 2, 90000, 'gable', 14, 18, 7, 0xf3efe6, 0x7f8c8d),
+  HSE('sankaku', '三角屋根の家', 2, 60000, 'aframe', 10, 10, 9, 0xb5651d, 0x3e2723),
+  HSE('renga', 'レンガの家', 2, 100000, 'gable', 13, 11, 7, 0xb5543c, 0x4e342e),
+  HSE('hokuou', '北欧風の家', 2, 110000, 'gable', 12, 10, 7, 0xa93226, 0x2d3436),
+  HSE('wafu', '和風の家', 3, 150000, 'jp', 14, 16, 5, 0xf5efe0, 0x2f3640),
+  HSE('loghouse', 'ログハウス', 3, 170000, 'log', 14, 11, 6.5, 0x8d5a2b, 0x3e5c3a),
+  HSE('designers', 'デザイナーズハウス', 3, 220000, 'flat', 14, 12, 7, 0xf5f6fa, 0x2d3436),
+  HSE('glasshouse', 'ガラスの家', 3, 260000, 'glass', 14, 12, 6, 0xffffff, 0xffffff),
+  HSE('whitemodern', '白いモダンハウス', 3, 240000, 'flat', 16, 13, 7.5, 0xffffff, 0x95a5a6),
+  HSE('chichukai', '地中海風の家', 3, 280000, 'flat', 15, 12, 7, 0xfdfdfd, 0x2e86de),
+  HSE('kominka', '古民家', 3, 200000, 'jp', 14, 14, 6, 0xd9c9a8, 0x8d7b5c, { thatch: true }),
+  HSE('dome', 'ドームハウス', 3, 230000, 'dome', 12, 12, 6, 0xf5f6fa, 0xdfe6e9),
+  HSE('treehouse', 'ツリーハウスつきの家', 3, 300000, 'tree', 12, 10, 6, 0xe3c79a, 0x8d5a2b),
+  HSE('todai', '灯台の家', 3, 350000, 'light', 12, 10, 6, 0xffffff, 0xc0392b),
+  HSE('manshon', '高級マンションの一室', 4, 500000, 'tower', 16, 14, 30, 0xcfd8e3, 0x7f8c8d),
+  HSE('towerman', 'タワーマンション最上階', 4, 1200000, 'tower', 14, 14, 60, 0x9fb3c8, 0x34495e),
+  HSE('yokan', '洋館', 4, 700000, 'yokan', 18, 14, 9, 0xe8dcc8, 0x34495e),
+  HSE('yashiki', '和風の屋敷', 4, 800000, 'jp', 20, 18, 5.5, 0xf3eee2, 0x2f3640),
+  HSE('bessou', '湖畔の別荘風', 4, 650000, 'log', 18, 13, 7, 0x7b5233, 0x2c3e50),
+  HSE('villa', 'プールつきヴィラ', 4, 900000, 'flat', 20, 14, 7, 0xfaf1e4, 0xc8a165),
+  HSE('resort', '南国リゾートヴィラ', 4, 850000, 'house', 18, 14, 6, 0xfaf3e3, 0xa5814f),
+  HSE('oyashiki', '西洋のお屋敷', 4, 1100000, 'yokan', 22, 16, 10, 0xdcd3c3, 0x2c3e50),
+  HSE('buke', '武家屋敷', 4, 1000000, 'jp', 22, 20, 6, 0xece5d5, 0x1e272e),
+  HSE('modern_tei', 'モダン邸宅', 4, 1400000, 'flat', 22, 16, 9, 0xecf0f1, 0x2c3e50),
+  HSE('gotei', '大豪邸', 5, 2000000, 'mansion', 24, 22, 10, 0xf3e9d7, 0x5d4037),
+  HSE('hakua', '白亜の大豪邸', 5, 3000000, 'mansion', 24, 22, 11, 0xffffff, 0x95a5a6),
+  HSE('glass_gotei', 'ガラスの大豪邸', 5, 3500000, 'glass', 24, 22, 9, 0xffffff, 0xffffff),
+  HSE('wa_gotei', '和の大豪邸', 5, 3200000, 'jp', 26, 22, 7, 0xf5efe0, 0x1e272e),
+  HSE('castle', 'お城', 5, 6000000, 'castle', 26, 22, 14, 0xd5d8dc, 0x1f4e79),
+  HSE('palace', '宮殿', 5, 8000000, 'palace', 26, 22, 12, 0xf6e7c1, 0xd4a017),
+  HSE('kojo', '石造りの古城', 5, 7000000, 'castle', 26, 22, 16, 0x9e9e9e, 0x4e342e),
+  HSE('future', '未来の豪邸', 5, 10000000, 'future', 24, 20, 10, 0xf5f6fa, 0x00cec9),
+  HSE('gold', '黄金の豪邸', 5, 15000000, 'mansion', 24, 22, 11, 0xffd54f, 0xffb300, { gold: true }),
+  HSE('tenku', '天空の豪邸', 5, 20000000, 'sky', 22, 18, 9, 0xffffff, 0x74b9ff),
+];
+const START_HOUSE = HSE('start', 'はじめの家', 1, 0, 'house', 16, 18, 7, 0xf3e3c3, 0xc0533a);
+const HOUSE = Object.fromEntries([START_HOUSE, ...HOUSES].map(h => [h.id, h]));
+const STYLE_ICON = { apt: '🏢', gable: '🏠', house: '🏡', trailer: '🚐', container: '📦', log: '🪵', jp: '🏯', aframe: '⛺', flat: '🏘️', glass: '🔷', dome: '⚪', tree: '🌳', light: '🗼', tower: '🏙️', yokan: '🏚️', mansion: '🏰', castle: '🏰', palace: '🕌', future: '🛸', sky: '☁️' };
+
+const OPT_CATS = { garage: 'ガレージ', chef: '専属シェフ（大豪邸だけ）', relax: 'くつろぐ', play: 'あそぶ', income: 'お金がふえる', util: 'べんり' };
+const OPD = (id, name, cat, price, desc, o) => Object.assign({ id, name, cat, price, desc }, o || {});
+const OPTIONS = [
+  OPD('garage_s', 'ガレージ（小）', 'garage', 20000, '朝になるとマイカーのガソリンが満タン', { lv: 1 }),
+  OPD('garage_m', 'ガレージ（中）', 'garage', 60000, '小の働きに加えて、車の傷もなおる', { lv: 2 }),
+  OPD('garage_l', 'ガレージ（大）', 'garage', 150000, '中の働きに加えて、洗車もしてくれる', { lv: 3 }),
+  OPD('chef_sushi', '専属シェフ：寿司', 'chef', 300000, 'にぎり寿司や軍艦巻きを作って食べる', { menu: 'sushi' }),
+  OPD('chef_french', '専属シェフ：フレンチ', 'chef', 350000, 'ステーキやポタージュを作って食べる', { menu: 'french' }),
+  OPD('chef_chinese', '専属シェフ：中華', 'chef', 300000, 'チャーハンや餃子を作って食べる', { menu: 'chinese' }),
+  OPD('chef_italian', '専属シェフ：イタリアン', 'chef', 300000, 'パスタやピザを作って食べる', { menu: 'italian' }),
+  OPD('chef_yakiniku', '専属シェフ：焼肉', 'chef', 320000, 'カルビやサンチュ巻きを作って食べる', { menu: 'yakiniku' }),
+  OPD('chef_ramen', '専属シェフ：ラーメン', 'chef', 250000, 'しょうゆやみそのラーメンを作って食べる', { menu: 'ramen' }),
+  OPD('chef_tempura', '専属シェフ：天ぷら', 'chef', 280000, 'えび天や天丼を作って食べる', { menu: 'tempura' }),
+  OPD('chef_curry', '専属シェフ：カレー', 'chef', 220000, 'カレーライスやカツカレーを作って食べる', { menu: 'curry' }),
+  OPD('chef_cake', '専属パティシエ', 'chef', 300000, 'ケーキを作って食べる', { menu: 'cake' }),
+  OPD('chef_bread', '専属パン職人', 'chef', 250000, '焼きたてのパンを作って食べる', { menu: 'panya' }),
+  OPD('pool', 'プール', 'relax', 120000, '泳ぐと体力 +40', { use: '泳ぐ', st: 40 }),
+  OPD('onsen', '温泉', 'relax', 200000, '入ると体力が満タン', { use: '温泉に入る', st: 100 }),
+  OPD('sauna', 'サウナ', 'relax', 80000, '入ると体力 +50', { use: 'サウナに入る', st: 50 }),
+  OPD('hammock', 'ハンモック', 'relax', 8000, 'ゆられると体力 +30', { use: 'ハンモックでひとやすみ', st: 30 }),
+  OPD('theater', 'ホームシアター', 'relax', 90000, '映画を見ると体力 +20', { use: '映画を見る', st: 20 }),
+  OPD('bed', '大きなベッド', 'relax', 30000, 'この家で休んだ次の日は体力が減りにくい'),
+  OPD('gym', 'トレーニングジム', 'relax', 100000, 'きたえると、いつでも体力が減りにくくなる'),
+  OPD('gameroom', 'ゲーム部屋', 'play', 50000, '発売した自分のゲームを家で遊べる', { use: 'ゲーム部屋へ行く' }),
+  OPD('karaoke', 'カラオケルーム', 'play', 60000, '家でカラオケ店員の仕事ができる', { use: 'カラオケで歌う' }),
+  OPD('piano', 'グランドピアノ', 'play', 150000, '家でピアニストの仕事ができる', { use: 'ピアノをひく' }),
+  OPD('telescope', '天体望遠鏡', 'play', 40000, '夜にのぞくと、1日1回流れ星が見つかる（+500円）', { use: '星をながめる' }),
+  OPD('hanabidai', '花火の打ち上げ台', 'play', 100000, '夜に自分の家から花火を打ち上げられる', { use: '花火を打ち上げる' }),
+  OPD('trampoline', 'トランポリン', 'play', 15000, '家の近くでは2倍高くジャンプできる'),
+  OPD('pingpong', '卓球台', 'play', 20000, '1日1回、運動ボーナス +100円', { use: '卓球をする' }),
+  OPD('bowling', 'ボウリングレーン', 'play', 120000, '1日1回、運動ボーナス +300円', { use: 'ボウリングをする' }),
+  OPD('solar', '太陽光パネル', 'income', 80000, '毎朝 +200円', { daily: 200 }),
+  OPD('saien', '家庭菜園', 'income', 20000, '毎朝 野菜が売れて +120円', { daily: 120 }),
+  OPD('onshitsu', '温室', 'income', 90000, '毎朝 フルーツが売れて +250円', { daily: 250 }),
+  OPD('chicken', 'ニワトリ小屋', 'income', 30000, '毎朝 たまごが売れて +100円', { daily: 100 }),
+  OPD('bees', 'はちみつの巣箱', 'income', 60000, '毎朝 はちみつが売れて +300円', { daily: 300 }),
+  OPD('parking', '貸し駐車場', 'income', 150000, '毎朝 駐車料金 +400円', { daily: 400 }),
+  OPD('guest', 'ゲストルーム（民泊）', 'income', 300000, '毎朝 宿泊料 +800円', { daily: 800 }),
+  OPD('windmill', '風車', 'income', 120000, '毎朝 電気が売れて +300円', { daily: 300 }),
+  OPD('heliport', 'ヘリポート', 'util', 500000, 'ファストトラベルが半額になる'),
+  OPD('security', '防犯カメラ', 'util', 50000, '落とし物を届けたときのお礼が2倍'),
+  OPD('pethouse', 'ペットハウス', 'util', 25000, 'ペットがいると、毎朝 +100円のおみやげ'),
+  OPD('fountain', '噴水と花壇', 'util', 70000, '家を売るときの値段が家の値段の1割ふえる'),
+];
+const OPT = Object.fromEntries(OPTIONS.map(o => [o.id, o]));
+
+/* おうちごはんのメニュー（お店の仕事のデータも使う） */
+const HOME_MENUS = {
+  sushi: RECIPES.sushi, cake: RECIPES.cake, panya: RECIPES.panya,
+  french: { ing: { beef: ['牛肉', '🥩', '焼く'], butter: ['バター', '🧈'], sauce: ['ソース', '🥫'], potato: ['じゃがいも', '🥔'], milk: ['ミルク', '🥛'], pot: ['なべ', '🍲', '煮る'], herb: ['ハーブ', '🌿'], bread: ['バゲット', '🥖'] },
+    dishes: [['ステーキ', '🥩', ['beef', 'butter', 'sauce', 'herb']], ['ポタージュ', '🥣', ['potato', 'milk', 'pot']], ['ガーリックトースト', '🥖', ['bread', 'butter', 'herb']]] },
+  chinese: { ing: { rice: ['ごはん', '🍚'], egg: ['たまご', '🥚'], negi: ['ねぎ', '🌱'], pork: ['ぶた肉', '🥓'], shrimp: ['エビ', '🦐'], chili: ['チリソース', '🌶️'], skin: ['餃子の皮', '🥟'], wok: ['中華なべ', '🔥', '炒める'] },
+    dishes: [['チャーハン', '🍛', ['rice', 'egg', 'negi', 'wok']], ['エビチリ', '🦐', ['shrimp', 'chili', 'wok']], ['焼き餃子', '🥟', ['skin', 'pork', 'negi', 'wok']]] },
+  italian: { ing: { pasta: ['パスタ', '🍝', 'ゆでる'], tomato: ['トマト', '🍅'], cheese: ['チーズ', '🧀'], basil: ['バジル', '🌿'], bacon: ['ベーコン', '🥓'], egg: ['たまご', '🥚'], garlic: ['にんにく', '🧄'] },
+    dishes: [['トマトパスタ', '🍝', ['pasta', 'garlic', 'tomato', 'basil']], ['カルボナーラ', '🍝', ['pasta', 'bacon', 'egg', 'cheese']]] },
+  yakiniku: { ing: { beef: ['カルビ', '🥩', '焼く'], tare: ['たれ', '🥫'], rice: ['ごはん', '🍚'], lettuce: ['サンチュ', '🥬'], kimchi: ['キムチ', '🌶️'], negi: ['ねぎ塩', '🌱'] },
+    dishes: [['カルビごはん', '🍚', ['beef', 'tare', 'rice']], ['サンチュ巻き', '🥬', ['lettuce', 'beef', 'kimchi']], ['ねぎ塩カルビ', '🥩', ['beef', 'negi']]] },
+  ramen: { ing: { soup: ['スープ', '🥣'], noodle: ['めん', '🍜', 'ゆでる'], pork: ['チャーシュー', '🍖'], negi: ['ねぎ', '🌱'], egg: ['味つけたまご', '🥚'], nori: ['のり', '🟩'], miso: ['みそ', '🟤'] },
+    dishes: [['しょうゆラーメン', '🍜', ['soup', 'noodle', 'pork', 'negi', 'nori']], ['みそラーメン', '🍜', ['miso', 'soup', 'noodle', 'egg']]] },
+  tempura: { ing: { shrimp: ['エビ', '🦐'], batter: ['ころも', '🥣'], oil: ['油', '🔥', 'あげる'], imo: ['さつまいも', '🍠'], rice: ['ごはん', '🍚'], tsuyu: ['天つゆ', '🥫'] },
+    dishes: [['えび天', '🍤', ['shrimp', 'batter', 'oil', 'tsuyu']], ['天丼', '🍱', ['rice', 'shrimp', 'batter', 'oil', 'tsuyu']], ['いも天', '🍠', ['imo', 'batter', 'oil']]] },
+  curry: { ing: { carrot: ['にんじん', '🥕'], potato: ['じゃがいも', '🥔'], onion: ['たまねぎ', '🧅'], meat: ['お肉', '🥩'], pot: ['なべ', '🍲', '煮こむ'], rice: ['ごはん', '🍚'], cutlet: ['とんかつ', '🍖', 'あげる'] },
+    dishes: [['カレーライス', '🍛', ['carrot', 'potato', 'onion', 'meat', 'pot', 'rice']], ['カツカレー', '🍛', ['onion', 'meat', 'pot', 'rice', 'cutlet']]] },
+};
+
+/* ---------- 家のモデル ---------- */
+let homeG = null, homeCols = [], homeWin = [], homeAnim = [];
+const homeCx = () => -84 - HOUSE[state.house].w / 2;
+const HOME_Z = 90;
+function homeMat(color, kind) {
+  const [a, b] = facadeTextures(kind || 'house');
+  const m = lam(color, { map: a, emissiveMap: b, emissive: 0 });
+  winMats.push(m); homeWin.push(m);
+  return m;
+}
+function hb(w, h, d, mat, x, y, z, shadow = true) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  if (mat.map) scaleUV(geo, w, h, d, 16);
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+  if (shadow) { m.castShadow = true; m.receiveShadow = true; }
+  homeG.add(m); return m;
+}
+function hmesh(geo, mat, x, y, z) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; homeG.add(m); return m; }
+function hcol(x, z, w, d, h) { const b = { x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, h }; boxes.push(b); homeCols.push(b); }
+const prismGeo = (() => { const g = new THREE.CylinderGeometry(1, 1, 1, 3); g.rotateX(-Math.PI / 2); return g; })();
+function gableRoof(cx, top, cz, w, d, rh, mat) {
+  const r = new THREE.Mesh(prismGeo, mat);
+  r.scale.set((w + 1) / 1.732, rh / 1.5, d + 1);
+  r.position.set(cx, top + rh / 3, cz); r.castShadow = true; homeG.add(r); return r;
+}
+function pyramidRoof(cx, top, cz, w, d, rh, mat) {
+  const r = new THREE.Mesh(roofGeo, mat);
+  r.scale.set((w / 2 + 0.6) / 0.7071, rh, (d / 2 + 0.6) / 0.7071); r.position.set(cx, top, cz); r.castShadow = true; homeG.add(r);
+}
+function buildHouseModel(def) {
+  const { w, d, h } = def, cx = homeCx(), cz = HOME_Z, base = 0.2;
+  const wall = homeMat(def.wall, ['apt', 'tower', 'flat', 'mansion', 'palace', 'castle'].includes(def.style) ? 'office' : 'house');
+  const roof = lam(def.roof), trim = lam(0xffffff), dark = lam(0x2d3436), wood = lam(0x8d5a2b);
+  const glass = new THREE.MeshLambertMaterial({ color: 0x9ad0ec, emissive: 0x0a2030, transparent: true, opacity: 0.55 });
+  const goldM = lam(0xffd54f, { emissive: 0x6b4b00 });
+  const front = cx + w / 2;
+  let top = base + h, signY = Math.min(h - 1, 5);
+  const s = def.style;
+  if (s === 'apt') {
+    hb(w, h, d, wall, cx, base + h / 2, cz);
+    for (let f = 1; f * 3.2 < h; f++) hb(1.1, 0.15, d * 0.9, trim, front + 0.55, base + f * 3.2, cz);
+    hb(w + 0.3, 0.5, d + 0.3, dark, cx, top + 0.25, cz);
+    for (let k = -1; k <= 1; k += 2) hb(0.1, 2.2, 1.2, dark, front + 0.05, base + 1.1, cz + k * d * 0.25);
+    hcol(cx, cz, w, d, h);
+  } else if (s === 'house' || s === 'gable' || s === 'log' || s === 'yokan') {
+    hb(w, h, d, s === 'log' ? lam(def.wall) : wall, cx, base + h / 2, cz);
+    if (s === 'log') for (let y = 0.4; y < h; y += 0.55) { hb(w + 0.15, 0.12, 0.2, wood, cx, base + y, cz + d / 2); hb(w + 0.15, 0.12, 0.2, wood, cx, base + y, cz - d / 2); hb(0.2, 0.12, d + 0.15, wood, front, base + y, cz); }
+    if (s === 'house') pyramidRoof(cx, top, cz, w, d, Math.min(w, d) * 0.35, roof);
+    else gableRoof(cx, top, cz, w, d, Math.min(w, d) * 0.45, roof);
+    hb(0.15, 2.2, 1.4, wood, front + 0.06, base + 1.1, cz);
+    if (s === 'yokan') {
+      const tw = new THREE.CylinderGeometry(2.4, 2.4, h + 4, 12); hmesh(tw, wall, front - 2.2, base + (h + 4) / 2, cz + d / 2 - 2.2);
+      hmesh(new THREE.ConeGeometry(2.9, 4, 12), roof, front - 2.2, base + h + 6, cz + d / 2 - 2.2);
+      hb(1.2, 3, 1.2, dark, cx - w / 4, top + 2.5, cz - d / 4);
+    }
+    if (def.id === 'resort') for (const k of [-1, 1]) { hmesh(new THREE.CylinderGeometry(0.25, 0.35, 7, 6), wood, front + 4, base + 3.5, cz + k * (d / 2 + 2)); hmesh(new THREE.ConeGeometry(2.6, 1.2, 7), lam(0x2e8b57), front + 4, base + 7.3, cz + k * (d / 2 + 2)); }
+    hcol(cx, cz, w, d, h * 1.4);
+  } else if (s === 'aframe') {
+    const r = new THREE.Mesh(prismGeo, roof); r.scale.set(w / 1.732, h / 1.5, d); r.position.set(cx, base + h / 3, cz); r.castShadow = true; homeG.add(r);
+    hb(0.2, 3, 3, glass, front - 0.2, base + 1.5, cz);
+    hcol(cx, cz, w, d, h); signY = 2.6;
+  } else if (s === 'jp') {
+    hb(w, h, d, wall, cx, base + h / 2, cz);
+    for (let z = -d / 2 + 1; z < d / 2; z += 2) hb(0.25, h, 0.25, wood, front + 0.05, base + h / 2, cz + z);
+    gableRoof(cx, top, cz, w + 2.5, d + 2, def.thatch ? h * 0.9 : h * 0.55, roof);
+    hb(1.6, 0.35, d, wood, front + 0.8, base + 0.35, cz);
+    hmesh(new THREE.CylinderGeometry(0.35, 0.45, 1.4, 6), lam(0xa4a4a4), front + 4, base + 0.7, cz - d / 2 + 1);
+    hb(0.8, 0.5, 0.8, lam(0xa4a4a4), front + 4, base + 1.6, cz - d / 2 + 1);
+    hcol(cx, cz, w, d, h * 1.6);
+  } else if (s === 'flat' || s === 'mansion' || s === 'sky' || s === 'future') {
+    const lift = s === 'sky' ? 12 : 0;
+    if (lift) { for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { hb(1.4, lift, 1.4, trim, cx + x * (w / 2 - 1.5), base + lift / 2, cz + z * (d / 2 - 1.5)); hcol(cx + x * (w / 2 - 1.5), cz + z * (d / 2 - 1.5), 1.4, 1.4, lift); }
+      for (let k = 0; k < 12; k++) hb(0.6, 0.3, 2.4, trim, front + 6.5 - k * 0.55, base + k + 0.15, cz); }
+    const b0 = base + lift, accent = lam(def.roof);
+    const m = def.gold ? goldM : wall;
+    if (s === 'mansion' || s === 'sky') {
+      hb(w * 0.5, h, d * 0.55, m, cx, b0 + h / 2, cz);
+      for (const k of [-1, 1]) hb(w * 0.85, h * 0.72, d * 0.24, m, cx - w * 0.05, b0 + h * 0.36, cz + k * d * 0.38);
+      for (let z = -d * 0.22; z <= d * 0.22 + 0.01; z += d * 0.11) hmesh(new THREE.CylinderGeometry(0.35, 0.35, h * 0.8, 10), def.gold ? goldM : trim, front + 1.4, b0 + h * 0.4, cz + z);
+      hb(3, 0.5, d * 0.55, def.gold ? goldM : trim, front + 0.9, b0 + h * 0.82, cz);
+      hb(w * 0.5 + 0.4, 0.6, d * 0.55 + 0.4, accent, cx, b0 + h + 0.3, cz);
+      if (!lift) hcol(cx, cz, w, d, h); else hcol(cx, cz, 0.1, 0.1, 0.1);
+      top = b0 + h + 0.6;
+    } else if (s === 'future') {
+      hb(w, h * 0.45, d, m, cx, b0 + h * 0.225, cz);
+      const pod = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 12), m); pod.scale.set(w * 0.35, h * 0.45, d * 0.4); pod.position.set(cx - w * 0.1, b0 + h * 0.55, cz); pod.castShadow = true; homeG.add(pod);
+      const glow = lam(def.roof, { emissive: def.roof });
+      hb(w + 0.1, 0.25, d + 0.1, glow, cx, b0 + h * 0.45, cz, false);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(w * 0.45, 0.25, 8, 40), glow); ring.rotation.x = Math.PI / 2; ring.position.set(cx, b0 + h + 1.5, cz); homeG.add(ring); homeAnim.push(['spin', ring]);
+      hcol(cx, cz, w, d, h);
+    } else {
+      hb(w, h * 0.5, d, m, cx, b0 + h * 0.25, cz);
+      hb(w * 0.7, h * 0.5, d * 0.8, m, cx - w * 0.15, b0 + h * 0.75, cz - d * 0.05);
+      hb(0.2, h * 0.35, d * 0.6, glass, front + 0.02, b0 + h * 0.25, cz);
+      hb(w + 0.2, 0.3, d + 0.2, accent, cx, b0 + h * 0.5, cz);
+      hcol(cx, cz, w, d, h);
+    }
+  } else if (s === 'glass') {
+    const frame = lam(def.wall);
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) hb(0.4, h, 0.4, frame, cx + x * w / 2, base + h / 2, cz + z * d / 2);
+    hb(w, 0.4, d, frame, cx, base + h, cz); hb(w, 0.3, d, frame, cx, base + h / 2, cz);
+    hb(w - 0.2, h - 0.2, d - 0.2, glass, cx, base + h / 2, cz, false);
+    hb(w * 0.3, 1, 2.5, lam(0xc0392b), cx, base + h / 2 + 0.7, cz);
+    hcol(cx, cz, w, d, h);
+  } else if (s === 'trailer') {
+    hb(w, h, d, lam(def.wall), cx, base + 0.6 + h / 2, cz);
+    hb(w * 0.9, 0.8, 0.05, glass, cx, base + 0.6 + h * 0.65, cz + d / 2 + 0.01);
+    for (const x of [-w / 4, w / 4]) for (const z of [-1, 1]) hmesh(wheelGeo, wheelMat, cx + x, base + 0.42, cz + z * (d / 2 - 0.1));
+    hcol(cx, cz, w, d, h + 1);
+  } else if (s === 'container') {
+    const cols2 = [def.wall, def.roof, 0x27ae60];
+    hb(w, h / 2, d, lam(cols2[0]), cx, base + h / 4, cz);
+    hb(w * 0.8, h / 2, d, lam(cols2[1]), cx - w * 0.15, base + h * 0.75, cz + 0.3);
+    for (let x = -w / 2; x <= w / 2; x += 0.8) hb(0.08, h / 2, d + 0.06, lam(0x1e272e), cx + x, base + h / 4, cz, false);
+    hcol(cx, cz, w, d, h);
+  } else if (s === 'dome') {
+    const dm = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), lam(def.wall)); dm.scale.set(w / 2, h, d / 2); dm.position.set(cx, base, cz); dm.castShadow = true; homeG.add(dm);
+    hb(1.5, 2.4, 2, wood, front - 0.4, base + 1.2, cz);
+    hcol(cx, cz, w * 0.85, d * 0.85, h); signY = 3;
+  } else if (s === 'tree') {
+    hmesh(new THREE.CylinderGeometry(1.2, 1.8, 14, 10), wood, cx, base + 7, cz);
+    for (const [x, y, z, r] of [[0, 15, 0, 5], [3, 13, 2, 3.5], [-3, 13, -2, 3.5], [0, 12, -3.5, 3]]) hmesh(new THREE.SphereGeometry(r, 10, 8), lam(0x3f8a48), cx + x, base + y, cz + z);
+    hb(w * 0.55, 3, d * 0.55, lam(def.wall), cx + 1, base + 8.5, cz);
+    gableRoof(cx + 1, base + 10, cz, w * 0.55, d * 0.55, 2, roof);
+    hb(w * 0.75, 0.4, d * 0.75, wood, cx + 1, base + 6.8, cz);
+    for (let y = 0.5; y < 6.8; y += 0.6) hb(0.15, 0.1, 1.2, wood, cx + w * 0.4, base + y, cz + 2);
+    hb(w * 0.45, 3, d * 0.5, lam(def.wall), cx - w * 0.15, base + 1.5, cz + d * 0.25);
+    hcol(cx, cz, 3.6, 3.6, 14); hcol(cx - w * 0.15, cz + d * 0.25, w * 0.45, d * 0.5, 3); signY = 2.5;
+  } else if (s === 'light') {
+    hb(w * 0.6, h, d, wall, cx - w * 0.2, base + h / 2, cz);
+    gableRoof(cx - w * 0.2, top, cz, w * 0.6, d, 3, roof);
+    const th = h * 3;
+    for (let i = 0; i < 6; i++) hmesh(new THREE.CylinderGeometry(1.9 - i * 0.08, 2.0 - i * 0.08, th / 6, 16), i % 2 ? lam(0xc0392b) : trim, cx + w * 0.3, base + th / 12 + i * th / 6, cz);
+    const lamp = lam(0xfff3b0, { emissive: 0xffd34d }); hmesh(new THREE.CylinderGeometry(1.3, 1.3, 2, 12), lamp, cx + w * 0.3, base + th + 1, cz);
+    hmesh(new THREE.ConeGeometry(1.7, 1.6, 12), roof, cx + w * 0.3, base + th + 2.8, cz);
+    hcol(cx - w * 0.2, cz, w * 0.6, d, h); hcol(cx + w * 0.3, cz, 4, 4, th);
+  } else if (s === 'tower') {
+    const tw = homeMat(def.wall, 'office');
+    hb(w, h, d, tw, cx, base + h / 2, cz);
+    hb(w * 0.6, 3, d * 0.6, dark, cx, top + 1.5, cz);
+    hb(w + 1, 1, d + 1, lam(def.roof), cx, base + 4, cz);
+    hcol(cx, cz, w, d, h);
+  } else if (s === 'castle') {
+    hb(w * 0.5, h, d * 0.5, wall, cx, base + h / 2, cz);
+    for (let x = -w * 0.25; x <= w * 0.25; x += 1.6) for (const z of [-1, 1]) hb(0.8, 0.9, 0.8, wall, cx + x, top + 0.45, cz + z * d * 0.25);
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const tx = cx + x * (w / 2 - 2.4), tz = cz + z * (d / 2 - 2.4);
+      hmesh(new THREE.CylinderGeometry(2.4, 2.6, h * 1.25, 14), wall, tx, base + h * 0.625, tz);
+      hmesh(new THREE.ConeGeometry(3, 5, 14), roof, tx, base + h * 1.25 + 2.5, tz);
+    }
+    for (const z of [-1, 1]) hb(w - 4.8, h * 0.45, 1, wall, cx, base + h * 0.225, cz + z * (d / 2 - 2.4));
+    for (const x of [-1, 1]) hb(1, h * 0.45, d - 4.8, wall, cx + x * (w / 2 - 2.4), base + h * 0.225, cz);
+    hb(0.4, 3.5, 3, wood, front - 2.2, base + 1.75, cz);
+    hcol(cx, cz, w, d, h * 1.25); signY = Math.min(h * 0.3, 4);
+  } else if (s === 'palace') {
+    hb(w, h * 0.7, d * 0.6, wall, cx, base + h * 0.35, cz);
+    for (const k of [-1, 1]) hb(w * 0.6, h * 0.55, d * 0.2, wall, cx - w * 0.2, base + h * 0.275, cz + k * d * 0.4);
+    hmesh(new THREE.CylinderGeometry(4, 4, 3, 20), wall, cx, base + h * 0.7 + 1.5, cz);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(4.2, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), lam(def.roof, { emissive: 0x3d2a00 })); dome.position.set(cx, base + h * 0.7 + 3, cz); dome.castShadow = true; homeG.add(dome);
+    for (let z = -d * 0.27; z <= d * 0.27 + 0.01; z += d * 0.09) hmesh(new THREE.CylinderGeometry(0.4, 0.4, h * 0.6, 10), trim, front + 1.5, base + h * 0.3, cz + z);
+    hb(3.2, 0.5, d * 0.6, trim, front + 1, base + h * 0.62, cz);
+    hcol(cx, cz, w, d, h);
+  }
+  // 表札
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(7, 1.6), new THREE.MeshBasicMaterial({ map: textTexture('わが家', '#f3e3c3', '#1d1a10', 512, 116, 60, '#ffffff') }));
+  sign.position.set(front + (s === 'tree' || s === 'light' ? -w * 0.2 + w * 0.15 : 0) + 0.12, base + signY + (s === 'sky' ? 0 : 0), cz - (s === 'tree' ? -d * 0.25 : 0));
+  sign.rotation.y = Math.PI / 2;
+  if (s === 'sky' || s === 'tree' || s === 'light' || s === 'castle') sign.position.x = front + 0.5;
+  if (s === 'sky') sign.position.y = base + 2.5;
+  homeG.add(sign);
+}
+const myOpts = (id = state.house) => state.houseOpts[id] || [];
+const hasOpt = id => myOpts().includes(id);
+function garageLv() { return Math.max(0, ...myOpts().filter(o => OPT[o] && OPT[o].cat === 'garage').map(o => OPT[o].lv)); }
+function buildOptionModels() {
+  const opts = myOpts(), base = 0.2, bk = -132;
+  const wood = lam(0x8d5a2b), stone = lam(0x9aa0a6), white = lam(0xffffff);
+  const water = lam(0x4fb3e8, { emissive: 0x0b3a55 });
+  const g = garageLv();
+  if (g) {
+    const [gw, gd] = [[5, 6], [8, 7], [12, 8]][g - 1];
+    const x = -78 - gw / 2;
+    hb(gw, 3.2, gd, lam(0xe8e2d4), x, base + 1.6, 106);
+    hb(0.1, 2.4, gd * 0.8, lam(0x7f8c8d), -78.02, base + 1.2, 106, false);
+    hcol(x, 106, gw, gd, 3.2);
+  }
+  if (opts.includes('pool')) { hb(14, 0.3, 6, stone, -93, base + 0.05, 74, false); hb(13, 0.1, 5, water, -93, base + 0.22, 74, false); }
+  if (opts.includes('onsen')) { hmesh(new THREE.CylinderGeometry(2.6, 2.8, 0.6, 16), stone, -105, base + 0.3, 74); hmesh(new THREE.CylinderGeometry(2.2, 2.2, 0.1, 16), water, -105, base + 0.62, 74); for (let i = 0; i < 6; i++) hmesh(new THREE.DodecahedronGeometry(0.5), stone, -105 + Math.cos(i) * 2.7, base + 0.6, 74 + Math.sin(i) * 2.7); }
+  if (opts.includes('sauna')) { hb(4, 3, 4, wood, -105, base + 1.5, 106); gableRoof(-105, base + 3, 106, 4, 4, 1.2, lam(0x5d4037)); hcol(-105, 106, 4, 4, 3); }
+  if (opts.includes('hammock')) { for (const z of [76, 80]) hb(0.2, 2, 0.2, wood, -71, base + 1, z); const hm = hb(0.9, 0.1, 3.6, lam(0xff7675), -71, base + 0.9, 78, false); hm.rotation.x = 0.05; }
+  if (opts.includes('hanabidai')) { hb(2, 0.6, 2, stone, -80, base + 0.3, 74); for (let i = 0; i < 4; i++) hmesh(new THREE.CylinderGeometry(0.15, 0.15, 1.2, 6), lam(0xc0392b), -80.5 + (i % 2), base + 1.2, 73.5 + Math.floor(i / 2)); }
+  if (opts.includes('trampoline')) { hmesh(new THREE.CylinderGeometry(1.8, 1.8, 0.15, 20), lam(0x2d3436), -97, base + 0.7, 106); hmesh(new THREE.TorusGeometry(1.8, 0.12, 6, 24), lam(0x0984e3), -97, base + 0.75, 106).rotation.x = Math.PI / 2; }
+  if (opts.includes('fountain')) { hmesh(new THREE.CylinderGeometry(1.5, 1.7, 0.6, 16), stone, -71, base + 0.3, 84); hmesh(new THREE.CylinderGeometry(1.3, 1.3, 0.1, 16), water, -71, base + 0.62, 84); for (const z of [81, 87]) hb(1.2, 0.4, 2, lam(0xe84393), -71, base + 0.2, z, false); }
+  if (opts.includes('pethouse')) { hb(1.4, 1, 1.4, lam(0xc0392b), -70.5, base + 0.5, 95); pyramidRoof(-70.5, base + 1, 95, 1.4, 1.4, 0.7, lam(0x2d3436)); }
+  // 道路の向こうの自分の土地
+  if (opts.includes('solar')) for (let k = 0; k < 3; k++) { const p = hb(5, 0.15, 2.2, lam(0x1e3799, { emissive: 0x0a1030 }), bk, base + 1, 59 + k * 2.6); p.rotation.x = -0.35; }
+  if (opts.includes('saien')) for (let k = 0; k < 4; k++) { hb(6, 0.3, 0.8, lam(0x6d4c41), bk, base + 0.15, 67.5 + k * 1.6, false); for (let i = 0; i < 5; i++) hmesh(new THREE.SphereGeometry(0.3, 6, 5), lam(0x27ae60), bk - 2.4 + i * 1.2, base + 0.5, 67.5 + k * 1.6); }
+  if (opts.includes('onshitsu')) { hb(6, 3, 6, new THREE.MeshLambertMaterial({ color: 0xd6f0ff, transparent: true, opacity: 0.45 }), bk, base + 1.5, 78, false); gableRoof(bk, base + 3, 78, 6, 6, 1.5, new THREE.MeshLambertMaterial({ color: 0xd6f0ff, transparent: true, opacity: 0.45 })); hcol(bk, 78, 6, 6, 3); }
+  if (opts.includes('chicken')) { hb(3.5, 2, 3, wood, bk, base + 1, 86); gableRoof(bk, base + 2, 86, 3.5, 3, 1, lam(0xc0392b)); for (let i = 0; i < 3; i++) hmesh(new THREE.SphereGeometry(0.3, 6, 5), white, bk + 2.5, base + 0.3, 85 + i); hcol(bk, 86, 3.5, 3, 2); }
+  if (opts.includes('bees')) for (let i = 0; i < 3; i++) hb(0.9, 1.1, 0.9, lam(0xf6b93b), bk - 2 + i * 2, base + 0.55, 94);
+  if (opts.includes('windmill')) {
+    hmesh(new THREE.CylinderGeometry(0.4, 0.7, 14, 8), white, bk, base + 7, 102);
+    const hub = new THREE.Group(); hub.position.set(bk + 0.8, base + 14, 102); homeG.add(hub);
+    for (let i = 0; i < 3; i++) { const bl = new THREE.Mesh(BX(0.15, 6, 0.6), white); bl.position.y = 3; const piv = new THREE.Group(); piv.rotation.x = i * Math.PI * 2 / 3; piv.add(bl); hub.add(piv); }
+    homeAnim.push(['windmill', hub]); hcol(bk, 102, 1.4, 1.4, 14);
+  }
+  if (opts.includes('parking')) { hb(8, 0.05, 7, lam(0x3d4352), bk, base + 0.03, 110, false); for (const z of [108, 112]) { const m = makeCarMesh('basic', pick(NPC_COLORS)).g; m.position.set(bk, base, z); m.rotation.y = Math.PI / 2; homeG.add(m); } }
+  if (opts.includes('heliport')) { const pad = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 0.2, 24), lam(0x2d3436)); pad.position.set(bk, base + 0.1, 121); homeG.add(pad); const hm = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.MeshBasicMaterial({ map: textTexture('H', '#2d3436', '#ffffff', 128, 128, 100), transparent: true })); hm.rotation.x = -Math.PI / 2; hm.position.set(bk, base + 0.22, 121); homeG.add(hm); }
+  if (opts.includes('telescope')) { hmesh(new THREE.SphereGeometry(2, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), white, bk, base, 130); hb(0.4, 0.4, 1.8, lam(0x2d3436), bk + 0.6, base + 2.1, 130); }
+}
+function rebuildHome() {
+  if (homeG) scene.remove(homeG);
+  for (const b of homeCols) { const i = boxes.indexOf(b); if (i >= 0) boxes.splice(i, 1); }
+  for (const m of homeWin) { const i = winMats.indexOf(m); if (i >= 0) winMats.splice(i, 1); }
+  homeCols = []; homeWin = []; homeAnim = [];
+  homeG = new THREE.Group(); scene.add(homeG);
+  buildHouseModel(HOUSE[state.house] || START_HOUSE);
+  buildOptionModels();
+  lastNight = -1;
+  if (P && !P.inCar) { const r = resolve(P.x, P.z, 0.45, P); P.x = r.x; P.z = r.z; }
+}
+function animateHome(dt) {
+  for (const [k, o] of homeAnim) { if (k === 'windmill') o.rotation.x += dt * 1.2; else o.rotation.z += dt * 0.6; }
+}
+const nearHome = () => { const { x, z } = playerPos(); return x > -112 && x < -66 && z > 68 && z < 112; };
+
+/* ---------- 不動産屋 ---------- */
+let reTab = 'buy', reTier = 1, reCat = 'garage';
+function sellPrice(id) {
+  const h = HOUSE[id], opts = myOpts(id);
+  return Math.round(h.price * 0.6 + opts.reduce((a, o) => a + OPT[o].price * 0.3, 0) + (opts.includes('fountain') ? h.price * 0.1 : 0));
+}
+function moveIn(id) { state.house = id; rebuildHome(); toast(`「${HOUSE[id].name}」に引っ越した！`, 'big'); sfx('lvl'); save(); }
+function openRealEstate() {
+  const cur = HOUSE[state.house];
+  const tabs = [['buy', '家を買う（50種類）'], ['opts', 'オプション（40種類）'], ['mine', '持っている家']];
+  let body = `<div class="chips">${tabs.map(t => `<button class="chipb${reTab === t[0] ? ' on' : ''}" data-ret="${t[0]}" type="button">${t[1]}</button>`).join('')}</div>
+    <div class="item"><div><div class="name">いま住んでいる家：${esc(cur.name)}</div><div class="sub">${HOUSE_TIERS[cur.tier]}・オプション ${myOpts().length}こ</div></div></div>`;
+  if (reTab === 'buy') {
+    body += `<div class="chips">${[1, 2, 3, 4, 5].map(t => `<button class="chipb${reTier === t ? ' on' : ''}" data-rtier="${t}" type="button">${HOUSE_TIERS[t]}</button>`).join('')}</div>
+      ${reTier === 5 ? '<div class="muted">大豪邸だけ、専属シェフをやとって料理を作って食べられます。</div>' : ''}
+      <div class="list">${HOUSES.map((h, i) => [h, i]).filter(([h]) => h.tier === reTier).map(([h, i]) => {
+        const owned = state.houses.includes(h.id), living = state.house === h.id;
+        return `<div class="item"><div><div class="name">No.${i + 1} ${STYLE_ICON[h.style] || '🏠'} ${esc(h.name)}</div><div class="sub">${HOUSE_TIERS[h.tier]}・広さ ${h.w}m×${h.d}m・家賃収入 毎朝${yen(Math.round(h.price * 0.005))}（住んでいないとき）</div></div>
+          ${living ? '<span class="muted">住んでいます</span>' : owned ? `<button class="btn" data-movein="${h.id}" type="button">ここに住む</button>` : `<button class="btn primary" data-hbuy="${h.id}" type="button" ${state.money < h.price ? 'disabled' : ''}>${yen(h.price)}</button>`}</div>`;
+      }).join('')}</div>`;
+  } else if (reTab === 'opts') {
+    body += `<div class="muted">オプションは、いま住んでいる家につきます。</div>
+      <div class="chips">${Object.entries(OPT_CATS).map(([k, n]) => `<button class="chipb${reCat === k ? ' on' : ''}" data-rcat="${k}" type="button">${n}</button>`).join('')}</div>
+      <div class="list">${OPTIONS.map((o, i) => [o, i]).filter(([o]) => o.cat === reCat).map(([o, i]) => {
+        const have = hasOpt(o.id) || (o.cat === 'garage' && garageLv() >= o.lv);
+        const lock = o.cat === 'chef' && cur.tier < 5;
+        return `<div class="item"><div><div class="name">No.${i + 1} ${esc(o.name)}</div><div class="sub">${esc(o.desc)}</div></div>
+          ${have ? '<span class="muted">ついています</span>' : lock ? '<span class="muted">大豪邸だけ</span>' : `<button class="btn primary" data-obuy="${o.id}" type="button" ${state.money < o.price ? 'disabled' : ''}>${yen(o.price)}</button>`}</div>`;
+      }).join('')}</div>`;
+  } else {
+    body += `<div class="list">${state.houses.map(id => { const h = HOUSE[id]; return `<div class="item"><div><div class="name">${STYLE_ICON[h.style] || '🏠'} ${esc(h.name)}</div><div class="sub">${HOUSE_TIERS[h.tier]}・オプション ${myOpts(id).length}こ</div></div>
+      ${state.house === id ? '<span class="muted">住んでいます</span>' : `<div class="row"><button class="btn" data-movein="${id}" type="button">住む</button>${id === 'start' ? '' : `<button class="btn danger" data-hsell="${id}" type="button">${yen(sellPrice(id))}で売る</button>`}</div>`}</div>`; }).join('')}</div>`;
+  }
+  svcScreen('不動産屋 すまいる', body, b => {
+    b.querySelectorAll('[data-ret]').forEach(x => x.onclick = () => { reTab = x.dataset.ret; openRealEstate(); });
+    b.querySelectorAll('[data-rtier]').forEach(x => x.onclick = () => { reTier = +x.dataset.rtier; openRealEstate(); });
+    b.querySelectorAll('[data-rcat]').forEach(x => x.onclick = () => { reCat = x.dataset.rcat; openRealEstate(); });
+    b.querySelectorAll('[data-hbuy]').forEach(x => x.onclick = () => { const h = HOUSE[x.dataset.hbuy]; if (!pay(h.price, `「${h.name}」を買った！`)) return; state.houses.push(h.id); state.houseOpts[h.id] = []; moveIn(h.id); openRealEstate(); });
+    b.querySelectorAll('[data-movein]').forEach(x => x.onclick = () => { moveIn(x.dataset.movein); openRealEstate(); });
+    b.querySelectorAll('[data-hsell]').forEach(x => x.onclick = () => { const id = x.dataset.hsell, p = sellPrice(id); state.houses = state.houses.filter(i => i !== id); delete state.houseOpts[id]; addMoney(p); toast(`家を売った +${yen(p)}`, 'money'); save(); openRealEstate(); });
+    b.querySelectorAll('[data-obuy]').forEach(x => x.onclick = () => {
+      const o = OPT[x.dataset.obuy];
+      if (!pay(o.price, `${o.name}をつけた！`)) return;
+      let list = myOpts();
+      if (o.cat === 'garage') list = list.filter(i => OPT[i].cat !== 'garage');
+      state.houseOpts[state.house] = list.concat(o.id);
+      rebuildHome(); save(); openRealEstate();
+    });
+  });
+}
+
+/* ---------- 家の中 ---------- */
+function openHome() {
+  const cur = HOUSE[state.house], opts = myOpts(), night = state.time / 60 >= 19 || state.time / 60 < 5;
+  const uses = opts.map(id => OPT[id]).filter(o => o.use);
+  const chefs = opts.map(id => OPT[id]).filter(o => o.cat === 'chef');
+  const passive = opts.map(id => OPT[id]).filter(o => !o.use && o.cat !== 'chef');
+  const html = `<div class="item"><div><div class="name">${STYLE_ICON[cur.style] || '🏠'} ${esc(cur.name)}</div><div class="sub">${HOUSE_TIERS[cur.tier]}・体力 ${Math.round(state.stamina)}</div></div></div>
+    <button class="btn primary" id="hmRest" type="button">休む（セーブして朝になる）</button>
+    ${cur.tier >= 5 ? (chefs.length ? '<button class="btn primary" id="hmCook" type="button">🍳 ごはんを作って食べる</button>' : '<div class="muted">大豪邸なので、不動産屋で専属シェフをやとうと、ごはんを作って食べられます。</div>') : ''}
+    ${uses.length ? `<h3>家でできること</h3><div class="list">${uses.map(o => `<div class="item"><div><div class="name">${esc(o.name)}</div><div class="sub">${esc(o.desc)}</div></div><button class="btn" data-use="${o.id}" type="button" ${(o.id === 'telescope' || o.id === 'hanabidai') && !night ? 'disabled' : ''}>${esc(o.use)}${(o.id === 'telescope' || o.id === 'hanabidai') && !night ? '（夜だけ）' : ''}</button></div>`).join('')}</div>` : ''}
+    ${passive.length ? `<h3>ついている設備</h3><div class="list">${passive.map(o => `<div class="item"><div><div class="name">${esc(o.name)}</div><div class="sub">${esc(o.desc)}</div></div></div>`).join('')}</div>` : ''}
+    <div class="muted">家やオプションは「不動産屋 すまいる」（地図の「不」）で買えます。</div>`;
+  svcScreen('わが家', html, b => {
+    b.querySelector('#hmRest').onclick = () => { closeScreen(); rest(); };
+    if (b.querySelector('#hmCook')) b.querySelector('#hmCook').onclick = () => openHomeCook();
+    b.querySelectorAll('[data-use]').forEach(x => x.onclick = () => useHomeOpt(x.dataset.use));
+  });
+}
+function useHomeOpt(id) {
+  const o = OPT[id];
+  if (o.st) { state.stamina = Math.min(100, state.stamina + o.st); toast(`${o.use}… 体力 +${o.st}`); sfx('ok'); openHome(); return; }
+  state.homeUsed = state.homeUsed && state.homeUsed.day === state.day ? state.homeUsed : { day: state.day };
+  if (id === 'gameroom') { closeScreen(); openPhone('games'); return; }
+  if (id === 'karaoke') { closeScreen(); openGig(GIG.karaoke); return; }
+  if (id === 'piano') { closeScreen(); openGig(GIG.pianist); return; }
+  if (id === 'hanabidai') { closeScreen(); fwForceT = 30; toast('花火を打ち上げた！空を見上げてみよう', 'big'); return; }
+  if (state.homeUsed[id]) { toast('今日はもうやりました。また明日！'); return; }
+  state.homeUsed[id] = 1;
+  if (id === 'telescope') { addMoney(500); toast('流れ星を見つけた！ねがいがかなって +500円', 'money'); sfx('lvl'); }
+  if (id === 'pingpong') { const n = 5 + Math.floor(Math.random() * 20); addMoney(100); toast(`卓球で${n}回ラリーが続いた！ 運動ボーナス +100円`, 'money'); state.stamina = Math.max(0, state.stamina - 10); }
+  if (id === 'bowling') { const sc = 80 + Math.floor(Math.random() * 200); addMoney(300); toast(`ボウリングで${sc}点！ 運動ボーナス +300円`, 'money'); state.stamina = Math.max(0, state.stamina - 10); }
+  openHome();
+}
+
+/* ---------- おうちごはん（大豪邸だけ） ---------- */
+let cook = null;
+function openHomeCook() {
+  if (HOUSE[state.house].tier < 5) { toast('ごはんを作れるのは大豪邸だけです'); return; }
+  const menus = myOpts().map(id => OPT[id]).filter(o => o.cat === 'chef').map(o => ({ o, m: HOME_MENUS[o.menu] }));
+  cook = { menus, dish: null, ing: null, plate: [], cooking: null };
+  $('#gTitle').textContent = '🍳 おうちごはん';
+  $('#gTimeWrap').hidden = true; setText($('#gScore'), '—');
+  $('#gIntro').hidden = true;
+  $('#gBody').innerHTML = `<div class="muted">何を作る？専属シェフが手伝ってくれます。食べると体力が満タンになって、今日の仕事のお金が1.1倍（まんぷくボーナス）。</div>
+    <div class="list">${menus.map(({ o, m }, mi) => m.dishes.map((d, di) => `<div class="item"><div class="name">${d[1]} ${esc(d[0])}<span class="sub">　${esc(o.name)}</span></div><button class="btn primary" data-cook="${mi}:${di}" type="button">作る</button></div>`).join('')).join('')}</div>`;
+  showScreen('gig');
+  $('#gQuit').onclick = () => { cook = null; closeScreen(); openHome(); };
+  $('#gBody').querySelectorAll('[data-cook]').forEach(b => b.onclick = () => { const [mi, di] = b.dataset.cook.split(':').map(Number); startCook(menus[mi].m, menus[mi].m.dishes[di]); });
+  mini = { update: cookUpdate, key: k => { if (k === ' ' && cook && cook.cooking) cookStopHome(); if (k === 'escape') { cook = null; closeScreen(); } } };
+}
+function startCook(menu, dish) {
+  cook.dish = dish; cook.ing = menu.ing; cook.plate = [];
+  const keys = Object.keys(menu.ing);
+  $('#gBody').innerHTML = `<div class="k-orders"><div class="ticket active"><div class="t-name"><span>${dish[1]}</span>${esc(dish[0])}</div><div class="t-steps" id="hcSteps"></div></div></div>
+    <div class="k-mid"><div class="plate-dish" id="hcPlate"></div><div class="g-msg" id="gMsg"></div>
+    <div class="k-cook" id="hcCook" hidden><div><div id="hcCookName" style="font-size:18px"></div><div class="k-bar"><div class="z1"></div><div class="z2"></div><div class="needle" id="hcNeedle"></div></div><button class="btn primary" id="hcStop" type="button" style="font-size:20px;padding:12px 40px">ストップ！</button></div></div>
+    <div class="k-cook" id="hcDone" hidden><div><div style="font-size:64px">${dish[1]}</div><div style="font-family:var(--display);font-size:22px">${esc(dish[0])}ができた！</div><button class="btn primary" id="hcEat" type="button" style="font-size:20px;padding:12px 40px">いただきます！</button></div></div></div>
+    <div class="k-ingr">${keys.map(k => `<button class="ing" data-hc="${k}" type="button"><span>${menu.ing[k][1]}</span>${menu.ing[k][0]}${menu.ing[k][2] ? `<small>${menu.ing[k][2]}</small>` : ''}</button>`).join('')}</div>`;
+  $('#gBody').querySelectorAll('[data-hc]').forEach(b => b.onclick = () => cookPress(b.dataset.hc));
+  $('#hcStop').onclick = cookStopHome;
+  $('#hcEat').onclick = eatHome;
+  cookRender();
+}
+function cookRender() {
+  const st = cook.dish[2];
+  $('#hcSteps').innerHTML = st.map((s, k) => `<i class="${k < cook.plate.length ? 'done' : k === cook.plate.length ? 'next' : ''}" title="${cook.ing[s][0]}">${cook.ing[s][1]}</i>`).join('');
+  $('#hcPlate').innerHTML = cook.plate.map(k => `<span>${cook.ing[k][1]}</span>`).join('');
+}
+function cookPress(k) {
+  if (!cook || cook.cooking || !cook.dish) return;
+  const need = cook.dish[2][cook.plate.length];
+  if (k !== need) { sfx('bad'); const m = $('#gMsg'); m.textContent = `シェフ「つぎは${cook.ing[need][0]}ですよ」`; m.className = 'g-msg ng'; return; }
+  if (cook.ing[k][2]) { cook.cooking = { k, p: 0, dir: 1 }; $('#hcCookName').textContent = `${cook.ing[k][1]} ${cook.ing[k][0]}を${cook.ing[k][2]}！`; $('#hcCook').hidden = false; return; }
+  cook.plate.push(k); sfx('click'); cookAfter();
+}
+function cookStopHome() {
+  const c = cook.cooking; if (!c) return;
+  const m = $('#gMsg');
+  if (Math.abs(c.p - 0.5) <= 0.08) { m.textContent = 'シェフ「おみごと！」'; m.className = 'g-msg ok'; sfx('coin'); }
+  else { m.textContent = 'シェフ「だいじょうぶ、おいしくなりますよ」'; m.className = 'g-msg'; sfx('click'); }
+  cook.cooking = null; $('#hcCook').hidden = true; cook.plate.push(c.k); cookAfter();
+}
+function cookAfter() { cookRender(); if (cook.plate.length >= cook.dish[2].length) { $('#hcDone').hidden = false; sfx('ok'); } }
+function cookUpdate(dt) {
+  if (!cook || !cook.cooking) return;
+  const c = cook.cooking; c.p += c.dir * 1.1 * dt;
+  if (c.p > 1) { c.p = 1; c.dir = -1; } if (c.p < 0) { c.p = 0; c.dir = 1; }
+  $('#hcNeedle').style.left = (c.p * 100) + '%';
+}
+function eatHome() {
+  const d = cook.dish; cook = null;
+  state.stamina = 100; state.buffDay = state.day;
+  closeScreen(); sfx('lvl');
+  svcScreen('ごちそうさま！', `<div style="font-size:64px;text-align:center">${d[1]}</div><div class="res-rows"><div><span>食べた料理</span><span>${esc(d[0])}</span></div><div><span>体力</span><span>満タン</span></div><div><span>まんぷくボーナス</span><span>今日の仕事のお金 1.1倍</span></div></div>`);
+}
+
+/* ---------- 朝の家の収入 ---------- */
+function homeDaily() {
+  let rent = 0, opt = 0;
+  for (const id of state.houses) {
+    if (id !== state.house && HOUSE[id]) rent += Math.round(HOUSE[id].price * 0.005);
+    for (const o of myOpts(id)) opt += OPT[o].daily || 0;
+    if (myOpts(id).includes('pethouse') && state.pet) opt += 100;
+  }
+  if (rent) { addMoney(rent); toast(`家賃収入 +${yen(rent)}`, 'money'); }
+  if (opt) { addMoney(opt); toast(`家の設備からの収入 +${yen(opt)}`, 'money'); }
+  const g = garageLv();
+  if (g >= 1) state.car.fuel = 100;
+  if (g >= 2) state.car.dmg = 0;
+  if (g >= 3) { state.car.dirt = 0; paintDirt(); }
+  if (g) toast(`ガレージ：${['', 'ガソリン満タン', 'ガソリン満タン・修理', 'ガソリン満タン・修理・洗車'][g]}`);
+  state.bedDay = hasOpt('bed') ? state.day : 0;
+}
+const drainMult = () => (hasOpt('gym') ? 0.75 : 1) * (state.bedDay === state.day ? 0.8 : 1);
+
+/* ---------- チートコード ---------- */
+let cheatBuf = '', phoneOpenedAt = 0;
+function cheatKey(k) {
+  if (k.length !== 1 || !/[a-z]/.test(k)) return;
+  cheatBuf = (cheatBuf + k).slice(-3);
+  if (cheatBuf === 'omg') {
+    cheatBuf = '';
+    if (openScreen === 'phone' && performance.now() - phoneOpenedAt < 3000) closeScreen();
+    toggleCheat();
+  }
+}
+function enterCheat(code) {
+  if (String(code).trim().toUpperCase() === 'OMG') { toggleCheat(); return true; }
+  toast('そのコードはありません'); sfx('bad'); return false;
+}
+function toggleCheat() {
+  if (!state.cheat) { state.cheat = { before: state.money }; state.money = 999999999; toast('チートコード「OMG」：お金むげんモード ON！', 'big'); sfx('lvl'); }
+  else { state.money = state.cheat.before; state.cheat = null; toast('お金むげんモード OFF（もとのお金にもどりました）', 'big'); }
+  save();
+}
+function cheatTick() { if (state.cheat && state.money < 999999999) state.money = 999999999; }
 
 /* =========================================================
    boot
