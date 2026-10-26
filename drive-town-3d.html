@@ -5973,13 +5973,16 @@ const ROOM_NAMES = { living: 'リビング', dining: 'ダイニング', bedroom:
 
 function buildInterior() {
   const def = HOUSE[state.house];
-  const rooms = [{ id: 'living' }, { id: 'entrance' }, { id: 'dining' }, { id: 'bedroom' }];
-  for (const o of OPTIONS) if (myOpts().includes(o.id)) rooms.push({ id: o.id });
+  // シェフは部屋をつくらず、奥の「大食堂」に全員集める
+  const chefs = OPTIONS.filter(o => o.cat === 'chef' && myOpts().includes(o.id)).map(o => o.id);
+  const rooms = [{ id: 'living' }, { id: 'entrance' }, ...(chefs.length ? [] : [{ id: 'dining' }]), { id: 'bedroom' }];
+  for (const o of OPTIONS) if (myOpts().includes(o.id) && o.cat !== 'chef') rooms.push({ id: o.id });
   const rows = Math.ceil(rooms.length / COLS);
+  const HALL_D = 20;
   const g = new THREE.Group(); scene.add(g);
   inHome = { g, cols: [], spots: [], npcs: [], screens: [], steam: [], hens: [], chairs: [], dish: null, rooms, tramp: null };
   const step = ROOM + GAP;
-  const W = COLS * step + GAP, D = rows * step + GAP;
+  const W = COLS * step + GAP, D = rows * step + GAP + (chefs.length ? HALL_D + GAP : 0);
   const x0 = IN_X - W / 2, z0 = IN_Z - GAP / 2;
   // 床と外の壁
   const floorC = def.tier >= 5 ? 0xe9e1d0 : def.tier >= 3 ? 0xd9c3a0 : 0xc8a97e;
@@ -6003,8 +6006,54 @@ function buildInterior() {
     const lab = labelSprite(name, '#ffc928'); lab.scale.set(6, 1.35, 1); lab.position.set(cx, 3.6, cz + ROOM / 2 - 0.5); g.add(lab);
     buildRoom(r, g, cx, cz);
   });
+  if (chefs.length) buildHall(g, x0 + GAP, z0 + GAP + rows * step, W - GAP * 2, HALL_D, chefs, imat(wallC));
   inHome.entrance = rooms[1];
   return inHome;
+}
+/* シェフ全員がいる大食堂（家のいちばん奥、横いっぱい） */
+function buildHall(g, hx0, hz0, HW, HD, chefs, wc) {
+  const cx = hx0 + HW / 2, cz = hz0 + HD / 2, back = hz0 + HD;
+  inHome.rooms.push({ id: 'hall', x: cx, z: cz });
+  ib(g, HW, 0.03, HD, 0x8e5b3a, cx, 0.02, cz);
+  for (let x = hx0 + 1; x < hx0 + HW; x += 2) ib(g, 0.05, 0.035, HD, 0x7a4b2e, x, 0.025, cz);
+  ib(g, HW, 2.6, 0.3, wc, cx, 1.3, back, true);
+  ib(g, 0.3, 2.6, HD, wc, hx0, 1.3, cz, true);
+  ib(g, 0.3, 2.6, HD, wc, hx0 + HW, 1.3, cz, true);
+  // 前の壁は入口を3つ残す
+  const doors = [hx0 + HW * 0.2, cx, hx0 + HW * 0.8];
+  let from = hx0;
+  for (const dx of [...doors, hx0 + HW + 1.6]) { const to = dx - 1.6; if (to > from) ib(g, to - from, 2.6, 0.3, wc, (from + to) / 2, 1.3, hz0, true); from = dx + 1.6; }
+  const lab = labelSprite('大食堂', '#ffc928'); lab.scale.set(10, 2.2, 1); lab.position.set(cx, 4.4, back - 0.5); g.add(lab);
+  // 奥にシェフのカウンターを並べる
+  const slot = HW / chefs.length;
+  chefs.forEach((id, i) => {
+    const [nm, e, col] = CHEF_INFO[id];
+    const sx = hx0 + slot * (i + 0.5), cw = Math.min(4.6, slot - 0.6);
+    ib(g, cw, 1, 1, 0xdfe6e9, sx, 0.5, back - 2.2, true); ib(g, cw, 0.08, 1.05, 0x636e72, sx, 1.04, back - 2.2);
+    im(g, new THREE.CylinderGeometry(0.3, 0.26, 0.35, 12), 0x95a5a6, sx - cw / 4, 1.27, back - 2.2);
+    im(g, new THREE.CylinderGeometry(0.35, 0.35, 0.05, 16), 0xffffff, sx + cw / 4, 1.1, back - 2.2);
+    const fs = emojiSprite(e, 0.75); fs.position.set(sx + cw / 4, 1.45, back - 2.2); g.add(fs);
+    ib(g, cw, 0.5, 0.15, col, sx, 2.3, back - 0.2);
+    const sign = labelSprite(nm, '#ffffff'); sign.scale.set(Math.min(4.4, cw), 0.95, 1); sign.position.set(sx, 3.1, back - 0.4); g.add(sign);
+    const chef = makeChef(); chef.g.position.set(sx, 0, back - 1.1); chef.g.rotation.y = Math.PI; g.add(chef.g);
+    inHome.npcs.push({ p: chef, kind: 'chef' });
+    spot(sx, back - 3.6, `シェフ（${nm}）に料理をたのむ`, () => openHomeCook(id), 1.6);
+  });
+  // まん中に長いテーブル2つ
+  inHome.chairs = [];
+  const tw = Math.min(HW - 8, 40);
+  for (const tz of [hz0 + 4.5, hz0 + 10]) {
+    ib(g, tw, 0.12, 2, 0x5d4037, cx, 0.95, tz, false);
+    for (const k of [-1, 1]) for (const q of [-1, 1]) ib(g, 0.15, 0.9, 0.15, 0x3e2723, cx + k * (tw / 2 - 0.4), 0.45, tz + q * 0.8);
+    icol(cx, tz, tw, 2, 1);
+    for (let x = cx - tw / 2 + 1.2; x <= cx + tw / 2 - 1.2; x += 2.4) for (const side of [-1, 1]) {
+      const z = tz + side * 1.7;
+      ib(g, 0.7, 0.5, 0.7, 0xa0522d, x, 0.25, z); ib(g, 0.7, 0.9, 0.12, 0xa0522d, x, 0.95, z + side * 0.3);
+      inHome.chairs.push({ x, z, face: side < 0 ? 0 : Math.PI });
+    }
+    for (let x = cx - tw / 2 + 2; x < cx + tw / 2; x += 6) { const v = emojiSprite('💐', 0.8); v.position.set(x, 1.45, tz); g.add(v); }
+  }
+  inHome.table = { x: cx, z: hz0 + 4.5 };
 }
 function enterHome() {
   if (inHome) return;
@@ -6044,17 +6093,19 @@ function homeAct(kind, x, z, optId) {
   P.x = x; P.z = z;
 }
 function startEat(dish) {
-  const ch = inHome.chairs[0], t = inHome.table;
+  // いちばん近い席にすわる
+  const ch = inHome.chairs.reduce((a, c) => Math.hypot(c.x - P.x, c.z - P.z) < Math.hypot(a.x - P.x, a.z - P.z) ? c : a, inHome.chairs[0]);
+  const t = inHome.table;
   inHome.dish = null;
   const food = new THREE.Group();
   const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.4, 0.06, 18), imat(0xffffff)); plate.position.y = 0.03; food.add(plate);
   const sp = emojiSprite(dish[1], 0.9); sp.position.y = 0.45; food.add(sp);
-  food.position.set(ch.x, 1.02, ch.z + 0.85); scene.add(food);
+  food.position.set(ch.x + Math.sin(ch.face) * 0.85, 1.02, ch.z + Math.cos(ch.face) * 0.85); scene.add(food);
   inHome.food = food; inHome.foodSprite = sp;
   inHome.mog = labelSprite('もぐもぐ', '#ffc928'); inHome.mog.scale.set(3, 0.7, 1); inHome.mog.visible = false; scene.add(inHome.mog);
   void t;
   homeAct('eat', ch.x, ch.z, null);
-  act.dish = dish; act.face = 0;
+  act.dish = dish; act.face = ch.face;
 }
 function updateAct(dt) {
   const a = act, p = P.person;
