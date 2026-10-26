@@ -1253,7 +1253,7 @@ function spawnPlayer() {
   if (state.pos && Math.abs(state.pos.x) < WORLD && Math.abs(state.pos.z) < WORLD) {
     const r = resolve(state.pos.x, state.pos.z, 0.5, P); P.x = r.x; P.z = r.z;
   }
-  myCar = new Car(state.carSel, home.sx, home.sz, home.sh);
+  myCar = new Car(state.carSel, home.sx, home.sz, home.sh, paintColor());
   cam.yaw = P.h;
 }
 function placeAtHome() {
@@ -1281,7 +1281,7 @@ function summonCar(type) {
   const px = P.inCar ? P.inCar.x : P.x, pz = P.inCar ? P.inCar.z : P.z;
   const yaw = cam.yaw;
   let r = resolve(px + Math.sin(yaw) * 5, pz + Math.cos(yaw) * 5, 2, null);
-  myCar = new Car(type, r.x, r.z, yaw);
+  myCar = new Car(type, r.x, r.z, yaw, paintColor());
   toast(`${CAR_TYPES[type].name}をよびました`);
   save();
 }
@@ -1655,29 +1655,6 @@ function showResult(title, rows, total, jobId, after) {
   showScreen('result');
   $('#resOk').onclick = () => { closeScreen(); if (after) after(); };
   $('#resOk').focus();
-}
-function openDealer() {
-  const body = $('#dealerBody');
-  const bar = (v, max) => `<i><b style="width:${Math.min(100, Math.round(v / max * 100))}%"></b></i>`;
-  body.innerHTML = `
-    <div class="row" style="justify-content:space-between"><h2>カーショップ ブーン</h2><button class="btn" id="dlClose" type="button">とじる</button></div>
-    <div class="muted">もっているお金：<b style="color:var(--signal)">${yen(state.money)}</b></div>
-    <div class="list">${MY_CARS.map(t => {
-      const c = CAR_TYPES[t], owned = state.cars.includes(t);
-      return `<div class="item"><div class="row"><span class="swatch" style="background:#${c.color.toString(16).padStart(6, '0')}"></span><div><div class="name">${c.name}</div><div class="sub">${c.desc}</div></div></div>
-        <div class="stat-grid"><span>最高速度</span>${bar(c.max, 60)}<span>加速</span>${bar(c.acc, 30)}</div>
-        ${owned ? `<button class="btn" data-ride="${t}" type="button">乗る</button>` : `<button class="btn primary" data-buy="${t}" type="button" ${state.money < c.price ? 'disabled' : ''}>${yen(c.price)}で買う</button>`}</div>`;
-    }).join('')}</div>`;
-  showScreen('dealer');
-  $('#dlClose').onclick = closeScreen;
-  body.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => {
-    const t = b.dataset.buy, c = CAR_TYPES[t];
-    if (state.money < c.price) return;
-    state.money -= c.price; state.cars.push(t); sfx('lvl');
-    toast(`${c.name}を買った！`, 'big');
-    closeScreen(); summonCar(t);
-  });
-  body.querySelectorAll('[data-ride]').forEach(b => b.onclick = () => { closeScreen(); summonCar(b.dataset.ride); if (myCar) enterCar(myCar); });
 }
 function rest() {
   if (job) { toast('仕事中は休めません'); return; }
@@ -3395,6 +3372,7 @@ const SERVICES = [
   { id: 'petshop', name: 'ペットショップ わんにゃん', short: 'ペ', key: '-90,30,1,1', color: '#e1a700', prompt: 'ペットを見る' },
   { id: 'hellowork', name: '職業案内所', short: '職', key: '-30,30,1,-1', color: '#6c5ce7', prompt: '仕事をさがす' },
   { id: 'realestate', name: '不動産屋 すまいる', short: '不', key: '-30,-90,1,-1', color: '#16a085', prompt: '家やオプションを買う' },
+  { id: 'furniture', name: '家具屋 くつろぎ', short: '具', key: '-90,-90,1,-1', color: '#d35400', prompt: '家具・壁紙・床を買う' },
 ];
 const SERVICE_AT = Object.fromEntries(SERVICES.map(s => [s.key, s]));
 const SVC = Object.fromEntries(SERVICES.map(s => [s.id, s]));
@@ -4500,6 +4478,8 @@ function migrateState() {
   s.houseOpts = s.houseOpts || { start: [] };
   if (!HOUSE[s.house] || !s.houses.includes(s.house)) s.house = 'start';
   s.cheat = s.cheat || null;
+  for (const k of ['furn', 'furnOff', 'wallsOwned', 'floorsOwned', 'paints']) if (!Array.isArray(s[k])) s[k] = [];
+  s.wallSel = s.wallSel || null; s.floorSel = s.floorSel || null; s.paintSel = s.paintSel || null;
   for (const g of GIGS) jobState(g.id);
   ensureDaily();
 }
@@ -4958,6 +4938,7 @@ function useService(s) {
     });
   } else if (s.id === 'hellowork') openPhone('jobs');
   else if (s.id === 'realestate') openRealEstate();
+  else if (s.id === 'furniture') openFurniture();
 }
 function buyDrink() {
   if (!pay(130, 'ジュースを飲んだ！体力 +15')) return;
@@ -4979,9 +4960,9 @@ function extraInteraction(x, z) {
 const APPS = [
   ['jobs', '💼', 'しごと'], ['map', '🗺️', 'マップ'], ['mission', '✅', 'ミッション'], ['ach', '🏆', '実績'],
   ['levels', '📈', 'レベル'], ['stats', '📊', '統計'], ['weather', '🌤️', '天気'], ['cars', '🚗', 'マイカー'],
-  ['games', '🎮', 'マイゲーム'], ['settings', '⚙️', '設定'], ['list', '🆕', '追加要素200'], ['save', '💾', 'セーブ'],
+  ['games', '🎮', 'マイゲーム'], ['settings', '⚙️', '設定'], ['list', '🆕', '追加要素200'], ['list400', '🎁', '追加要素400'], ['save', '💾', 'セーブ'],
 ];
-let jobFilter = 'all', listFilter = 'all';
+let jobFilter = 'all', listFilter = 'all', list4Filter = 'all';
 function phoneHead(title, back = true) {
   return `<div class="row" style="justify-content:space-between"><div class="row">${back ? '<button class="btn" data-home type="button">もどる</button>' : ''}<h2>${esc(title)}</h2></div><button class="btn" data-close type="button">とじる</button></div>`;
 }
@@ -5051,6 +5032,12 @@ function openPhone(view = 'home') {
     html = `${phoneHead('追加要素 200')}<div class="muted">今回ふえた200個を、1から200まで番号順にならべています。</div>
       <div class="chips">${cats.map(c => `<button class="chipb${listFilter === c ? ' on' : ''}" data-lf="${c}" type="button">${c === 'all' ? 'すべて' : c}（${c === 'all' ? all.length : all.filter(r => r.cat === c).length}）</button>`).join('')}</div>
       <ol class="add-list">${shown.map(r => `<li value="${r.no}"><b>${r.no}. ${esc(r.name)}</b><span>${esc(r.cat)}・${esc(r.desc)}</span></li>`).join('')}</ol>`;
+  } else if (view === 'list400') {
+    const all = allAdditions400(), cats = ['all', '家具', '壁紙', '床', '車', '車の塗装'];
+    const shown = list4Filter === 'all' ? all : all.filter(r => r.cat === list4Filter);
+    html = `${phoneHead('追加要素 400')}<div class="muted">さらにふえた400個を、1から400まで番号順にならべています。</div>
+      <div class="chips">${cats.map(c => `<button class="chipb${list4Filter === c ? ' on' : ''}" data-l4="${c}" type="button">${c === 'all' ? 'すべて' : c}（${c === 'all' ? all.length : all.filter(r => r.cat === c).length}）</button>`).join('')}</div>
+      <ol class="add-list">${shown.map(r => `<li value="${r.no}"><b>${r.no}. ${esc(r.name)}</b><span>${esc(r.cat)}・${esc(r.desc)}</span></li>`).join('')}</ol>`;
   } else if (view === 'save') {
     save();
     html = `${phoneHead('セーブ')}<div class="muted">セーブしました。このブラウザに保存されています（15秒ごとにも自動でセーブします）。</div>`;
@@ -5063,6 +5050,7 @@ function openPhone(view = 'home') {
   if ($('#phQuit')) $('#phQuit').onclick = () => { quitJob(); closeScreen(); };
   if ($('#phCamp')) $('#phCamp').onclick = () => { closeScreen(); rest(); };
   body.querySelectorAll('[data-jf]').forEach(b => b.onclick = () => { jobFilter = b.dataset.jf; openPhone('jobs'); });
+  body.querySelectorAll('[data-l4]').forEach(b => b.onclick = () => { list4Filter = b.dataset.l4; openPhone('list400'); });
   body.querySelectorAll('[data-lf]').forEach(b => b.onclick = () => { listFilter = b.dataset.lf; openPhone('list'); });
   body.querySelectorAll('[data-gig]').forEach(b => b.onclick = () => { closeScreen(); startGig(GIG[b.dataset.gig]); });
   body.querySelectorAll('[data-pin]').forEach(b => b.onclick = () => { const p = PLACES.find(q => q.id === b.dataset.pin); setPin(p.mx, p.mz); closeScreen(); });
@@ -5827,6 +5815,12 @@ function roomInfo(id) {
 function buildRoom(r, g, cx, cz) {
   const id = r.id, B = (...a) => ib(g, ...a), M = (...a) => im(g, ...a);
   const back = cz + ROOM / 2 - 1.2;
+  if (id === 'furn') {
+    const items = placedFurn().slice(r.idx * 9, r.idx * 9 + 9);
+    items.forEach((fid, k) => { const m = furnModel(FURN_BY[fid]); m.position.set(cx + [-3.2, 0, 3.2][k % 3], 0, cz + [3.2, 0.6, -2][Math.floor(k / 3)]); g.add(m); });
+    spot(cx, cz - 3.8, 'この部屋の家具を見る', () => toast(items.map(i => FURN_BY[i].name).join('・')), 1.8);
+    return;
+  }
   if (id === 'living') {
     B(5, 0.8, 1.6, 0x6c5ce7, cx, 0.4, back, true); B(5, 0.9, 0.4, 0x6c5ce7, cx, 0.85, back + 0.6);
     B(2.4, 0.4, 1.2, 0x8d5a2b, cx, 0.2, cz + 1, true);
@@ -5977,6 +5971,8 @@ function buildInterior() {
   const chefs = OPTIONS.filter(o => o.cat === 'chef' && myOpts().includes(o.id)).map(o => o.id);
   const rooms = [{ id: 'living' }, { id: 'entrance' }, ...(chefs.length ? [] : [{ id: 'dining' }]), { id: 'bedroom' }];
   for (const o of OPTIONS) if (myOpts().includes(o.id) && o.cat !== 'chef') rooms.push({ id: o.id });
+  const furnN = Math.ceil(placedFurn().length / 9);
+  for (let i = 0; i < furnN; i++) rooms.push({ id: 'furn', idx: i });
   const rows = Math.ceil(rooms.length / COLS);
   const HALL_D = 20;
   const g = new THREE.Group(); scene.add(g);
@@ -5987,26 +5983,30 @@ function buildInterior() {
   // 床と外の壁
   const floorC = def.tier >= 5 ? 0xe9e1d0 : def.tier >= 3 ? 0xd9c3a0 : 0xc8a97e;
   ib(g, W + 40, 0.02, D + 40, 0x2d2a26, IN_X, -0.02, z0 + D / 2);
-  ib(g, W, 0.04, D, floorC, IN_X, 0.0, z0 + D / 2);
+  const flSel = state.floorSel && FLOOR_BY[state.floorSel];
+  ib(g, W, 0.04, D, flSel ? patternMat(flSel, W / 3, D / 3) : floorC, IN_X, 0.0, z0 + D / 2);
+  const roomFloor = flSel ? patternMat(flSel, 4, 4) : null;
   const wallC = def.wall;
-  for (const [x, z, w, d] of [[IN_X, z0, W, 0.4], [IN_X, z0 + D, W, 0.4], [x0, z0 + D / 2, 0.4, D], [x0 + W, z0 + D / 2, 0.4, D]]) ib(g, w, 2.6, d, wallC, x, 1.3, z, true);
+  const wSel = state.wallSel && WALL_BY[state.wallSel];
+  const wallMat = wSel ? patternMat(wSel, 4, 1) : imat(wallC);
+  for (const [x, z, w, d] of [[IN_X, z0, W, 0.4], [IN_X, z0 + D, W, 0.4], [x0, z0 + D / 2, 0.4, D], [x0 + W, z0 + D / 2, 0.4, D]]) ib(g, w, 2.6, d, wallMat, x, 1.3, z, true);
   rooms.forEach((r, i) => {
     const c = i % COLS, row = Math.floor(i / COLS);
     const cx = x0 + GAP + c * step + ROOM / 2, cz = z0 + GAP + row * step + ROOM / 2;
     r.x = cx; r.z = cz;
     const isChef = !!CHEF_INFO[r.id];
-    ib(g, ROOM, 0.03, ROOM, ROOM_COLORS[r.id] || (isChef ? 0xf5f6fa : 0xe8e0d0), cx, 0.02, cz);
-    const wc = imat(wallC);
+    ib(g, ROOM, 0.03, ROOM, roomFloor || ROOM_COLORS[r.id] || (isChef ? 0xf5f6fa : 0xe8e0d0), cx, 0.02, cz);
+    const wc = wallMat;
     // 後ろと左右の壁（前は入口を残す）
     ib(g, ROOM, 2.4, 0.25, wc, cx, 1.2, cz + ROOM / 2, true);
     ib(g, 0.25, 2.4, ROOM, wc, cx - ROOM / 2, 1.2, cz, true);
     ib(g, 0.25, 2.4, ROOM, wc, cx + ROOM / 2, 1.2, cz, true);
     for (const k of [-1, 1]) ib(g, 3.2, 2.4, 0.25, wc, cx + k * 3.4, 1.2, cz - ROOM / 2, true);
-    const name = ROOM_NAMES[r.id] || (OPT[r.id] ? OPT[r.id].name : r.id);
+    const name = r.id === 'furn' ? `家具の部屋 ${r.idx + 1}` : ROOM_NAMES[r.id] || (OPT[r.id] ? OPT[r.id].name : r.id);
     const lab = labelSprite(name, '#ffc928'); lab.scale.set(6, 1.35, 1); lab.position.set(cx, 3.6, cz + ROOM / 2 - 0.5); g.add(lab);
     buildRoom(r, g, cx, cz);
   });
-  if (chefs.length) buildHall(g, x0 + GAP, z0 + GAP + rows * step, W - GAP * 2, HALL_D, chefs, imat(wallC));
+  if (chefs.length) buildHall(g, x0 + GAP, z0 + GAP + rows * step, W - GAP * 2, HALL_D, chefs, wallMat);
   inHome.entrance = rooms[1];
   return inHome;
 }
@@ -6014,7 +6014,7 @@ function buildInterior() {
 function buildHall(g, hx0, hz0, HW, HD, chefs, wc) {
   const cx = hx0 + HW / 2, cz = hz0 + HD / 2, back = hz0 + HD;
   inHome.rooms.push({ id: 'hall', x: cx, z: cz });
-  ib(g, HW, 0.03, HD, 0x8e5b3a, cx, 0.02, cz);
+  ib(g, HW, 0.03, HD, state.floorSel && FLOOR_BY[state.floorSel] ? patternMat(FLOOR_BY[state.floorSel], HW / 3, HD / 3) : 0x8e5b3a, cx, 0.02, cz);
   for (let x = hx0 + 1; x < hx0 + HW; x += 2) ib(g, 0.05, 0.035, HD, 0x7a4b2e, x, 0.025, cz);
   ib(g, HW, 2.6, 0.3, wc, cx, 1.3, back, true);
   ib(g, 0.3, 2.6, HD, wc, hx0, 1.3, cz, true);
@@ -6181,6 +6181,240 @@ function camInterior(dt) {
   camera.position.lerp(tmpV, Math.min(1, dt * 8));
   camera.lookAt(tx, 1, tz);
 }
+
+
+/* =========================================================
+   さらに追加 400（家具 200・壁紙 30・床 30・車 100・車の塗装 40）
+   ========================================================= */
+const FCOL = [['赤い', 0xe74c3c], ['青い', 0x3498db], ['白い', 0xf5f6fa], ['黒い', 0x2d3436], ['木目の', 0x8d5a2b], ['金色の', 0xf1c40f], ['ピンクの', 0xfd79a8], ['緑の', 0x27ae60]];
+// [種類の id, 名前, 基本の値段, 名前の付け方（色 / 絵）, 絵の一覧]
+const FURN_TYPES = [
+  ['sofa', 'ソファ', 3000], ['chair', 'いす', 800], ['table', 'テーブル', 1500], ['bed', 'ベッド', 5000], ['shelf', '本棚', 2000],
+  ['plant', '観葉植物', 1200, [['サボテン', '🌵'], ['ヤシの木', '🌴'], ['ハーブ', '🌿'], ['四つ葉', '🍀'], ['新芽', '🌱'], ['門松', '🎍'], ['大きな木', '🌳'], ['笹かざり', '🎋']]],
+  ['lamp', 'フロアランプ', 1500], ['rug', 'じゅうたん', 1000],
+  ['paint', '絵', 2500, [['山の絵', '🏔️'], ['海の絵', '🌊'], ['花の絵', '🌸'], ['ネコの絵', '🐱'], ['夜空の絵', '🌌'], ['富士山の絵', '🗻'], ['にじの絵', '🌈'], ['くだものの絵', '🍎']]],
+  ['clock', 'はしら時計', 4000], ['tv', '大きなテレビ', 6000],
+  ['tank', '水槽', 5000, [['熱帯魚の水槽', '🐠'], ['小魚の水槽', '🐟'], ['フグの水槽', '🐡'], ['サメの水槽', '🦈'], ['カメの水槽', '🐢'], ['カニの水槽', '🦀'], ['タコの水槽', '🐙'], ['エビの水槽', '🦐']]],
+  ['statue', '像', 8000, [['金の像', 0xf1c40f], ['銀の像', 0xbdc3c7], ['銅の像', 0xb87333], ['大理石の像', 0xf5f6fa], ['木彫りの像', 0x8d5a2b], ['石の像', 0x7f8c8d], ['氷の像', 0xa8e6ff], ['クリスタルの像', 0xd6a2e8]]],
+  ['plush', 'ぬいぐるみ', 800, [['クマのぬいぐるみ', '🧸'], ['ウサギのぬいぐるみ', '🐰'], ['イヌのぬいぐるみ', '🐶'], ['ネコのぬいぐるみ', '🐱'], ['パンダのぬいぐるみ', '🐼'], ['ユニコーンのぬいぐるみ', '🦄'], ['カエルのぬいぐるみ', '🐸'], ['ペンギンのぬいぐるみ', '🐧']]],
+  ['desk', 'つくえ', 2500], ['cupboard', '食器棚', 3500], ['mirror', '鏡', 2000],
+  ['vase', '花びん', 1000, [['バラの花びん', '🌹'], ['ひまわりの花びん', '🌻'], ['チューリップの花びん', '🌷'], ['さくらの花びん', '🌸'], ['ハイビスカスの花びん', '🌺'], ['花束の花びん', '💐'], ['ロゼットの花びん', '🏵️'], ['デイジーの花びん', '🌼']]],
+  ['fire', '暖炉', 9000], ['console', 'ゲーム機', 4500], ['globe', '地球儀', 1800], ['chest', '宝箱', 6000], ['armor', 'よろい', 12000], ['robot', 'ロボット', 15000], ['jukebox', 'ジュークボックス', 10000],
+];
+const FURN = [];
+for (const [t, nm, price, list] of FURN_TYPES) {
+  for (let i = 0; i < 8; i++) {
+    const v = list ? list[i] : FCOL[i];
+    const isColor = !list || typeof v[1] === 'number';
+    const name = list ? v[0] : `${v[0]}${nm}`;
+    const k = list ? 1 + (i % 3) * 0.25 : [1, 1, 1, 1.1, 1.2, 3, 1.1, 1][i];
+    FURN.push({ id: `f_${t}_${i}`, t, name, price: Math.round(price * k / 10) * 10, c: isColor ? (list ? v[1] : v[1]) : FCOL[i][1], e: !isColor ? v[1] : null });
+  }
+}
+const FURN_BY = Object.fromEntries(FURN.map(f => [f.id, f]));
+
+/* ---- 壁紙と床 ---- */
+const WALLPAPERS = [
+  ...[['白', 0xffffff], ['クリーム', 0xfff3d6], ['水色', 0xcdeefc], ['ピンク', 0xffd6e5], ['ミント', 0xd2f5e3], ['ラベンダー', 0xe3d7f7], ['グレー', 0xcfd3d8], ['レモン', 0xfff6a8], ['オレンジ', 0xffd8a8], ['ネイビー', 0x34495e]].map(([n, c]) => ({ name: `${n}の壁紙`, kind: 'solid', c, c2: c })),
+  ...[['赤', 0xe74c3c], ['青', 0x3498db], ['緑', 0x27ae60], ['黄', 0xf1c40f], ['ピンク', 0xfd79a8], ['むらさき', 0x9b59b6], ['茶色', 0x8d5a2b], ['黒', 0x2d3436], ['水色', 0x74b9ff], ['オレンジ', 0xe67e22]].map(([n, c]) => ({ name: `${n}のしま模様の壁紙`, kind: 'stripe', c: 0xffffff, c2: c })),
+  { name: '水玉の壁紙', kind: 'dot', c: 0xffffff, c2: 0xe84393 }, { name: 'チェックの壁紙', kind: 'check', c: 0xffffff, c2: 0x74b9ff },
+  { name: '星柄の壁紙', kind: 'emoji', c: 0x1e2a4a, e: '⭐' }, { name: 'ハート柄の壁紙', kind: 'emoji', c: 0xffe3ee, e: '💗' },
+  { name: '花柄の壁紙', kind: 'emoji', c: 0xf7f1e3, e: '🌼' }, { name: 'レンガの壁紙', kind: 'brick', c: 0xb5543c, c2: 0xe8d5c4 },
+  { name: '和紙の壁紙', kind: 'noise', c: 0xf3ede0, c2: 0xe2d9c6 }, { name: '木の板の壁紙', kind: 'plank', c: 0xb07c4f, c2: 0x8d5a2b },
+  { name: '大理石の壁紙', kind: 'noise', c: 0xf5f6fa, c2: 0xc8ccd2 }, { name: '金色の壁紙', kind: 'check', c: 0xf1c40f, c2: 0xd4a017 },
+].map((w, i) => Object.assign(w, { id: `w_${i}`, price: 2000 + i * 200 }));
+const FLOORS = [
+  ...[['ナラ', 0xc89d67], ['ウォールナット', 0x6b4226], ['白木', 0xe8d7b5], ['さくら', 0xd9a07a], ['竹', 0xd8c27a], ['ヒノキ', 0xe6c99a], ['チーク', 0x9c6b3c], ['メープル', 0xe0b984], ['黒檀', 0x3b2a20], ['寄木', 0xb8875a]].map(([n, c]) => ({ name: `${n}のフローリング`, kind: 'plank', c, c2: new THREE.Color(c).multiplyScalar(0.82).getHex() })),
+  { name: '白いタイル', kind: 'tile', c: 0xffffff, c2: 0xd5d8dc }, { name: '白黒のチェック', kind: 'check', c: 0xffffff, c2: 0x2d3436 },
+  { name: '大理石の床', kind: 'noise', c: 0xf0f0f0, c2: 0xc8c8c8 }, { name: 'テラコッタ', kind: 'tile', c: 0xd27d4e, c2: 0xa65d36 },
+  { name: '青いタイル', kind: 'tile', c: 0x74b9ff, c2: 0x0984e3 }, { name: '石だたみ', kind: 'brick', c: 0x95a5a6, c2: 0x7f8c8d },
+  { name: 'モザイクタイル', kind: 'mosaic', c: 0x00cec9, c2: 0xfd79a8 }, { name: 'たたみ', kind: 'tatami', c: 0xc9c27a, c2: 0x8e8a4a },
+  { name: 'コンクリート', kind: 'noise', c: 0xb2b7bb, c2: 0x9aa0a6 }, { name: 'ガラスの床', kind: 'tile', c: 0xbfe9ff, c2: 0x8fd3f4 },
+  ...[['赤', 0xc0392b], ['青', 0x2e5e9e], ['緑', 0x2f8f5b], ['グレー', 0x7f8c8d], ['ベージュ', 0xd8c3a5], ['ピンク', 0xf8a5c2], ['むらさき', 0x8e44ad], ['黄', 0xf6d365], ['黒', 0x2d3436], ['ふわふわの白', 0xfafafa]].map(([n, c]) => ({ name: `${n}のじゅうたん`, kind: 'solid', c, c2: c })),
+].map((f, i) => Object.assign(f, { id: `fl_${i}`, price: 2000 + i * 200 }));
+const WALL_BY = Object.fromEntries(WALLPAPERS.map(w => [w.id, w])), FLOOR_BY = Object.fromEntries(FLOORS.map(f => [f.id, f]));
+const patCache = {};
+function patternTex(p) {
+  if (patCache[p.id]) return patCache[p.id];
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const g = cv.getContext('2d'), h = c => '#' + new THREE.Color(c).getHexString();
+  g.fillStyle = h(p.c); g.fillRect(0, 0, 64, 64); g.fillStyle = h(p.c2 != null ? p.c2 : p.c);
+  if (p.kind === 'stripe') for (let x = 0; x < 64; x += 16) g.fillRect(x, 0, 6, 64);
+  else if (p.kind === 'dot') for (let y = 8; y < 64; y += 16) for (let x = 8; x < 64; x += 16) { g.beginPath(); g.arc(x + (y % 32 ? 0 : 8), y, 4, 0, 7); g.fill(); }
+  else if (p.kind === 'check') for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { if ((x + y) % 2) g.fillRect(x * 16, y * 16, 16, 16); }
+  else if (p.kind === 'brick') { for (let y = 0; y < 64; y += 16) { g.fillRect(0, y, 64, 2); for (let x = (y % 32 ? 8 : 24); x < 64; x += 32) g.fillRect(x, y, 2, 16); } }
+  else if (p.kind === 'plank') { for (let y = 0; y < 64; y += 12) { g.fillRect(0, y, 64, 1.5); g.fillRect((y * 7) % 64, y, 1.5, 12); } }
+  else if (p.kind === 'tile') { for (let i = 0; i < 64; i += 21) { g.fillRect(i, 0, 2, 64); g.fillRect(0, i, 64, 2); } }
+  else if (p.kind === 'mosaic') for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { g.fillStyle = (x * 3 + y * 5) % 3 === 0 ? h(p.c2) : (x + y) % 2 ? h(p.c) : '#ffffff'; g.fillRect(x * 8, y * 8, 7, 7); }
+  else if (p.kind === 'tatami') { g.fillRect(0, 0, 64, 3); g.fillRect(0, 31, 64, 3); for (let x = 0; x < 64; x += 3) { g.globalAlpha = 0.25; g.fillRect(x, 0, 1, 64); } g.globalAlpha = 1; }
+  else if (p.kind === 'noise') for (let i = 0; i < 300; i++) { g.globalAlpha = 0.3; g.fillRect(Math.random() * 64, Math.random() * 64, 2 + Math.random() * 6, 1); }
+  else if (p.kind === 'emoji') { g.font = '22px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(p.e, 16, 16); g.fillText(p.e, 48, 48); }
+  g.globalAlpha = 1;
+  const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return (patCache[p.id] = t);
+}
+function patternMat(p, rx, ry) {
+  const t = patternTex(p).clone(); t.needsUpdate = true; t.repeat.set(rx, ry);
+  return new THREE.MeshLambertMaterial({ map: t });
+}
+
+/* ---- 家具の形 ---- */
+function furnModel(f) {
+  const g = new THREE.Group(), c = f.c;
+  const B = (w, h, d, col, x, y, z) => { const m = new THREE.Mesh(BX(w, h, d), typeof col === 'number' ? imat(col) : col); m.position.set(x, y, z); g.add(m); return m; };
+  const C = (geo, col, x, y, z) => { const m = new THREE.Mesh(geo, typeof col === 'number' ? imat(col) : col); m.position.set(x, y, z); g.add(m); return m; };
+  const S = (e, s, x, y, z) => { const sp = emojiSprite(e, s); sp.position.set(x, y, z); g.add(sp); return sp; };
+  const wood = 0x8d5a2b, dark = 0x2d3436;
+  switch (f.t) {
+    case 'sofa': B(2, 0.45, 0.9, c, 0, 0.3, 0); B(2, 0.6, 0.25, c, 0, 0.75, 0.33); B(0.25, 0.4, 0.9, c, -0.95, 0.6, 0); B(0.25, 0.4, 0.9, c, 0.95, 0.6, 0); break;
+    case 'chair': B(0.6, 0.08, 0.6, c, 0, 0.5, 0); B(0.6, 0.6, 0.08, c, 0, 0.85, 0.26); for (const [x, z] of [[-0.25, -0.25], [0.25, -0.25], [-0.25, 0.25], [0.25, 0.25]]) B(0.06, 0.5, 0.06, c, x, 0.25, z); break;
+    case 'table': B(1.6, 0.08, 1, c, 0, 0.75, 0); for (const [x, z] of [[-0.7, -0.4], [0.7, -0.4], [-0.7, 0.4], [0.7, 0.4]]) B(0.08, 0.75, 0.08, c, x, 0.37, z); break;
+    case 'bed': B(1.4, 0.4, 2, c, 0, 0.2, 0); B(1.3, 0.15, 1.9, 0xffffff, 0, 0.48, 0); B(0.6, 0.12, 0.35, 0xffffff, 0, 0.62, 0.7); B(1.4, 0.8, 0.1, c, 0, 0.5, 1); break;
+    case 'shelf': B(1.4, 1.9, 0.4, c, 0, 0.95, 0); for (let y = 0.4; y < 1.9; y += 0.45) for (let i = 0; i < 5; i++) B(0.15, 0.3, 0.3, [0xe74c3c, 0x3498db, 0xf1c40f, 0x27ae60, 0x9b59b6][(i + Math.round(y * 10)) % 5], -0.5 + i * 0.22, y + 0.15, -0.06); break;
+    case 'plant': C(new THREE.CylinderGeometry(0.3, 0.22, 0.45, 12), [0xc0392b, 0xf5f6fa, 0x2d3436, 0x8d5a2b][f.id.length % 4], 0, 0.22, 0); S(f.e, 1.2, 0, 1.05, 0); break;
+    case 'lamp': C(new THREE.CylinderGeometry(0.2, 0.25, 0.05, 12), dark, 0, 0.03, 0); B(0.05, 1.5, 0.05, dark, 0, 0.75, 0); C(new THREE.CylinderGeometry(0.22, 0.32, 0.35, 14), imat(c, { emissive: new THREE.Color(c).multiplyScalar(0.5).getHex() }), 0, 1.55, 0); break;
+    case 'rug': B(2, 0.03, 1.4, c, 0, 0.03, 0); B(1.6, 0.035, 1, 0xffffff, 0, 0.035, 0); B(1.4, 0.04, 0.8, c, 0, 0.04, 0); break;
+    case 'paint': B(1.4, 1.1, 0.08, 0xd4a017, 0, 1.3, 0); B(1.2, 0.9, 0.1, 0xfdfdfd, 0, 1.3, -0.01); S(f.e, 0.85, 0, 1.3, -0.08); B(0.06, 0.8, 0.06, wood, 0, 0.4, 0.05); break;
+    case 'clock': B(0.6, 2, 0.4, c, 0, 1, 0); C(new THREE.CylinderGeometry(0.22, 0.22, 0.05, 20), 0xffffff, 0, 1.6, -0.21).rotation.x = Math.PI / 2; B(0.03, 0.15, 0.03, dark, 0, 1.65, -0.25); break;
+    case 'tv': B(1.6, 0.5, 0.45, c, 0, 0.25, 0); B(1.8, 1, 0.1, dark, 0, 1.05, 0); B(1.65, 0.85, 0.05, imat(0x111111, { emissive: 0x3d7bd8 }), 0, 1.05, -0.06); break;
+    case 'tank': B(1.4, 0.6, 0.6, wood, 0, 0.3, 0); B(1.4, 0.8, 0.6, new THREE.MeshLambertMaterial({ color: 0x74c7ec, transparent: true, opacity: 0.45, emissive: 0x0b3a55 }), 0, 1, 0); S(f.e, 0.45, -0.3, 1, 0); S(f.e, 0.35, 0.35, 1.15, 0); break;
+    case 'statue': B(0.7, 0.6, 0.7, 0xdfe6e9, 0, 0.3, 0); { const m = imat(c, { emissive: f.name.startsWith('金') ? 0x3d2a00 : 0 }); B(0.35, 0.6, 0.25, m, 0, 0.95, 0); C(new THREE.SphereGeometry(0.17, 12, 8), m, 0, 1.4, 0); B(0.1, 0.45, 0.1, m, -0.24, 1.1, 0).rotation.z = 0.6; } break;
+    case 'plush': S(f.e, 1.1, 0, 0.6, 0); C(new THREE.CylinderGeometry(0.45, 0.45, 0.06, 16), 0xfd79a8, 0, 0.03, 0); break;
+    case 'desk': B(1.4, 0.06, 0.7, c, 0, 0.75, 0); B(0.45, 0.72, 0.65, c, 0.45, 0.36, 0); B(0.06, 0.72, 0.65, c, -0.67, 0.36, 0); B(0.5, 0.35, 0.05, dark, -0.2, 1.0, 0.2); break;
+    case 'cupboard': B(1.2, 1.9, 0.5, c, 0, 0.95, 0); B(1, 0.8, 0.05, new THREE.MeshLambertMaterial({ color: 0xd6f0ff, transparent: true, opacity: 0.5 }), 0, 1.4, -0.26); for (let i = 0; i < 3; i++) C(new THREE.CylinderGeometry(0.12, 0.12, 0.02, 12), 0xffffff, -0.3 + i * 0.3, 1.25, -0.1).rotation.x = Math.PI / 2; break;
+    case 'mirror': B(0.9, 1.8, 0.08, c, 0, 0.95, 0); B(0.75, 1.6, 0.05, imat(0xe8f6ff, { emissive: 0x4a5a66 }), 0, 0.95, -0.05); break;
+    case 'vase': C(new THREE.CylinderGeometry(0.18, 0.12, 0.5, 12), [0x74b9ff, 0xffffff, 0xfd79a8, 0x2d3436][f.id.length % 4], 0, 0.6, 0); B(0.5, 0.35, 0.5, wood, 0, 0.17, 0); S(f.e, 0.8, 0, 1.15, 0); break;
+    case 'fire': B(1.6, 1.2, 0.6, c, 0, 0.6, 0); B(1, 0.7, 0.62, dark, 0, 0.45, 0); S('🔥', 0.7, 0, 0.5, -0.32); B(1.8, 0.12, 0.7, c, 0, 1.25, 0); break;
+    case 'console': B(1.2, 0.45, 0.45, wood, 0, 0.22, 0); B(1.3, 0.75, 0.08, dark, 0, 0.85, 0.1); B(1.2, 0.65, 0.04, imat(0x111111, { emissive: 0x0be881 }), 0, 0.85, 0.05); B(0.4, 0.1, 0.25, c, 0, 0.5, -0.05); break;
+    case 'globe': B(0.3, 0.05, 0.3, wood, 0, 0.03, 0); B(0.05, 0.7, 0.05, wood, 0, 0.4, 0); C(new THREE.SphereGeometry(0.3, 16, 12), imat(0x3498db, { emissive: 0x0b2a4a }), 0, 0.95, 0); C(new THREE.TorusGeometry(0.34, 0.025, 6, 24), c, 0, 0.95, 0); break;
+    case 'chest': B(1, 0.5, 0.6, c, 0, 0.25, 0); B(1, 0.25, 0.6, c, 0, 0.62, 0); B(1.02, 0.08, 0.62, 0xf1c40f, 0, 0.5, 0); B(0.15, 0.2, 0.05, 0xf1c40f, 0, 0.45, -0.32); S('💰', 0.45, 0, 0.95, 0); break;
+    case 'armor': B(0.5, 0.6, 0.3, 0x95a5a6, 0, 1.2, 0); C(new THREE.SphereGeometry(0.2, 10, 8), 0xbdc3c7, 0, 1.68, 0); B(0.06, 0.25, 0.06, c, 0, 1.95, 0); for (const x of [-0.13, 0.13]) B(0.15, 0.8, 0.15, 0x7f8c8d, x, 0.45, 0); for (const x of [-0.33, 0.33]) B(0.12, 0.55, 0.12, 0x7f8c8d, x, 1.15, 0); B(0.05, 1.4, 0.05, 0xd5d8dc, 0.45, 1, -0.1); break;
+    case 'robot': B(0.6, 0.7, 0.45, c, 0, 0.85, 0); B(0.45, 0.4, 0.4, c, 0, 1.45, 0); for (const x of [-0.1, 0.1]) B(0.08, 0.08, 0.02, imat(0x0fbcf9, { emissive: 0x0fbcf9 }), x, 1.48, -0.21); for (const x of [-0.18, 0.18]) B(0.16, 0.5, 0.18, 0x7f8c8d, x, 0.25, 0); for (const x of [-0.4, 0.4]) B(0.12, 0.55, 0.12, 0x7f8c8d, x, 0.85, 0); B(0.03, 0.25, 0.03, dark, 0, 1.78, 0); break;
+    case 'jukebox': B(0.9, 1.4, 0.55, c, 0, 0.7, 0); C(new THREE.CylinderGeometry(0.45, 0.45, 0.55, 16, 1, false, 0, Math.PI), c, 0, 1.4, 0).rotation.z = Math.PI / 2; B(0.7, 0.5, 0.05, imat(0x111111, { emissive: 0xff9f43 }), 0, 1.0, -0.28); break;
+  }
+  return g;
+}
+
+/* ---- 車 100 ---- */
+const CAR_CLASSES = [
+  ['kei', '軽自動車', { shape: 'car', max: 23, acc: 10, turn: 2.2 }, 3000, ['ちょこまか', 'ミニポップ', 'コロン', 'ピコ', 'タントン', 'まめっち', 'ちびっこ', 'ルンルン', 'ポケット', 'さくらんぼ']],
+  ['sedan', 'セダン', { shape: 'car', long: 1.12, max: 30, acc: 13, turn: 1.9 }, 6000, ['ジェントル', 'ノーブル', 'アーバン', 'ミッドナイト', 'グランツ', 'セレス', 'アルテ', 'ヴェール', 'ステラ', 'シルバーアロー']],
+  ['van', 'ワゴン・ミニバン', { shape: 'van', max: 27, acc: 11, turn: 1.8 }, 5000, ['ハッピーバン', 'ワイワイ', 'ゆったり', 'ツアラー', 'フレンズ', 'ホリデー', 'ルームス', 'スマイルワゴン', 'ポップバン', 'モアスペース']],
+  ['suv', 'SUV', { shape: 'car', tall: true, max: 30, acc: 13, turn: 1.8, r: 1.8 }, 8000, ['タフ', 'マウンテン', 'サバンナ', 'ジャングル', 'アドベンチャー', 'トレイル', 'ワイルド', 'グリズリー', 'サンダー', 'キャニオン']],
+  ['sport', 'スポーツカー', { shape: 'car', low: true, max: 40, acc: 19, turn: 2.2 }, 15000, ['ハヤテ', 'イナズマ', 'つむじかぜ', 'ブレイズ', 'スティング', 'ファルコン', 'ストーム', 'ジェット', 'レーザー', 'スピカ']],
+  ['super', 'スーパーカー', { shape: 'car', low: true, max: 50, acc: 25, turn: 2.3 }, 40000, ['ゼウス', 'オーディン', 'ドラゴン', 'フェニックス', 'ギャラクシー', 'ネビュラ', 'オメガ', 'タイタン', 'アトラス', 'メテオ']],
+  ['classic', 'クラシックカー', { shape: 'car', max: 28, acc: 11, turn: 1.9 }, 10000, ['レトロ1950', 'ノスタルジア', 'ビンテージ', 'ヒストリア', 'クラシカ', 'アンティーク', 'モダンレトロ', 'レガシー', 'オールドタイム', 'セピア']],
+  ['ev', '電気自動車', { shape: 'car', ev: true, max: 34, acc: 18, turn: 2.0 }, 9000, ['ボルト', 'エレキ', 'プラズマ', 'ソーラー', 'ピュア', 'スパーク', 'ネオン', 'ゼロ', 'エコロ', 'ライトニング']],
+  ['work', '働く車', { shape: 'truck', max: 24, acc: 9, turn: 1.7, r: 2.1 }, 12000, ['ダンプカー', 'キッチンカー', '冷凍トラック', 'はしご消防車', 'ミキサー車', '移動販売車', '引っ越しトラック', '給水車', 'クレーン車', '宅配トラック']],
+  ['other', 'バイク・バス', { shape: 'bike', max: 26, acc: 14, turn: 2.6, r: 1.1 }, 4000, ['原付', 'オフロードバイク', 'アメリカンバイク', 'レーサーバイク', 'ミニバイク', 'ミニバス', '遊園地のバス', '2階建て観光バス', '夜行バス', 'シャトルバス']],
+];
+const CAR_PAL = [0xe74c3c, 0x3498db, 0x2ecc71, 0xf1c40f, 0x9b59b6, 0xe67e22, 0x1abc9c, 0xecf0f1, 0x34495e, 0xfd79a8];
+const CARS100 = [];
+CAR_CLASSES.forEach(([cid, cname, base, price, names], ci) => {
+  names.forEach((nm, i) => {
+    const o = Object.assign({}, base);
+    const j = ((i * 37 + ci * 11) % 10) / 10;
+    o.max = Math.round((base.max + j * 6) * 10) / 10; o.acc = Math.round((base.acc + j * 3) * 10) / 10;
+    if (cid === 'other' && i >= 5) Object.assign(o, { shape: 'bus', double: i === 7, max: 21 + j * 3, acc: 8, turn: 1.4, r: 2.6 });
+    if (cid === 'work' && (i === 1 || i === 5)) { o.shape = 'van'; o.r = 1.9; }
+    if (cid === 'work' && i === 3) o.siren = [0xff3b30, 0xff3b30];
+    if (cid === 'work' && (i === 0 || i === 9)) o.bed = i === 0;
+    const id = `car_${cid}_${i}`;
+    CARS100.push(id);
+    CAR_TYPES[id] = Object.assign(o, { name: `${nm}（${cname}）`, price: Math.round(price * (1 + i * 0.12) / 100) * 100, color: CAR_PAL[(i + ci) % CAR_PAL.length], color2: cid === 'classic' ? 0xffffff : undefined, cls: cid, desc: `${cname}・最高速度 ${Math.round(o.max * 3.6)}km/h${o.ev ? '・ガソリンいらず' : ''}` });
+  });
+});
+MY_CARS.push(...CARS100);
+
+/* ---- 車の塗装 40 ---- */
+const PAINTS = [['赤', 0xd63031], ['朱色', 0xe55039], ['ワインレッド', 0x7b1e2b], ['ピンク', 0xfd79a8], ['さくら色', 0xfbd3e0], ['オレンジ', 0xe67e22], ['山吹色', 0xf6b93b], ['黄色', 0xf1c40f], ['レモン', 0xfff200], ['黄緑', 0xa3cb38],
+  ['若草色', 0xc4e538], ['緑', 0x27ae60], ['深緑', 0x0b6e4f], ['ミント', 0x55efc4], ['エメラルド', 0x009473], ['水色', 0x74b9ff], ['空色', 0x82ccdd], ['青', 0x0984e3], ['紺', 0x1e3799], ['群青', 0x3c40c6],
+  ['むらさき', 0x8e44ad], ['ラベンダー', 0xb8a9e0], ['すみれ色', 0x6c3483], ['白', 0xf5f6fa], ['パールホワイト', 0xfdfcf7], ['銀', 0xbdc3c7], ['グレー', 0x7f8c8d], ['ガンメタル', 0x4b5563], ['黒', 0x1e1e1e], ['茶色', 0x8d5a2b],
+  ['こげ茶', 0x4e342e], ['ベージュ', 0xd8c3a5], ['クリーム', 0xfff3d6], ['金', 0xd4a017], ['銅', 0xb87333], ['ローズゴールド', 0xe0a899], ['ターコイズ', 0x1abc9c], ['コーラル', 0xff7f50], ['マゼンタ', 0xd81b60], ['ミッドナイトブルー', 0x191970]]
+  .map(([n, c], i) => ({ id: `p_${i}`, name: `${n}の塗装`, c, price: 500 + (i % 10) * 250 }));
+const PAINT_BY = Object.fromEntries(PAINTS.map(p => [p.id, p]));
+const paintColor = () => state.paintSel && PAINT_BY[state.paintSel] ? PAINT_BY[state.paintSel].c : undefined;
+
+/* ---- 1 から 400 までの一覧 ---- */
+function allAdditions400() {
+  const list = [];
+  for (const f of FURN) list.push(['家具', f.name, `${yen(f.price)}・家具屋で買える`]);
+  for (const w of WALLPAPERS) list.push(['壁紙', w.name, `${yen(w.price)}・家具屋で買える`]);
+  for (const f of FLOORS) list.push(['床', f.name, `${yen(f.price)}・家具屋で買える`]);
+  for (const id of CARS100) list.push(['車', CAR_TYPES[id].name, `${yen(CAR_TYPES[id].price)}・${CAR_TYPES[id].desc}`]);
+  for (const p of PAINTS) list.push(['車の塗装', p.name, `${yen(p.price)}・カーショップで買える`]);
+  return list.map((r, i) => ({ no: i + 1, cat: r[0], name: r[1], desc: r[2] }));
+}
+
+/* ---- 家具屋 ---- */
+let fuTab = 'furn', fuType = 'sofa';
+function openFurniture() {
+  const tabs = [['furn', '家具（200）'], ['wall', '壁紙（30）'], ['floor', '床（30）'], ['mine', '持っている家具']];
+  let html = `<div class="chips">${tabs.map(t => `<button class="chipb${fuTab === t[0] ? ' on' : ''}" data-ft="${t[0]}" type="button">${t[1]}</button>`).join('')}</div>
+    <div class="muted">買った家具は、家の中の「家具の部屋」にならびます（1部屋に9こ）。壁紙と床は家の中ぜんぶに使われます。</div>`;
+  if (fuTab === 'furn') {
+    html += `<div class="chips">${FURN_TYPES.map(t => `<button class="chipb${fuType === t[0] ? ' on' : ''}" data-fty="${t[0]}" type="button">${t[1]}</button>`).join('')}</div>
+      <div class="list">${FURN.map((f, i) => [f, i]).filter(([f]) => f.t === fuType).map(([f, i]) => `<div class="item"><div class="row"><span class="swatch" style="background:#${new THREE.Color(f.c).getHexString()}">${f.e || ''}</span><div class="name">No.${i + 1} ${esc(f.name)}</div></div>
+        ${state.furn.includes(f.id) ? '<span class="muted">持っています</span>' : `<button class="btn primary" data-fbuy="${f.id}" type="button" ${state.money < f.price ? 'disabled' : ''}>${yen(f.price)}</button>`}</div>`).join('')}</div>`;
+  } else if (fuTab === 'wall' || fuTab === 'floor') {
+    const list = fuTab === 'wall' ? WALLPAPERS : FLOORS, own = fuTab === 'wall' ? state.wallsOwned : state.floorsOwned, sel = fuTab === 'wall' ? state.wallSel : state.floorSel;
+    html += `<div class="item"><div class="name">いまの${fuTab === 'wall' ? '壁紙' : '床'}：${sel ? esc((fuTab === 'wall' ? WALL_BY : FLOOR_BY)[sel].name) : 'はじめのまま'}</div>${sel ? `<button class="btn" data-fsel="" type="button">はじめにもどす</button>` : ''}</div>
+      <div class="list">${list.map((w, i) => `<div class="item"><div class="row"><span class="swatch" style="background:#${new THREE.Color(w.c2 != null && w.kind !== 'solid' ? w.c2 : w.c).getHexString()}"></span><div class="name">No.${i + 1} ${esc(w.name)}</div></div>
+        ${sel === w.id ? '<span class="muted">使っています</span>' : own.includes(w.id) ? `<button class="btn" data-fsel="${w.id}" type="button">使う</button>` : `<button class="btn primary" data-fwb="${w.id}" type="button" ${state.money < w.price ? 'disabled' : ''}>${yen(w.price)}</button>`}</div>`).join('')}</div>`;
+  } else {
+    html += state.furn.length ? `<div class="list">${state.furn.map(id => { const f = FURN_BY[id], off = state.furnOff.includes(id); return `<div class="item"><div class="name">${esc(f.name)}</div><button class="btn" data-ftoggle="${id}" type="button">${off ? '家に置く' : 'しまう'}</button></div>`; }).join('')}</div>` : '<div class="muted">まだ家具を持っていません。</div>';
+  }
+  svcScreen('家具屋 くつろぎ', html, b => {
+    b.querySelectorAll('[data-ft]').forEach(x => x.onclick = () => { fuTab = x.dataset.ft; openFurniture(); });
+    b.querySelectorAll('[data-fty]').forEach(x => x.onclick = () => { fuType = x.dataset.fty; openFurniture(); });
+    b.querySelectorAll('[data-fbuy]').forEach(x => x.onclick = () => { const f = FURN_BY[x.dataset.fbuy]; if (pay(f.price, `${f.name}を買った！家の「家具の部屋」に置きました`)) { state.furn.push(f.id); save(); openFurniture(); } });
+    b.querySelectorAll('[data-fwb]').forEach(x => x.onclick = () => {
+      const isW = fuTab === 'wall', it = (isW ? WALL_BY : FLOOR_BY)[x.dataset.fwb];
+      if (!pay(it.price, `${it.name}を買った！`)) return;
+      (isW ? state.wallsOwned : state.floorsOwned).push(it.id); if (isW) state.wallSel = it.id; else state.floorSel = it.id; save(); openFurniture();
+    });
+    b.querySelectorAll('[data-fsel]').forEach(x => x.onclick = () => { if (fuTab === 'wall') state.wallSel = x.dataset.fsel || null; else state.floorSel = x.dataset.fsel || null; toast('模様がえしました'); save(); openFurniture(); });
+    b.querySelectorAll('[data-ftoggle]').forEach(x => x.onclick = () => { const id = x.dataset.ftoggle; if (state.furnOff.includes(id)) state.furnOff = state.furnOff.filter(i => i !== id); else state.furnOff.push(id); save(); openFurniture(); });
+  });
+}
+
+/* ---- カーショップ（車 116 台と塗装 40 色） ---- */
+let dlTab = 'cars', dlCls = 'first';
+function openDealer() {
+  const bar = (v, max) => `<i><b style="width:${Math.min(100, Math.round(v / max * 100))}%"></b></i>`;
+  const tabs = [['cars', `車を買う（${MY_CARS.length}台）`], ['paint', '塗装（40色）']];
+  let html = `<div class="chips">${tabs.map(t => `<button class="chipb${dlTab === t[0] ? ' on' : ''}" data-dt="${t[0]}" type="button">${t[1]}</button>`).join('')}</div>`;
+  if (dlTab === 'cars') {
+    const classes = [['first', 'はじめからの16台'], ...CAR_CLASSES.map(c => [c[0], c[1]])];
+    const list = dlCls === 'first' ? MY_CARS.filter(t => !CAR_TYPES[t].cls) : MY_CARS.filter(t => CAR_TYPES[t].cls === dlCls);
+    html += `<div class="chips">${classes.map(c => `<button class="chipb${dlCls === c[0] ? ' on' : ''}" data-dc="${c[0]}" type="button">${c[1]}</button>`).join('')}</div>
+      <div class="list">${list.map(t => { const c = CAR_TYPES[t], owned = state.cars.includes(t), no = MY_CARS.indexOf(t) + 1;
+        return `<div class="item"><div class="row"><span class="swatch" style="background:#${c.color.toString(16).padStart(6, '0')}"></span><div><div class="name">No.${no} ${esc(c.name)}</div><div class="sub">${esc(c.desc)}</div></div></div>
+          <div class="stat-grid"><span>最高速度</span>${bar(c.max, 60)}<span>加速</span>${bar(c.acc, 30)}</div>
+          ${owned ? `<button class="btn" data-ride="${t}" type="button">乗る</button>` : `<button class="btn primary" data-buy="${t}" type="button" ${state.money < c.price ? 'disabled' : ''}>${yen(c.price)}で買う</button>`}</div>`; }).join('')}</div>`;
+  } else {
+    html += `<div class="item"><div class="name">いまのマイカーの色：${state.paintSel ? esc(PAINT_BY[state.paintSel].name) : 'その車のもとの色'}</div>${state.paintSel ? '<button class="btn" data-psel="" type="button">もとの色にもどす</button>' : ''}</div>
+      <div class="list">${PAINTS.map((pt, i) => `<div class="item"><div class="row"><span class="swatch" style="background:#${new THREE.Color(pt.c).getHexString()}"></span><div class="name">No.${i + 1} ${esc(pt.name)}</div></div>
+        ${state.paintSel === pt.id ? '<span class="muted">ぬっています</span>' : state.paints.includes(pt.id) ? `<button class="btn" data-psel="${pt.id}" type="button">ぬる</button>` : `<button class="btn primary" data-pbuy="${pt.id}" type="button" ${state.money < pt.price ? 'disabled' : ''}>${yen(pt.price)}</button>`}</div>`).join('')}</div>`;
+  }
+  svcScreen('カーショップ ブーン', html, b => {
+    b.querySelectorAll('[data-dt]').forEach(x => x.onclick = () => { dlTab = x.dataset.dt; openDealer(); });
+    b.querySelectorAll('[data-dc]').forEach(x => x.onclick = () => { dlCls = x.dataset.dc; openDealer(); });
+    b.querySelectorAll('[data-buy]').forEach(x => x.onclick = () => {
+      const t = x.dataset.buy, c = CAR_TYPES[t];
+      if (state.money < c.price) return;
+      state.money -= c.price; state.cars.push(t); sfx('lvl');
+      toast(`${c.name}を買った！`, 'big');
+      closeScreen(); summonCar(t);
+    });
+    b.querySelectorAll('[data-ride]').forEach(x => x.onclick = () => { closeScreen(); summonCar(x.dataset.ride); if (myCar) enterCar(myCar); });
+    const repaint = () => { if (myCar && !inHome) { const t = myCar.type; summonCar(t); } };
+    b.querySelectorAll('[data-pbuy]').forEach(x => x.onclick = () => { const pt = PAINT_BY[x.dataset.pbuy]; if (!pay(pt.price, `${pt.name}をした！`)) return; state.paints.push(pt.id); state.paintSel = pt.id; repaint(); save(); openDealer(); });
+    b.querySelectorAll('[data-psel]').forEach(x => x.onclick = () => { state.paintSel = x.dataset.psel || null; repaint(); toast('マイカーの色をかえました'); save(); openDealer(); });
+  });
+}
+
+const placedFurn = () => state.furn.filter(id => !state.furnOff.includes(id));
 
 /* =========================================================
    boot
