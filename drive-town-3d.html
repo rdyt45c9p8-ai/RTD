@@ -627,7 +627,7 @@ function loadSave() {
 }
 function save() {
   try {
-    if (P) state.pos = { x: P.inCar ? P.inCar.x : P.x, z: P.inCar ? P.inCar.z : P.z };
+    if (P) state.pos = (typeof inHome !== 'undefined' && inHome) ? { x: PLACES[5].mx + 2, z: PLACES[5].mz } : { x: P.inCar ? P.inCar.x : P.x, z: P.inCar ? P.inCar.z : P.z };
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
   } catch (e) { /* storage unavailable */ }
 }
@@ -1271,6 +1271,7 @@ function exitCar(silent) {
   if (!silent) sfx('click');
 }
 function summonCar(type) {
+  if (inHome) { toast('車は家の外でよんでね'); return; }
   if (myCar && P.inCar === myCar) exitCar(true);
   if (myCar) myCar.remove();
   state.carSel = type;
@@ -1382,6 +1383,7 @@ canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointerc
    ========================================================= */
 function playerPos() { return P.inCar ? { x: P.inCar.x, z: P.inCar.z } : { x: P.x, z: P.z }; }
 function getInteraction() {
+  if (inHome) return homeInteraction();
   const { x, z } = playerPos();
   for (const p of PLACES) {
     const r = P.inCar ? 4.8 : 3.3;
@@ -1408,7 +1410,7 @@ function usePlace(p) {
   else if (p.id === 'chef') openChef();
   else if (p.id === 'engineer') openStudio();
   else if (p.id === 'dealer') openDealer();
-  else if (p.id === 'home') openHome();
+  else if (p.id === 'home') enterHome();
 }
 
 /* =========================================================
@@ -2703,6 +2705,7 @@ function updateSky() {
 let titleT = 0, clockAcc = 0, saveAcc = 0, elapsed = 0;
 const tmpV = new THREE.Vector3();
 function updatePlayer(dt) {
+  if (act) { updateAct(dt); return; }
   const inp = readMove();
   if (P.inCar) {
     P.inCar.drive(dt, inp);
@@ -2792,6 +2795,7 @@ function frame(now) {
   if (full) return;
   updateSky();
   weatherSky();
+  if (inHome) { hemi.intensity = Math.max(hemi.intensity, 0.95); sun.intensity = Math.max(sun.intensity, 0.55); scene.fog.near = 200; scene.fog.far = 600; }
   if (running) { updateWeather(dt); updateFireworks(dt); }
   // markers & arrow
   const pulse = 1 + Math.sin(elapsed * 4) * 0.06;
@@ -4560,7 +4564,7 @@ function buildWeather() {
   snowObj.frustumCulled = false; snowObj.visible = false; scene.add(snowObj);
 }
 function updateWeather(dt) {
-  const w = curWx();
+  const w = inHome ? 0 : curWx();
   rainObj.visible = w === 2; snowObj.visible = w === 3;
   const cx = camera.position.x, cz = camera.position.z;
   if (w === 2) {
@@ -4690,12 +4694,13 @@ function walkSpeed(l) {
   P.running = run;
   return (run ? 11.5 : 7.5) * Math.min(1, l) * (state.stamina <= 0 ? 0.6 : 1);
 }
-function playerJump() { if (P.inCar || P.jy > 0.01 || P.sit) return; P.jv = hasOpt('trampoline') && nearHome() ? 9.5 : 6.5; state.stamina = Math.max(0, state.stamina - 0.5); sfx('jump'); }
+function playerJump() { if (P.inCar || P.jy > 0.01 || P.sit) return; P.jv = hasOpt('trampoline') && (nearHome() || (inHome && inHome.tramp && Math.hypot(P.x - inHome.tramp.x, P.z - inHome.tramp.z) < 4)) ? 9.5 : 6.5; state.stamina = Math.max(0, state.stamina - 0.5); sfx('jump'); }
 function toggleSit(b) {
   if (P.sit) { P.sit = false; return; }
   P.sit = true; P.x = b.x; P.z = b.z + (b.r ? 0 : 0); toast('ベンチで休んでいます（動くと立ちます）');
 }
 function updateBody(dt) {
+  if (act) return;
   if (P.inCar) { P.jy = 0; P.jv = 0; P.sit = false; return; }
   if (P.jy > 0 || P.jv > 0) { P.jv -= 22 * dt; P.jy = Math.max(0, P.jy + P.jv * dt); if (P.jy === 0) P.jv = 0; }
   const mv = readMove();
@@ -4839,6 +4844,7 @@ function camExtra(dt) {
   const tx = c ? c.x : P.x, tz = c ? c.z : P.z;
   for (const car of cars) car.mesh.visible = !(cam.mode === 1 && car === c && !cam.photo);
   P.person.g.visible = !c && !(cam.mode === 1 && !cam.photo);
+  if (inHome && !cam.photo && cam.mode !== 1) { camInterior(dt); return true; }
   if (cam.photo) {
     if (cam.dragT <= 0) cam.yaw += dt * 0.15;
     cam.dragT -= dt;
@@ -5085,7 +5091,7 @@ function openPhone(view = 'home') {
     });
   }
 }
-function startGig(def) { if (def.kind === 'route' || def.kind === 'carry' || def.kind === 'chase' || def.kind === 'park') startGigDrive(def); else openGig(def); }
+function startGig(def) { if (inHome && ['route', 'carry', 'chase', 'park'].includes(def.kind)) exitHome(true); if (def.kind === 'route' || def.kind === 'carry' || def.kind === 'chase' || def.kind === 'park') startGigDrive(def); else openGig(def); }
 function applyShadows() { sun.castShadow = !!state.settings.shadow; renderer.shadowMap.enabled = !!state.settings.shadow; }
 function drawBigMap(cv) {
   const c = cv.getContext('2d');
@@ -5104,6 +5110,7 @@ function travelSpots() {
   return spots.map(s => Object.assign(s, { cost: Math.round((100 + Math.hypot(s.x - x, s.z - z) * 0.6) * (hasOpt('heliport') ? 0.5 : 1)) }));
 }
 function travel(t) {
+  if (inHome) exitHome(true);
   if (job && !job.overlay) { toast('仕事中は使えません'); return; }
   if (!pay(t.cost)) return;
   closeScreen();
@@ -5143,6 +5150,7 @@ function onNewDay() {
    ========================================================= */
 let redKey = '', redCd = 0;
 function updateExtras(dt) {
+  animateInterior(dt);
   cheatTick();
   animateHome(dt);
   updateSignals();
@@ -5636,6 +5644,7 @@ function openHome() {
   const chefs = opts.map(id => OPT[id]).filter(o => o.cat === 'chef');
   const passive = opts.map(id => OPT[id]).filter(o => !o.use && o.cat !== 'chef');
   const html = `<div class="item"><div><div class="name">${STYLE_ICON[cur.style] || '🏠'} ${esc(cur.name)}</div><div class="sub">${HOUSE_TIERS[cur.tier]}・体力 ${Math.round(state.stamina)}</div></div></div>
+    ${inHome ? '' : '<button class="btn primary" id="hmIn" type="button">🚪 家の中に入る</button>'}
     <button class="btn primary" id="hmRest" type="button">休む（セーブして朝になる）</button>
     ${cur.tier >= 5 ? (chefs.length ? '<button class="btn primary" id="hmCook" type="button">🍳 ごはんを作って食べる</button>' : '<div class="muted">大豪邸なので、不動産屋で専属シェフをやとうと、ごはんを作って食べられます。</div>') : ''}
     ${uses.length ? `<h3>家でできること</h3><div class="list">${uses.map(o => `<div class="item"><div><div class="name">${esc(o.name)}</div><div class="sub">${esc(o.desc)}</div></div><button class="btn" data-use="${o.id}" type="button" ${(o.id === 'telescope' || o.id === 'hanabidai') && !night ? 'disabled' : ''}>${esc(o.use)}${(o.id === 'telescope' || o.id === 'hanabidai') && !night ? '（夜だけ）' : ''}</button></div>`).join('')}</div>` : ''}
@@ -5643,13 +5652,14 @@ function openHome() {
     <div class="muted">家やオプションは「不動産屋 すまいる」（地図の「不」）で買えます。</div>`;
   svcScreen('わが家', html, b => {
     b.querySelector('#hmRest').onclick = () => { closeScreen(); rest(); };
+    if (b.querySelector('#hmIn')) b.querySelector('#hmIn').onclick = () => { closeScreen(); enterHome(); };
     if (b.querySelector('#hmCook')) b.querySelector('#hmCook').onclick = () => openHomeCook();
     b.querySelectorAll('[data-use]').forEach(x => x.onclick = () => useHomeOpt(x.dataset.use));
   });
 }
 function useHomeOpt(id) {
   const o = OPT[id];
-  if (o.st) { state.stamina = Math.min(100, state.stamina + o.st); toast(`${o.use}… 体力 +${o.st}`); sfx('ok'); openHome(); return; }
+  if (o.st) { state.stamina = Math.min(100, state.stamina + o.st); toast(`${o.use}… 体力 +${o.st}`); sfx('ok'); if (!inHome) openHome(); return; }
   state.homeUsed = state.homeUsed && state.homeUsed.day === state.day ? state.homeUsed : { day: state.day };
   if (id === 'gameroom') { closeScreen(); openPhone('games'); return; }
   if (id === 'karaoke') { closeScreen(); openGig(GIG.karaoke); return; }
@@ -5660,14 +5670,14 @@ function useHomeOpt(id) {
   if (id === 'telescope') { addMoney(500); toast('流れ星を見つけた！ねがいがかなって +500円', 'money'); sfx('lvl'); }
   if (id === 'pingpong') { const n = 5 + Math.floor(Math.random() * 20); addMoney(100); toast(`卓球で${n}回ラリーが続いた！ 運動ボーナス +100円`, 'money'); state.stamina = Math.max(0, state.stamina - 10); }
   if (id === 'bowling') { const sc = 80 + Math.floor(Math.random() * 200); addMoney(300); toast(`ボウリングで${sc}点！ 運動ボーナス +300円`, 'money'); state.stamina = Math.max(0, state.stamina - 10); }
-  openHome();
+  if (!inHome) openHome();
 }
 
 /* ---------- おうちごはん（大豪邸だけ） ---------- */
 let cook = null;
-function openHomeCook() {
+function openHomeCook(only) {
   if (HOUSE[state.house].tier < 5) { toast('ごはんを作れるのは大豪邸だけです'); return; }
-  const menus = myOpts().map(id => OPT[id]).filter(o => o.cat === 'chef').map(o => ({ o, m: HOME_MENUS[o.menu] }));
+  const menus = myOpts().map(id => OPT[id]).filter(o => o.cat === 'chef' && (!only || typeof only !== 'string' || o.id === only)).map(o => ({ o, m: HOME_MENUS[o.menu] }));
   cook = { menus, dish: null, ing: null, plate: [], cooking: null };
   $('#gTitle').textContent = '🍳 おうちごはん';
   $('#gTimeWrap').hidden = true; setText($('#gScore'), '—');
@@ -5685,7 +5695,7 @@ function startCook(menu, dish) {
   $('#gBody').innerHTML = `<div class="k-orders"><div class="ticket active"><div class="t-name"><span>${dish[1]}</span>${esc(dish[0])}</div><div class="t-steps" id="hcSteps"></div></div></div>
     <div class="k-mid"><div class="plate-dish" id="hcPlate"></div><div class="g-msg" id="gMsg"></div>
     <div class="k-cook" id="hcCook" hidden><div><div id="hcCookName" style="font-size:18px"></div><div class="k-bar"><div class="z1"></div><div class="z2"></div><div class="needle" id="hcNeedle"></div></div><button class="btn primary" id="hcStop" type="button" style="font-size:20px;padding:12px 40px">ストップ！</button></div></div>
-    <div class="k-cook" id="hcDone" hidden><div><div style="font-size:64px">${dish[1]}</div><div style="font-family:var(--display);font-size:22px">${esc(dish[0])}ができた！</div><button class="btn primary" id="hcEat" type="button" style="font-size:20px;padding:12px 40px">いただきます！</button></div></div></div>
+    <div class="k-cook" id="hcDone" hidden><div><div style="font-size:64px">${dish[1]}</div><div style="font-family:var(--display);font-size:22px">${esc(dish[0])}ができた！</div><button class="btn primary" id="hcEat" type="button" style="font-size:20px;padding:12px 40px">${inHome ? 'テーブルで食べる' : 'いただきます！'}</button></div></div></div>
     <div class="k-ingr">${keys.map(k => `<button class="ing" data-hc="${k}" type="button"><span>${menu.ing[k][1]}</span>${menu.ing[k][0]}${menu.ing[k][2] ? `<small>${menu.ing[k][2]}</small>` : ''}</button>`).join('')}</div>`;
   $('#gBody').querySelectorAll('[data-hc]').forEach(b => b.onclick = () => cookPress(b.dataset.hc));
   $('#hcStop').onclick = cookStopHome;
@@ -5720,9 +5730,9 @@ function cookUpdate(dt) {
 }
 function eatHome() {
   const d = cook.dish; cook = null;
-  state.stamina = 100; state.buffDay = state.day;
-  closeScreen(); sfx('lvl');
-  svcScreen('ごちそうさま！', `<div style="font-size:64px;text-align:center">${d[1]}</div><div class="res-rows"><div><span>食べた料理</span><span>${esc(d[0])}</span></div><div><span>体力</span><span>満タン</span></div><div><span>まんぷくボーナス</span><span>今日の仕事のお金 1.1倍</span></div></div>`);
+  closeScreen();
+  if (inHome && inHome.chairs.length) { startEat(d); return; }
+  finishMeal(d);
 }
 
 /* ---------- 朝の家の収入 ---------- */
@@ -5766,10 +5776,360 @@ function toggleCheat() {
 }
 function cheatTick() { if (state.cheat && state.money < 999999999) state.money = 999999999; }
 
+
+/* =========================================================
+   家の中（部屋・シェフ・食べるモーション）
+   ========================================================= */
+const IN_X = 2000, IN_Z = 0, ROOM = 10, GAP = 2.4, COLS = 5;
+let inHome = null;
+const imatCache = {};
+const imat = (c, o) => { const k = c + (o ? JSON.stringify(o) : ''); return imatCache[k] || (imatCache[k] = lam(c, o)); };
+
+function ib(g, w, h, d, c, x, y, z, col) {
+  const m = new THREE.Mesh(BX(w, h, d), typeof c === 'number' ? imat(c) : c);
+  m.position.set(x, y, z); m.castShadow = h > 0.3; m.receiveShadow = true; g.add(m);
+  if (col) icol(x, z, w, d, h + y);
+  return m;
+}
+function im(g, geo, c, x, y, z) { const m = new THREE.Mesh(geo, typeof c === 'number' ? imat(c) : c); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; }
+function icol(x, z, w, d, h) { const b = { x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, h: h || 2.4 }; boxes.push(b); inHome.cols.push(b); }
+const spotRingGeo = new THREE.RingGeometry(0.55, 0.75, 24), spotRingMat = new THREE.MeshBasicMaterial({ color: 0xffc928, side: THREE.DoubleSide });
+function spot(x, z, label, fn, r) {
+  inHome.spots.push({ x, z, label, fn, r: r || 2.3 });
+  const ring = new THREE.Mesh(spotRingGeo, spotRingMat); ring.rotation.x = -Math.PI / 2; ring.position.set(x, 0.07, z); inHome.g.add(ring);
+}
+function emojiSprite(e, size) {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'); g.font = '100px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(e, 64, 72);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthWrite: false })); s.scale.set(size, size, 1); return s;
+}
+function makeChef(hatColor) {
+  const p = makePerson({ shirt: 0xffffff, pants: 0x2d3436, hair: 0x3a2a1e });
+  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.26, 0.55, 12), imat(hatColor || 0xffffff)); hat.position.y = 2.6; p.g.add(hat);
+  const top = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 8), imat(hatColor || 0xffffff)); top.position.y = 2.88; p.g.add(top);
+  const apron = new THREE.Mesh(BX(0.6, 0.7, 0.05), imat(0xdfe6e9)); apron.position.set(0, 1.15, 0.23); p.g.add(apron);
+  return p;
+}
+
+/* ---- 部屋ごとの家具 ---- */
+const CHEF_INFO = {
+  chef_sushi: ['寿司', '🍣', 0x8d5a2b], chef_french: ['フレンチ', '🥩', 0x2d3436], chef_chinese: ['中華', '🥟', 0xc0392b], chef_italian: ['イタリアン', '🍝', 0x27ae60],
+  chef_yakiniku: ['焼肉', '🥩', 0x6d4c41], chef_ramen: ['ラーメン', '🍜', 0xe67e22], chef_tempura: ['天ぷら', '🍤', 0xf6b93b], chef_curry: ['カレー', '🍛', 0xd35400],
+  chef_cake: ['パティシエ', '🍰', 0xfd79a8], chef_bread: ['パン', '🥐', 0xe1a95f],
+};
+function roomInfo(id) {
+  const o = OPT[id];
+  return () => { toast(`${o.name}：${o.desc}`); sfx('click'); };
+}
+function buildRoom(r, g, cx, cz) {
+  const id = r.id, B = (...a) => ib(g, ...a), M = (...a) => im(g, ...a);
+  const back = cz + ROOM / 2 - 1.2;
+  if (id === 'living') {
+    B(5, 0.8, 1.6, 0x6c5ce7, cx, 0.4, back, true); B(5, 0.9, 0.4, 0x6c5ce7, cx, 0.85, back + 0.6);
+    B(2.4, 0.4, 1.2, 0x8d5a2b, cx, 0.2, cz + 1, true);
+    B(3.2, 1.8, 0.2, 0x111111, cx, 1.3, cz - 3.6); B(3, 1.6, 0.05, imat(0x3d7bd8, { emissive: 0x1d3b68 }), cx, 1.3, cz - 3.48);
+    B(4, 0.02, 3, 0xe17055, cx, 0.02, cz + 1);
+    spot(cx, cz + 2.4, 'ソファでくつろぐ（家のメニュー）', () => openHome());
+  } else if (id === 'dining') {
+    B(6, 0.12, 2, 0x8d5a2b, cx, 0.95, cz, false); for (const x of [-2.6, 2.6]) for (const z of [-0.8, 0.8]) B(0.12, 0.9, 0.12, 0x5d4037, cx + x, 0.45, cz + z);
+    icol(cx, cz, 6, 2, 1);
+    inHome.chairs = [];
+    for (let i = 0; i < 6; i++) { const x = cx - 2 + (i % 3) * 2, z = cz + (i < 3 ? -1.7 : 1.7); B(0.7, 0.5, 0.7, 0xa0522d, x, 0.25, z); B(0.7, 0.9, 0.12, 0xa0522d, x, 0.95, z + (i < 3 ? -0.3 : 0.3)); inHome.chairs.push({ x, z, face: i < 3 ? 0 : Math.PI }); }
+    inHome.table = { x: cx, z: cz };
+    M(new THREE.CylinderGeometry(0.4, 0.4, 0.05, 16), 0xffffff, cx - 2, 1.04, cz - 0.6);
+    spot(cx, cz - 2.6, 'テーブルにつく', () => { if (inHome.dish) startEat(inHome.dish); else toast(HOUSE[state.house].tier >= 5 ? 'シェフの部屋で料理をたのもう' : '大豪邸ならシェフに料理をたのめます'); }, 2.6);
+  } else if (id === 'bedroom' || id === 'bed') {
+    const big = id === 'bed';
+    B(big ? 4.2 : 2.4, 0.6, 3.4, 0xffffff, cx, 0.3, back - 1.2, true);
+    B(big ? 4.2 : 2.4, 0.2, 2.2, big ? 0xc0392b : 0x74b9ff, cx, 0.7, back - 0.8);
+    B(big ? 4.4 : 2.6, 1.2, 0.2, 0x5d4037, cx, 0.6, back + 0.5);
+    B(0.8, 0.6, 0.8, 0x8d5a2b, cx + (big ? 3 : 2), 0.3, back);
+    spot(cx, cz, '休む（セーブして朝になる）', () => rest());
+  } else if (id === 'entrance') {
+    B(3, 2.6, 0.3, 0x5d4037, cx, 1.3, cz - ROOM / 2 + 0.2);
+    B(0.8, 1, 0.8, 0x2d3436, cx - 3, 0.5, cz - 3);
+    if (HOUSE[state.house].tier >= 4) {
+      const butler = makePerson({ shirt: 0x2d3436, pants: 0x2d3436, hair: 0xb2bec3 }); butler.g.position.set(cx + 2.5, 0, cz - 1); butler.g.rotation.y = -Math.PI / 2; g.add(butler.g);
+      inHome.npcs.push({ p: butler, kind: 'idle' });
+      spot(cx + 2.5, cz - 1, '執事と話す', () => toast(pick(['執事「おかえりなさいませ」', '執事「今日もお仕事おつかれさまです」', '執事「お食事はシェフにお申しつけください」'])));
+    }
+    spot(cx, cz - ROOM / 2 + 1.4, '外に出る', () => exitHome());
+  } else if (CHEF_INFO[id]) {
+    const [nm, e, col] = CHEF_INFO[id];
+    B(6, 1, 1, 0xdfe6e9, cx, 0.5, back, true); B(6, 0.08, 1.05, 0x636e72, cx, 1.04, back);
+    B(1, 1, 3, 0xdfe6e9, cx - 3.5, 0.5, back - 1.5, true);
+    B(1.2, 2.2, 1, 0xf5f6fa, cx + 3.6, 1.1, back, true);
+    M(new THREE.CylinderGeometry(0.35, 0.3, 0.4, 12), 0x95a5a6, cx - 1, 1.3, back);
+    M(new THREE.CylinderGeometry(0.4, 0.4, 0.05, 16), 0xffffff, cx + 1, 1.1, back);
+    const fs = emojiSprite(e, 0.8); fs.position.set(cx + 1, 1.5, back); g.add(fs);
+    B(6.4, 0.6, 0.2, col, cx, 2.2, back + 0.55);
+    const chef = makeChef(); chef.g.position.set(cx, 0, back - 1.1); chef.g.rotation.y = Math.PI; g.add(chef.g);
+    inHome.npcs.push({ p: chef, kind: 'chef' });
+    spot(cx, back - 2.6, `シェフ（${nm}）に料理をたのむ`, () => openHomeCook(id), 2.6);
+  } else if (id === 'garage_s' || id === 'garage_m' || id === 'garage_l') {
+    B(8, 0.02, 8, 0x636e72, cx, 0.02, cz);
+    const t = myCar ? myCar.type : state.carSel;
+    const car = makeCarMesh(t).g; car.position.set(cx, 0, cz + 1); g.add(car); icol(cx, cz + 1, 2.4, 4.6, 1.8);
+    B(0.2, 2.2, 2, 0x7f8c8d, cx - 4.5, 1.1, cz);
+    spot(cx, cz - 2.8, '車で出かける', () => { exitHome(true); if (!myCar) summonCar(state.carSel); const home = PLACES.find(p => p.id === 'home'); myCar.x = home.sx; myCar.z = home.sz; myCar.h = home.sh; myCar.speed = 0; myCar.sync(); enterCar(myCar); cam.yaw = myCar.h; });
+  } else if (id === 'pool') {
+    B(8, 0.25, 6, 0xdfe6e9, cx, 0.1, cz + 0.6); B(7.4, 0.06, 5.4, imat(0x4fb3e8, { emissive: 0x0b3a55 }), cx, 0.25, cz + 0.6);
+    spot(cx, cz - 3.2, '泳ぐ', () => homeAct('swim', cx, cz + 0.6, 'pool'));
+  } else if (id === 'onsen') {
+    M(new THREE.CylinderGeometry(3, 3.2, 0.5, 20), 0x9aa0a6, cx, 0.25, cz + 1); M(new THREE.CylinderGeometry(2.6, 2.6, 0.06, 20), imat(0x7ed6df, { emissive: 0x1a4a50 }), cx, 0.5, cz + 1);
+    for (let i = 0; i < 8; i++) M(new THREE.DodecahedronGeometry(0.45), 0x7f8c8d, cx + Math.cos(i * 0.8) * 3, 0.5, cz + 1 + Math.sin(i * 0.8) * 3);
+    for (let i = 0; i < 4; i++) { const s = emojiSprite('♨️', 1); s.position.set(cx - 1.5 + i, 1.5, cz + 1); g.add(s); inHome.steam.push(s); }
+    spot(cx, cz - 2.8, '温泉に入る', () => homeAct('soak', cx, cz + 1, 'onsen'));
+  } else if (id === 'sauna') {
+    B(ROOM - 1, 0.02, ROOM - 1, 0xc49a6c, cx, 0.02, cz);
+    for (const [y, z] of [[0.4, back - 0.2], [0.8, back + 0.4]]) B(7, 0.15, 1, 0xa0522d, cx, y, z);
+    B(1.2, 1, 1.2, 0x2d3436, cx - 3.5, 0.5, cz - 2, true); M(new THREE.DodecahedronGeometry(0.35), 0xe17055, cx - 3.5, 1.2, cz - 2);
+    spot(cx, cz, 'サウナに入る', () => homeAct('sit', cx, back - 0.2, 'sauna'));
+  } else if (id === 'hammock') {
+    for (const x of [-2.2, 2.2]) B(0.2, 2.2, 0.2, 0x8d5a2b, cx + x, 1.1, cz);
+    B(4, 0.1, 1.2, 0xff7675, cx, 1.0, cz);
+    spot(cx, cz - 1.6, 'ハンモックでひとやすみ', () => homeAct('lie', cx, cz, 'hammock'));
+  } else if (id === 'theater') {
+    B(6, 3, 0.2, 0x111111, cx, 1.6, back + 0.5);
+    const scr = B(5.6, 2.6, 0.05, imat(0x222222, { emissive: 0x335577 }), cx, 1.6, back + 0.38); inHome.screens.push(scr);
+    for (const z of [cz - 1, cz - 3]) B(5, 0.6, 1.2, 0xc0392b, cx, 0.3, z, true);
+    spot(cx, cz, '映画を見る', () => homeAct('sit', cx, cz - 1, 'theater'));
+  } else if (id === 'gym') {
+    B(1.2, 0.3, 3, 0x2d3436, cx - 2, 0.15, cz + 1, true); B(1.2, 1.4, 0.15, 0x636e72, cx - 2, 0.9, cz + 2.4);
+    B(3, 0.1, 0.1, 0x95a5a6, cx + 2, 1.2, back); for (const x of [-1.4, 1.4]) M(new THREE.CylinderGeometry(0.35, 0.35, 0.2, 12), 0x2d3436, cx + 2 + x, 1.2, back).rotation.z = Math.PI / 2;
+    B(2, 0.3, 0.6, 0x2d3436, cx + 2, 0.4, cz, true);
+    spot(cx - 2, cz - 1.4, 'ランニングマシンで走る', () => homeAct('run', cx - 2, cz + 0.8, 'gym'));
+  } else if (id === 'gameroom') {
+    for (let i = 0; i < 3; i++) { B(1.1, 2, 1, 0x6c5ce7 + i * 0x101010, cx - 2.5 + i * 2.5, 1, back, true); const s = B(0.9, 0.7, 0.05, imat(0x111111, { emissive: [0xff3f34, 0x0be881, 0x0fbcf9][i] }), cx - 2.5 + i * 2.5, 1.5, back - 0.52); inHome.screens.push(s); }
+    spot(cx, cz - 1, 'ゲームで遊ぶ', () => useHomeOpt('gameroom'));
+  } else if (id === 'karaoke') {
+    B(4, 2.2, 0.2, 0x111111, cx, 1.4, back + 0.5); const s = B(3.6, 1.9, 0.05, imat(0x111111, { emissive: 0x8e44ad }), cx, 1.4, back + 0.38); inHome.screens.push(s);
+    B(0.06, 1.4, 0.06, 0x95a5a6, cx, 0.7, cz); M(new THREE.SphereGeometry(0.12, 8, 6), 0x2d3436, cx, 1.45, cz);
+    B(5, 0.6, 1.2, 0x2980b9, cx, 0.3, cz - 3, true);
+    spot(cx, cz - 1, 'カラオケで歌う', () => useHomeOpt('karaoke'));
+  } else if (id === 'piano') {
+    B(2.4, 0.5, 3, 0x111111, cx, 1.0, cz + 1, true); const lid = B(2.4, 0.05, 3, 0x111111, cx, 1.6, cz + 1.3); lid.rotation.x = -0.6;
+    B(2.2, 0.08, 0.4, 0xffffff, cx, 1.28, cz - 0.6); for (const [x, z] of [[-1, 0], [1, 0], [0, 2.2]]) B(0.15, 0.8, 0.15, 0x111111, cx + x, 0.4, cz + z);
+    B(1.2, 0.5, 0.5, 0x111111, cx, 0.25, cz - 1.3);
+    spot(cx, cz - 2, 'ピアノをひく', () => useHomeOpt('piano'));
+  } else if (id === 'telescope') {
+    for (const a of [0, 2.1, 4.2]) { const l = B(0.06, 1.6, 0.06, 0x2d3436, cx + Math.sin(a) * 0.4, 0.75, cz + Math.cos(a) * 0.4); l.rotation.set(Math.cos(a) * 0.25, 0, -Math.sin(a) * 0.25); }
+    const tube = M(new THREE.CylinderGeometry(0.18, 0.25, 1.8, 12), 0xf5f6fa, cx, 1.8, cz + 0.3); tube.rotation.x = -0.9;
+    B(4, 2.4, 0.1, imat(0x0c1430, { emissive: 0x0c1430 }), cx, 1.6, back + 0.6);
+    spot(cx, cz - 1.2, '星をながめる（夜だけ）', () => { if (!(state.time / 60 >= 19 || state.time / 60 < 5)) { toast('星は夜に見えます'); return; } useHomeOpt('telescope'); });
+  } else if (id === 'hanabidai') {
+    B(2, 1, 1, 0x636e72, cx, 0.5, cz, true); M(new THREE.CylinderGeometry(0.3, 0.35, 0.2, 16), 0xe74c3c, cx, 1.1, cz);
+    spot(cx, cz - 1.4, '花火を打ち上げる（夜だけ）', () => { if (!(state.time / 60 >= 19 || state.time / 60 < 5)) { toast('花火は夜に打ち上げよう'); return; } exitHome(true); useHomeOpt('hanabidai'); });
+  } else if (id === 'trampoline') {
+    M(new THREE.CylinderGeometry(2, 2, 0.15, 24), 0x2d3436, cx, 0.6, cz); const t = M(new THREE.TorusGeometry(2, 0.12, 6, 28), 0x0984e3, cx, 0.65, cz); t.rotation.x = Math.PI / 2;
+    inHome.tramp = { x: cx, z: cz };
+    spot(cx, cz - 2.8, 'トランポリン（この部屋ではジャンプが高い）', () => playerJump());
+  } else if (id === 'pingpong') {
+    B(2.8, 0.1, 1.6, 0x27ae60, cx, 0.8, cz, false); B(0.05, 0.18, 1.6, 0xffffff, cx, 0.94, cz); for (const [x, z] of [[-1.2, -0.6], [1.2, -0.6], [-1.2, 0.6], [1.2, 0.6]]) B(0.1, 0.8, 0.1, 0x2d3436, cx + x, 0.4, cz + z);
+    icol(cx, cz, 2.8, 1.6, 1);
+    spot(cx, cz - 1.8, '卓球をする', () => useHomeOpt('pingpong'));
+  } else if (id === 'bowling') {
+    B(1.4, 0.04, 8, 0xe1b382, cx, 0.03, cz); for (let i = 0; i < 6; i++) M(new THREE.CylinderGeometry(0.06, 0.1, 0.4, 8), 0xffffff, cx - 0.3 + (i % 3) * 0.3, 0.22, back - Math.floor(i / 3) * 0.3);
+    M(new THREE.SphereGeometry(0.2, 12, 8), 0x2d3436, cx, 0.2, cz - 3);
+    spot(cx, cz - 3.4, 'ボウリングをする', () => useHomeOpt('bowling'));
+  } else if (id === 'guest') {
+    B(2.4, 0.6, 3.4, 0xffffff, cx - 2, 0.3, back - 1.2, true); B(2.4, 0.2, 2, 0xa29bfe, cx - 2, 0.7, back - 0.8);
+    const guest = makePerson({ shirt: pick([0x00b894, 0xe17055, 0x0984e3]), pants: 0x2d3436 }); guest.g.position.set(cx + 2, 0, cz); guest.g.rotation.y = Math.PI; g.add(guest.g);
+    inHome.npcs.push({ p: guest, kind: 'idle' });
+    spot(cx + 2, cz - 1, 'ゲストと話す', () => toast(pick(['ゲスト「すてきなお部屋ですね！」', 'ゲスト「この町はいいところですね」', 'ゲスト「また泊まりに来ます」']) + '（毎朝 +800円）'));
+  } else if (id === 'saien' || id === 'onshitsu') {
+    for (let k = 0; k < 3; k++) { B(6, 0.5, 1, 0x6d4c41, cx, 0.25, cz - 2 + k * 2, true); for (let i = 0; i < 5; i++) { const s = emojiSprite(id === 'saien' ? pick(['🥕', '🥬', '🍅']) : pick(['🍓', '🍈', '🍊']), 0.7); s.position.set(cx - 2.4 + i * 1.2, 0.9, cz - 2 + k * 2); g.add(s); } }
+    spot(cx, cz - 3.6, `${OPT[id].name}を見る`, roomInfo(id));
+  } else if (id === 'chicken') {
+    B(ROOM - 1, 0.03, ROOM - 1, 0xe1c16e, cx, 0.02, cz);
+    for (let i = 0; i < 4; i++) { const ch = new THREE.Group(); const b = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), imat(0xffffff)); b.position.y = 0.3; const c = new THREE.Mesh(BX(0.1, 0.12, 0.1), imat(0xe74c3c)); c.position.set(0, 0.62, 0.15); ch.add(b, c); ch.position.set(cx - 2 + i * 1.3, 0, cz + (i % 2)); g.add(ch); inHome.hens.push(ch); }
+    const s = emojiSprite('🥚', 0.8); s.position.set(cx + 3, 1, back); g.add(s);
+    spot(cx, cz - 3, 'ニワトリ小屋を見る', roomInfo(id));
+  } else if (id === 'bees') {
+    for (let k = 0; k < 2; k++) { B(5, 0.1, 0.6, 0x8d5a2b, cx, 0.8 + k * 0.8, back, false); for (let i = 0; i < 6; i++) { const s = emojiSprite('🍯', 0.5); s.position.set(cx - 2 + i * 0.8, 1.1 + k * 0.8, back); g.add(s); } }
+    spot(cx, cz - 1, 'はちみつの棚を見る', roomInfo(id));
+  } else if (id === 'pethouse') {
+    M(new THREE.CylinderGeometry(1.2, 1.2, 0.3, 16), 0xfd79a8, cx, 0.15, cz); M(new THREE.CylinderGeometry(0.3, 0.25, 0.15, 12), 0x0984e3, cx + 2, 0.08, cz);
+    spot(cx, cz - 2, 'ペットのお部屋を見る', roomInfo(id));
+  } else if (id === 'fountain') {
+    M(new THREE.CylinderGeometry(2.2, 2.4, 0.6, 20), 0xbfc3c9, cx, 0.3, cz); M(new THREE.CylinderGeometry(1.9, 1.9, 0.06, 20), imat(0x4fb3e8, { emissive: 0x0b3a55 }), cx, 0.6, cz); M(new THREE.CylinderGeometry(0.25, 0.4, 1.6, 10), 0xd5d8dd, cx, 1, cz);
+    icol(cx, cz, 4.4, 4.4, 0.6);
+    spot(cx, cz - 3, '中庭の噴水を見る', roomInfo(id));
+  } else {
+    // 発電・駐車・防犯・ヘリポートなどはモニターのある管理室
+    B(4, 0.9, 1, 0x636e72, cx, 0.45, back - 0.5, true);
+    for (let i = 0; i < 3; i++) { const s = B(1.1, 0.8, 0.06, imat(0x111111, { emissive: [0x0be881, 0x0fbcf9, 0xffc048][i] }), cx - 1.3 + i * 1.3, 1.5, back - 0.2); inHome.screens.push(s); }
+    B(0.6, 0.5, 0.6, 0x2d3436, cx, 0.25, back - 1.6);
+    const e = { solar: '☀️', windmill: '🌬️', parking: '🅿️', security: '📹', heliport: '🚁' }[id] || '🏠';
+    const s = emojiSprite(e, 1.4); s.position.set(cx - 3.2, 1.6, cz); g.add(s);
+    spot(cx, cz - 1.5, id === 'heliport' ? 'ヘリで出かける（ファストトラベル半額）' : `${OPT[id].name}の管理室`, id === 'heliport' ? () => openPhone('map') : roomInfo(id));
+  }
+}
+const ROOM_COLORS = { living: 0xf5e6cc, dining: 0xf3d9b1, bedroom: 0xdfe6e9, bed: 0xf8c8dc, entrance: 0xcfc3b0 };
+const ROOM_NAMES = { living: 'リビング', dining: 'ダイニング', bedroom: '寝室', entrance: '玄関' };
+
+function buildInterior() {
+  const def = HOUSE[state.house];
+  const rooms = [{ id: 'living' }, { id: 'entrance' }, { id: 'dining' }, { id: 'bedroom' }];
+  for (const o of OPTIONS) if (myOpts().includes(o.id)) rooms.push({ id: o.id });
+  const rows = Math.ceil(rooms.length / COLS);
+  const g = new THREE.Group(); scene.add(g);
+  inHome = { g, cols: [], spots: [], npcs: [], screens: [], steam: [], hens: [], chairs: [], dish: null, rooms, tramp: null };
+  const step = ROOM + GAP;
+  const W = COLS * step + GAP, D = rows * step + GAP;
+  const x0 = IN_X - W / 2, z0 = IN_Z - GAP / 2;
+  // 床と外の壁
+  const floorC = def.tier >= 5 ? 0xe9e1d0 : def.tier >= 3 ? 0xd9c3a0 : 0xc8a97e;
+  ib(g, W + 40, 0.02, D + 40, 0x2d2a26, IN_X, -0.02, z0 + D / 2);
+  ib(g, W, 0.04, D, floorC, IN_X, 0.0, z0 + D / 2);
+  const wallC = def.wall;
+  for (const [x, z, w, d] of [[IN_X, z0, W, 0.4], [IN_X, z0 + D, W, 0.4], [x0, z0 + D / 2, 0.4, D], [x0 + W, z0 + D / 2, 0.4, D]]) ib(g, w, 2.6, d, wallC, x, 1.3, z, true);
+  rooms.forEach((r, i) => {
+    const c = i % COLS, row = Math.floor(i / COLS);
+    const cx = x0 + GAP + c * step + ROOM / 2, cz = z0 + GAP + row * step + ROOM / 2;
+    r.x = cx; r.z = cz;
+    const isChef = !!CHEF_INFO[r.id];
+    ib(g, ROOM, 0.03, ROOM, ROOM_COLORS[r.id] || (isChef ? 0xf5f6fa : 0xe8e0d0), cx, 0.02, cz);
+    const wc = imat(wallC);
+    // 後ろと左右の壁（前は入口を残す）
+    ib(g, ROOM, 2.4, 0.25, wc, cx, 1.2, cz + ROOM / 2, true);
+    ib(g, 0.25, 2.4, ROOM, wc, cx - ROOM / 2, 1.2, cz, true);
+    ib(g, 0.25, 2.4, ROOM, wc, cx + ROOM / 2, 1.2, cz, true);
+    for (const k of [-1, 1]) ib(g, 3.2, 2.4, 0.25, wc, cx + k * 3.4, 1.2, cz - ROOM / 2, true);
+    const name = ROOM_NAMES[r.id] || (OPT[r.id] ? OPT[r.id].name : r.id);
+    const lab = labelSprite(name, '#ffc928'); lab.scale.set(6, 1.35, 1); lab.position.set(cx, 3.6, cz + ROOM / 2 - 0.5); g.add(lab);
+    buildRoom(r, g, cx, cz);
+  });
+  inHome.entrance = rooms[1];
+  return inHome;
+}
+function enterHome() {
+  if (inHome) return;
+  if (P.inCar) exitCar(true);
+  P.sit = false;
+  buildInterior();
+  const e = inHome.entrance;
+  P.x = e.x; P.z = e.z - 2; P.h = 0; cam.yaw = 0; cam.pitch = 0.95;
+  camera.position.set(P.x, 12, P.z - 8);
+  if (petObj) { petObj.x = P.x + 1; petObj.z = P.z; }
+  sfx('ok'); toast(`${HOUSE[state.house].name}の中に入った。部屋の輪に近づいて E で使えます`);
+}
+function exitHome(silent) {
+  if (!inHome) return;
+  scene.remove(inHome.g);
+  for (const b of inHome.cols) { const i = boxes.indexOf(b); if (i >= 0) boxes.splice(i, 1); }
+  if (inHome.food) scene.remove(inHome.food);
+  inHome = null; act = null;
+  const home = PLACES.find(p => p.id === 'home');
+  P.x = home.mx + 2; P.z = home.mz; P.h = Math.PI / 2; cam.yaw = P.h; cam.pitch = 0.32;
+  camera.position.set(P.x - 8, 6, P.z);
+  if (petObj) { petObj.x = P.x - 1; petObj.z = P.z; }
+  if (!silent) sfx('click');
+}
+function homeInteraction() {
+  if (act) return null;
+  const { x, z } = playerPos();
+  let best = null, bd = 1e9;
+  for (const s of inHome.spots) { const d = Math.hypot(s.x - x, s.z - z); if (d < s.r && d < bd) { bd = d; best = s; } }
+  return best ? { label: best.label, fn: best.fn } : null;
+}
+
+/* ---- 動き（食べる・泳ぐ・温泉・走るなど） ---- */
+let act = null;
+function homeAct(kind, x, z, optId) {
+  act = { kind, t: 0, dur: kind === 'eat' ? 4.5 : 3, x, z, opt: optId, ox: P.x, oz: P.z };
+  P.x = x; P.z = z;
+}
+function startEat(dish) {
+  const ch = inHome.chairs[0], t = inHome.table;
+  inHome.dish = null;
+  const food = new THREE.Group();
+  const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.4, 0.06, 18), imat(0xffffff)); plate.position.y = 0.03; food.add(plate);
+  const sp = emojiSprite(dish[1], 0.9); sp.position.y = 0.45; food.add(sp);
+  food.position.set(ch.x, 1.02, ch.z + 0.85); scene.add(food);
+  inHome.food = food; inHome.foodSprite = sp;
+  inHome.mog = labelSprite('もぐもぐ', '#ffc928'); inHome.mog.scale.set(3, 0.7, 1); inHome.mog.visible = false; scene.add(inHome.mog);
+  void t;
+  homeAct('eat', ch.x, ch.z, null);
+  act.dish = dish; act.face = 0;
+}
+function updateAct(dt) {
+  const a = act, p = P.person;
+  a.t += dt;
+  const g = p.g;
+  g.position.set(a.x, 0, a.z); g.visible = true;
+  p.armL.rotation.set(0, 0, 0); p.armR.rotation.set(0, 0, 0); p.legL.rotation.set(0, 0, 0); p.legR.rotation.set(0, 0, 0);
+  if (a.kind === 'eat') {
+    g.rotation.y = a.face; g.position.y = -0.45;
+    p.legL.rotation.x = p.legR.rotation.x = -1.4;
+    const bite = Math.max(0, Math.sin(a.t * 4));
+    p.armR.rotation.x = -1.2 - bite * 1.3;
+    p.armL.rotation.x = -0.9;
+    const k = Math.max(0.05, 1 - a.t / a.dur);
+    inHome.foodSprite.scale.set(0.9 * k, 0.9 * k, 1);
+    inHome.mog.visible = Math.floor(a.t * 2) % 2 === 0 && a.t < a.dur - 0.5;
+    inHome.mog.position.set(a.x, 3.2, a.z);
+    if (Math.floor(a.t * 4) !== Math.floor((a.t - dt) * 4) && bite > 0.5) tone(180 + Math.random() * 60, 0.08, 'square', 0.03);
+  } else if (a.kind === 'swim') {
+    g.rotation.set(-1.3, a.t * 0.8, 0); g.position.y = 0.05 + Math.sin(a.t * 3) * 0.05;
+    p.armL.rotation.x = Math.sin(a.t * 6) * 2.2; p.armR.rotation.x = -Math.sin(a.t * 6) * 2.2;
+    p.legL.rotation.x = Math.sin(a.t * 10) * 0.4; p.legR.rotation.x = -Math.sin(a.t * 10) * 0.4;
+  } else if (a.kind === 'soak') {
+    g.rotation.set(0, Math.PI, 0); g.position.y = -0.85; p.armL.rotation.z = 0.8; p.armR.rotation.z = -0.8;
+  } else if (a.kind === 'sit') {
+    g.rotation.set(0, Math.PI, 0); g.position.y = -0.45 + (a.opt === 'sauna' ? 0.3 : 0); p.legL.rotation.x = p.legR.rotation.x = -1.4;
+  } else if (a.kind === 'lie') {
+    g.rotation.set(-Math.PI / 2, 0, Math.PI / 2); g.position.y = 1.15;
+  } else if (a.kind === 'run') {
+    g.rotation.set(0, 0, 0); g.position.y = 0.3; animPerson(p, a.t * 14, 1);
+  }
+  if (a.t >= a.dur) finishAct();
+}
+function finishAct() {
+  const a = act; act = null;
+  const g = P.person.g; g.rotation.set(0, P.h, 0);
+  if (a.kind === 'eat') {
+    if (inHome) { scene.remove(inHome.food); scene.remove(inHome.mog); inHome.food = null; }
+    P.x = a.x; P.z = a.z - 1.6;
+    finishMeal(a.dish);
+    return;
+  }
+  P.x = a.ox; P.z = a.oz;
+  const o = OPT[a.opt];
+  if (o && o.st) { state.stamina = Math.min(100, state.stamina + o.st); toast(`${o.use}… 体力 +${o.st}`); sfx('ok'); }
+  else if (a.opt === 'gym') { state.stamina = Math.max(0, state.stamina - 5); toast('いい運動になった！ジムのおかげで、体力が減りにくい体になっています'); sfx('ok'); }
+}
+function finishMeal(d) {
+  state.stamina = 100; state.buffDay = state.day; sfx('lvl');
+  svcScreen('ごちそうさま！', `<div style="font-size:64px;text-align:center">${d[1]}</div><div class="res-rows"><div><span>食べた料理</span><span>${esc(d[0])}</span></div><div><span>体力</span><span>満タン</span></div><div><span>まんぷくボーナス</span><span>今日の仕事のお金 1.1倍</span></div></div>`);
+}
+function animateInterior(dt) {
+  if (!inHome) return;
+  for (const n of inHome.npcs) {
+    if (n.kind === 'chef') { n.p.armR.rotation.x = -0.9 + Math.sin(elapsed * 5) * 0.4; n.p.armL.rotation.x = -0.6; }
+    else n.p.armR.rotation.x = Math.sin(elapsed * 1.5) * 0.1;
+  }
+  for (const s of inHome.screens) s.material.emissiveIntensity = 0.7 + Math.sin(elapsed * 3 + s.position.x) * 0.3;
+  for (const s of inHome.steam) { s.position.y = 1.2 + ((elapsed * 0.5 + s.position.x) % 1.2); s.material.opacity = 0.8 - ((elapsed * 0.5 + s.position.x) % 1.2) / 1.5; }
+  for (const h of inHome.hens) { h.rotation.y += dt * (Math.sin(elapsed + h.position.x) > 0 ? 1 : -1); h.children[0].position.y = 0.3 + Math.abs(Math.sin(elapsed * 6 + h.position.x)) * 0.05; }
+}
+function camInterior(dt) {
+  const eating = act && act.kind === 'eat';
+  if (eating) cam.yaw += angDiff(cam.yaw, act.face + Math.PI + 0.5) * Math.min(1, dt * 3);
+  else if (cam.dragT <= 0 && !act) cam.yaw += angDiff(cam.yaw, 0) * Math.min(1, dt * 1.5);
+  cam.dragT -= dt;
+  const tx = act ? act.x : P.x, tz = act ? act.z + (eating ? 0.5 : 0) : P.z;
+  const pitch = eating ? 0.55 : clamp(cam.pitch, 0.7, 1.35), dist = eating ? 5.5 : 10;
+  tmpV.set(tx - Math.sin(cam.yaw) * dist * Math.cos(pitch), 1.5 + dist * Math.sin(pitch), tz - Math.cos(cam.yaw) * dist * Math.cos(pitch));
+  camera.position.lerp(tmpV, Math.min(1, dt * 8));
+  camera.lookAt(tx, 1, tz);
+}
+
 /* =========================================================
    boot
    ========================================================= */
 function startGame(fresh) {
+  if (inHome) exitHome(true);
   initAudio();
   if (fresh) {
     try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ }
