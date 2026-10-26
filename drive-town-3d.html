@@ -369,6 +369,10 @@
   .tbtn { width: 50px; height: 50px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); font-size: 11px; display: grid; place-items: center; line-height: 1.1; }
   .tbtn span { font-size: 18px; display: block; }
   #bJump { width: 62px; height: 62px; }
+  #editBar { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); top: calc(64px + env(safe-area-inset-top, 0px)); width: min(calc(100% - 32px), 720px); background: rgba(20, 22, 30, .88); color: #fff; border-radius: 16px; padding: 10px 12px; display: grid; gap: 8px; }
+  #editBar[hidden] { display: none; }
+  #editBar .row { flex-wrap: wrap; gap: 6px; }
+  #editName { font-weight: 700; font-size: 14px; }
   #photoBar { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
   @media (max-width: 640px) {
     #tools { top: calc(132px + env(safe-area-inset-top, 0px)); }
@@ -470,6 +474,7 @@
     <button class="rbtn" id="bJump" type="button">ジャンプ<small class="kb">Space</small></button>
   </div>
 </div>
+<div id="editBar" hidden><div id="editName"></div><div class="row"><button class="btn" id="edPrev" type="button" aria-label="前の家具">◀</button><button class="btn" id="edNext" type="button" aria-label="次の家具">▶</button><button class="btn" id="edRot" type="button">回す (R)</button><button class="btn primary" id="edPlace" type="button">置く (F)</button><button class="btn" id="edNear" type="button">近くの家具</button><button class="btn" id="edBack" type="button">部屋にもどす</button><button class="btn danger" id="edEnd" type="button">終わる</button></div></div>
 <div id="photoBar" hidden><button class="btn primary" id="photoExit" type="button">写真モードを終わる</button></div>
 
 <!-- title -->
@@ -1312,6 +1317,10 @@ function onKeyPress(k) {
   if (running) cheatKey(k);
   if (mini && mini.key) { mini.key(k); return; }
   if (!running) return;
+  if (edit && !openScreen) {
+    if (k === 'r') rotateEdit(); else if (k === 'f' || k === 'e' || k === 'enter') placeEdit(); else if (k === ',') selectEdit(-1); else if (k === '.') selectEdit(1); else if (k === 'escape') endEdit();
+    return;
+  }
   if (cam.photo) { if (k === 'p' || k === 'escape') togglePhoto(); return; }
   if (openScreen) { if (k === 'escape' && ['phone', 'dealer', 'result', 'svc'].includes(openScreen)) closeScreen(); return; }
   if (k === 'e' || k === 'enter') doAction();
@@ -3587,6 +3596,7 @@ function buildExtras() {
   buildFireworks();
   buildPin();
   rebuildHome();
+  buildFriends();
 }
 
 /* =========================================================
@@ -4479,6 +4489,10 @@ function migrateState() {
   if (!HOUSE[s.house] || !s.houses.includes(s.house)) s.house = 'start';
   s.cheat = s.cheat || null;
   for (const k of ['furn', 'furnOff', 'wallsOwned', 'floorsOwned', 'paints']) if (!Array.isArray(s[k])) s[k] = [];
+  if (!s.furnPos || typeof s.furnPos !== 'object') s.furnPos = {};
+  if (!s.fr || typeof s.fr !== 'object') s.fr = {};
+  if (s.partner === undefined) s.partner = null;
+  if (s.guest === undefined) s.guest = null;
   s.wallSel = s.wallSel || null; s.floorSel = s.floorSel || null; s.paintSel = s.paintSel || null;
   for (const g of GIGS) jobState(g.id);
   ensureDaily();
@@ -4947,6 +4961,8 @@ function buyDrink() {
 function extraInteraction(x, z) {
   const inCar = !!P.inCar;
   if (inCar && Math.abs(P.inCar.speed) > 3) return null;
+  const fr = !inCar && friendNear(x, z);
+  if (fr) return { label: `${fr.name}（${relLabel(fr.id)}）と話す`, fn: () => openFriendMenu(fr.id) };
   for (const s of SERVICES) { const r = inCar ? 4.8 : 3.3; if ((x - s.mx) ** 2 + (z - s.mz) ** 2 < r * r) return { label: s.prompt, fn: () => useService(s) }; }
   for (const v of VENDING) { const r = inCar ? 3.8 : 2.4; if ((x - v.x) ** 2 + (z - v.z) ** 2 < r * r) return { label: 'ジュースを買う（130円）', fn: buyDrink }; }
   if ((x - RACE.x) ** 2 + (z - RACE.z) ** 2 < (inCar ? 7 : 3.3) ** 2 && !job) return { label: 'タイムアタックに挑戦', fn: startRace };
@@ -4960,7 +4976,7 @@ function extraInteraction(x, z) {
 const APPS = [
   ['jobs', '💼', 'しごと'], ['map', '🗺️', 'マップ'], ['mission', '✅', 'ミッション'], ['ach', '🏆', '実績'],
   ['levels', '📈', 'レベル'], ['stats', '📊', '統計'], ['weather', '🌤️', '天気'], ['cars', '🚗', 'マイカー'],
-  ['games', '🎮', 'マイゲーム'], ['settings', '⚙️', '設定'], ['list', '🆕', '追加要素200'], ['list400', '🎁', '追加要素400'], ['save', '💾', 'セーブ'],
+  ['games', '🎮', 'マイゲーム'], ['settings', '⚙️', '設定'], ['list', '🆕', '追加要素200'], ['list400', '🎁', '追加要素400'], ['friends', '💕', 'ともだち'], ['save', '💾', 'セーブ'],
 ];
 let jobFilter = 'all', listFilter = 'all', list4Filter = 'all';
 function phoneHead(title, back = true) {
@@ -5032,6 +5048,12 @@ function openPhone(view = 'home') {
     html = `${phoneHead('追加要素 200')}<div class="muted">今回ふえた200個を、1から200まで番号順にならべています。</div>
       <div class="chips">${cats.map(c => `<button class="chipb${listFilter === c ? ' on' : ''}" data-lf="${c}" type="button">${c === 'all' ? 'すべて' : c}（${c === 'all' ? all.length : all.filter(r => r.cat === c).length}）</button>`).join('')}</div>
       <ol class="add-list">${shown.map(r => `<li value="${r.no}"><b>${r.no}. ${esc(r.name)}</b><span>${esc(r.cat)}・${esc(r.desc)}</span></li>`).join('')}</ol>`;
+  } else if (view === 'friends') {
+    const g = state.guest && FR[state.guest.id];
+    html = `${phoneHead('ともだち')}<div class="muted">町の人に話しかけたり、プレゼントをわたすと仲よくなれます。友だちになると家にさそえて、親友になると告白できます。${g ? `<br>いま「${esc(g.name)}」が家に来ています。` : ''}</div>
+      <div class="list">${FRIENDS.map(f => { const fs = fstate(f.id), known = fs.met; return `<div class="item"><div style="flex:1"><div class="name">${f.g === 'f' ? '👧' : '👦'} ${known ? esc(f.name) : '？？？'}・${known ? relLabel(f.id) : 'まだ会っていない'}</div><div class="xpbar" style="--c:var(--tomato)"><b style="width:${fs.aff}%"></b></div><div class="sub">好感度 ${fs.aff} / 100</div></div>
+        <div class="row"><button class="btn" data-frpin="${f.id}" type="button">場所</button>${known ? `<button class="btn primary" data-frcall="${f.id}" type="button" ${stageOf(f.id) < 1 && state.partner !== f.id ? 'disabled' : ''}>家に呼ぶ</button>` : ''}</div></div>`; }).join('')}</div>
+      ${g ? '<button class="btn" id="frSend" type="button">家に来ている人に帰ってもらう</button>' : ''}`;
   } else if (view === 'list400') {
     const all = allAdditions400(), cats = ['all', '家具', '壁紙', '床', '車', '車の塗装'];
     const shown = list4Filter === 'all' ? all : all.filter(r => r.cat === list4Filter);
@@ -5047,6 +5069,9 @@ function openPhone(view = 'home') {
   body.querySelectorAll('[data-close]').forEach(b => b.onclick = closeScreen);
   body.querySelectorAll('[data-home]').forEach(b => b.onclick = () => openPhone('home'));
   body.querySelectorAll('[data-app]').forEach(b => b.onclick = () => { sfx('click'); openPhone(b.dataset.app); });
+  body.querySelectorAll('[data-frpin]').forEach(b => b.onclick = () => { const m = friendMeshes[b.dataset.frpin]; closeScreen(); setPin(m.x, m.z); });
+  body.querySelectorAll('[data-frcall]').forEach(b => b.onclick = () => { invite(FR[b.dataset.frcall], true); openPhone('friends'); });
+  if (body.querySelector('#frSend')) body.querySelector('#frSend').onclick = () => { sendHome(); openPhone('friends'); };
   if ($('#phQuit')) $('#phQuit').onclick = () => { quitJob(); closeScreen(); };
   if ($('#phCamp')) $('#phCamp').onclick = () => { closeScreen(); rest(); };
   body.querySelectorAll('[data-jf]').forEach(b => b.onclick = () => { jobFilter = b.dataset.jf; openPhone('jobs'); });
@@ -5121,6 +5146,7 @@ function travel(t) {
    ========================================================= */
 function onNewDay() {
   state.stamina = 100;
+  if (state.guest) { const gf = FR[state.guest.id]; state.guest = null; if (gf) toast(`${gf.name}は朝になったので帰っていきました`); if (inHome) refreshInterior(); }
   homeDaily();
   const it = Math.min(3000, Math.floor(state.bank * 0.01));
   if (it > 0) { state.bank += it; toast(`銀行の利息 +${yen(it)}`, 'money'); }
@@ -5142,6 +5168,8 @@ function onNewDay() {
 let redKey = '', redCd = 0;
 function updateExtras(dt) {
   animateInterior(dt);
+  updateFriends(dt);
+  if (inHome) { updateGuestInside(dt); updateEdit(); }
   cheatTick();
   animateHome(dt);
   updateSignals();
@@ -5816,9 +5844,10 @@ function buildRoom(r, g, cx, cz) {
   const id = r.id, B = (...a) => ib(g, ...a), M = (...a) => im(g, ...a);
   const back = cz + ROOM / 2 - 1.2;
   if (id === 'furn') {
-    const items = placedFurn().slice(r.idx * 9, r.idx * 9 + 9);
+    const items = roomFurn().slice(r.idx * 9, r.idx * 9 + 9);
     items.forEach((fid, k) => { const m = furnModel(FURN_BY[fid]); m.position.set(cx + [-3.2, 0, 3.2][k % 3], 0, cz + [3.2, 0.6, -2][Math.floor(k / 3)]); g.add(m); });
     spot(cx, cz - 3.8, 'この部屋の家具を見る', () => toast(items.map(i => FURN_BY[i].name).join('・')), 1.8);
+    spot(cx - 3.2, cz - 3.4, '模様がえ（家具を自由に置く）', startEdit, 1.2);
     return;
   }
   if (id === 'living') {
@@ -5827,6 +5856,7 @@ function buildRoom(r, g, cx, cz) {
     B(3.2, 1.8, 0.2, 0x111111, cx, 1.3, cz - 3.6); B(3, 1.6, 0.05, imat(0x3d7bd8, { emissive: 0x1d3b68 }), cx, 1.3, cz - 3.48);
     B(4, 0.02, 3, 0xe17055, cx, 0.02, cz + 1);
     spot(cx, cz + 2.4, 'ソファでくつろぐ（家のメニュー）', () => openHome());
+    spot(cx - 3.3, cz - 1.2, '模様がえ（家具を自由に置く）', startEdit, 1.3);
   } else if (id === 'dining') {
     B(6, 0.12, 2, 0x8d5a2b, cx, 0.95, cz, false); for (const x of [-2.6, 2.6]) for (const z of [-0.8, 0.8]) B(0.12, 0.9, 0.12, 0x5d4037, cx + x, 0.45, cz + z);
     icol(cx, cz, 6, 2, 1);
@@ -5971,7 +6001,7 @@ function buildInterior() {
   const chefs = OPTIONS.filter(o => o.cat === 'chef' && myOpts().includes(o.id)).map(o => o.id);
   const rooms = [{ id: 'living' }, { id: 'entrance' }, ...(chefs.length ? [] : [{ id: 'dining' }]), { id: 'bedroom' }];
   for (const o of OPTIONS) if (myOpts().includes(o.id) && o.cat !== 'chef') rooms.push({ id: o.id });
-  const furnN = Math.ceil(placedFurn().length / 9);
+  const furnN = Math.ceil(roomFurn().length / 9);
   for (let i = 0; i < furnN; i++) rooms.push({ id: 'furn', idx: i });
   const rows = Math.ceil(rooms.length / COLS);
   const HALL_D = 20;
@@ -6008,6 +6038,9 @@ function buildInterior() {
   });
   if (chefs.length) buildHall(g, x0 + GAP, z0 + GAP + rows * step, W - GAP * 2, HALL_D, chefs, wallMat);
   inHome.entrance = rooms[1];
+  inHome.bounds = { x0, x1: x0 + W, z0, z1: z0 + D };
+  freeBuild();
+  spawnGuestInside();
   return inHome;
 }
 /* シェフ全員がいる大食堂（家のいちばん奥、横いっぱい） */
@@ -6070,7 +6103,10 @@ function exitHome(silent) {
   if (!inHome) return;
   scene.remove(inHome.g);
   for (const b of inHome.cols) { const i = boxes.indexOf(b); if (i >= 0) boxes.splice(i, 1); }
+  endEdit(true);
   if (inHome.food) scene.remove(inHome.food);
+  if (inHome.gfood) scene.remove(inHome.gfood);
+  if (inHome.mog) scene.remove(inHome.mog);
   inHome = null; act = null;
   const home = PLACES.find(p => p.id === 'home');
   P.x = home.mx + 2; P.z = home.mz; P.h = Math.PI / 2; cam.yaw = P.h; cam.pitch = 0.32;
@@ -6079,11 +6115,14 @@ function exitHome(silent) {
   if (!silent) sfx('click');
 }
 function homeInteraction() {
-  if (act) return null;
+  if (act || edit) return null;
   const { x, z } = playerPos();
   let best = null, bd = 1e9;
   for (const s of inHome.spots) { const d = Math.hypot(s.x - x, s.z - z); if (d < s.r && d < bd) { bd = d; best = s; } }
-  return best ? { label: best.label, fn: best.fn } : null;
+  if (best) return { label: best.label, fn: best.fn };
+  const g = inHome.guest;
+  if (g && Math.hypot(g.x - x, g.z - z) < 2.8) return { label: `${g.f.name}と過ごす（ご飯・ゲーム）`, fn: openGuestMenu };
+  return null;
 }
 
 /* ---- 動き（食べる・泳ぐ・温泉・走るなど） ---- */
@@ -6106,6 +6145,15 @@ function startEat(dish) {
   void t;
   homeAct('eat', ch.x, ch.z, null);
   act.dish = dish; act.face = ch.face;
+  // 家に来ている友だちは向かいの席でいっしょに食べる
+  const gs = inHome.guest && guestSeatFor(ch);
+  if (gs) {
+    const gf = new THREE.Group();
+    const gp = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.4, 0.06, 18), imat(0xffffff)); gp.position.y = 0.03; gf.add(gp);
+    const gsp = emojiSprite(dish[1], 0.9); gsp.position.y = 0.45; gf.add(gsp);
+    gf.position.set(gs.x + Math.sin(gs.face) * 0.85, 1.02, gs.z + Math.cos(gs.face) * 0.85); scene.add(gf);
+    inHome.gfood = gf; act.guestSeat = gs; act.guestSprite = gsp;
+  }
 }
 function updateAct(dt) {
   const a = act, p = P.person;
@@ -6124,6 +6172,7 @@ function updateAct(dt) {
     inHome.mog.visible = Math.floor(a.t * 2) % 2 === 0 && a.t < a.dur - 0.5;
     inHome.mog.position.set(a.x, 3.2, a.z);
     if (Math.floor(a.t * 4) !== Math.floor((a.t - dt) * 4) && bite > 0.5) tone(180 + Math.random() * 60, 0.08, 'square', 0.03);
+    if (a.guestSeat && inHome.guest) guestEatPose(a);
   } else if (a.kind === 'swim') {
     g.rotation.set(-1.3, a.t * 0.8, 0); g.position.y = 0.05 + Math.sin(a.t * 3) * 0.05;
     p.armL.rotation.x = Math.sin(a.t * 6) * 2.2; p.armR.rotation.x = -Math.sin(a.t * 6) * 2.2;
@@ -6146,6 +6195,15 @@ function finishAct() {
     if (inHome) { scene.remove(inHome.food); scene.remove(inHome.mog); inHome.food = null; }
     P.x = a.x; P.z = a.z - 1.6;
     finishMeal(a.dish);
+    const gg = inHome && inHome.guest;
+    if (a.guestSeat && gg) {
+      scene.remove(inHome.gfood); inHome.gfood = null;
+      const s = a.guestSeat; gg.x = s.x; gg.z = s.z + (s.face === 0 ? -1.6 : 1.6);
+      gg.p.g.position.set(gg.x, 0, gg.z); animPerson(gg.p, 0, 0);
+      const fs = fstate(gg.f.id);
+      toast(`${gg.f.name}「${pick(['おいしかったね！', 'いっしょに食べるとおいしいね', 'ごちそうさま！また来たいな'])}」`, 'big');
+      if (fs.mealDay !== state.day) { fs.mealDay = state.day; addAff(gg.f.id, 15, 'いっしょにご飯'); }
+    }
     return;
   }
   P.x = a.ox; P.z = a.oz;
@@ -6415,6 +6473,369 @@ function openDealer() {
 }
 
 const placedFurn = () => state.furn.filter(id => !state.furnOff.includes(id));
+// 自由に置いた家具は「家具の部屋」には並べない
+const roomFurn = () => placedFurn().filter(id => !state.furnPos[id]);
+
+/* =========================================================
+   家具を自由に置く（模様がえ）
+   ========================================================= */
+let edit = null;
+const editRingGeo = new THREE.RingGeometry(1.1, 1.3, 32), editRingMat = new THREE.MeshBasicMaterial({ color: 0x0be881, side: THREE.DoubleSide });
+function addFree(fid, pos) {
+  const m = furnModel(FURN_BY[fid]);
+  m.position.set(IN_X + pos.x, 0, IN_Z + pos.z); m.rotation.y = pos.r || 0;
+  inHome.free.add(m); inHome.freeMap[fid] = m;
+}
+function freeBuild() {
+  inHome.free = new THREE.Group(); inHome.g.add(inHome.free); inHome.freeMap = {};
+  for (const [fid, pos] of Object.entries(state.furnPos)) if (FURN_BY[fid] && state.furn.includes(fid) && !state.furnOff.includes(fid)) addFree(fid, pos);
+}
+function startEdit() {
+  const list = state.furn.filter(id => !state.furnOff.includes(id));
+  if (!list.length) { toast('家具屋で家具を買うと、ここで自由に置けます'); return; }
+  edit = { list, idx: 0, rot: 0, ghost: null };
+  $('#editBar').hidden = false;
+  selectEdit(0);
+  toast('模様がえモード：歩くと家具がついてきます。好きな場所で「置く」');
+}
+function selectEdit(d) {
+  edit.idx = (edit.idx + d + edit.list.length) % edit.list.length;
+  const fid = edit.list[edit.idx];
+  if (edit.ghost) inHome.g.remove(edit.ghost);
+  for (const m of Object.values(inHome.freeMap)) m.visible = true;
+  if (inHome.freeMap[fid]) { inHome.freeMap[fid].visible = false; edit.rot = state.furnPos[fid].r || 0; }
+  edit.ghost = furnModel(FURN_BY[fid]);
+  const ring = new THREE.Mesh(editRingGeo, editRingMat); ring.rotation.x = -Math.PI / 2; ring.position.y = 0.08; edit.ghost.add(ring);
+  inHome.g.add(edit.ghost);
+  const no = FURN.findIndex(f => f.id === fid) + 1;
+  $('#editName').textContent = `No.${no} ${FURN_BY[fid].name}（${edit.idx + 1} / ${edit.list.length}）${state.furnPos[fid] ? '・置いてある' : '・家具の部屋'}`;
+}
+function updateEdit() {
+  if (!edit || !inHome) return;
+  const b = inHome.bounds;
+  const gx = clamp(Math.round((P.x + Math.sin(P.h) * 2.2) * 2) / 2, b.x0 + 1, b.x1 - 1);
+  const gz = clamp(Math.round((P.z + Math.cos(P.h) * 2.2) * 2) / 2, b.z0 + 1, b.z1 - 1);
+  edit.ghost.position.set(gx, 0.02 + Math.sin(elapsed * 6) * 0.04, gz);
+  edit.ghost.rotation.y = edit.rot;
+}
+function rotateEdit() { if (!edit) return; edit.rot = (edit.rot + Math.PI / 2) % (Math.PI * 2); sfx('click'); }
+function placeEdit() {
+  if (!edit) return;
+  const fid = edit.list[edit.idx];
+  const pos = { x: edit.ghost.position.x - IN_X, z: edit.ghost.position.z - IN_Z, r: edit.rot };
+  state.furnPos[fid] = pos;
+  if (inHome.freeMap[fid]) inHome.free.remove(inHome.freeMap[fid]);
+  addFree(fid, pos);
+  sfx('coin'); toast(`${FURN_BY[fid].name}を置いた`);
+  save();
+  selectEdit(1);
+}
+function unplaceEdit() {
+  if (!edit) return;
+  const fid = edit.list[edit.idx];
+  if (!state.furnPos[fid]) { toast('この家具は家具の部屋にあります'); return; }
+  delete state.furnPos[fid];
+  if (inHome.freeMap[fid]) { inHome.free.remove(inHome.freeMap[fid]); delete inHome.freeMap[fid]; }
+  toast(`${FURN_BY[fid].name}を家具の部屋にもどした（模様がえを終わると並びます）`); save(); selectEdit(0);
+}
+function nearestEdit() {
+  if (!edit) return;
+  let best = -1, bd = 1e9;
+  edit.list.forEach((fid, i) => { const m = inHome.freeMap[fid]; if (!m) return; const d = Math.hypot(m.position.x - P.x, m.position.z - P.z); if (d < bd) { bd = d; best = i; } });
+  if (best < 0) { toast('まだ自由に置いた家具がありません'); return; }
+  edit.idx = best; selectEdit(0);
+}
+function endEdit(noRefresh) {
+  if (!edit) return;
+  if (edit.ghost && inHome) inHome.g.remove(edit.ghost);
+  edit = null; $('#editBar').hidden = true;
+  if (!noRefresh && inHome) refreshInterior();
+  save();
+}
+function refreshInterior() {
+  const px = P.x, pz = P.z;
+  scene.remove(inHome.g);
+  for (const b of inHome.cols) { const i = boxes.indexOf(b); if (i >= 0) boxes.splice(i, 1); }
+  buildInterior();
+  const b = inHome.bounds;
+  if (px < b.x0 + 0.5 || px > b.x1 - 0.5 || pz < b.z0 + 0.5 || pz > b.z1 - 0.5) { P.x = inHome.entrance.x; P.z = inHome.entrance.z - 2; return; }
+  const r = resolve(px, pz, 0.45, P); P.x = r.x; P.z = r.z;
+}
+
+/* =========================================================
+   友だち・恋人
+   ========================================================= */
+const FRIENDS = [
+  { id: 'hana', name: 'はな', g: 'f', shirt: 0xfd79a8, pants: 0x6c5ce7, hair: 0x3a2a1e, long: true, like: 'cake', at: ['park', 12, 1.5], skill: 0.55, word: 'あまいものに目がないの' },
+  { id: 'yui', name: 'ゆい', g: 'f', shirt: 0x74b9ff, pants: 0x2d3436, hair: 0x2d1b10, long: true, like: 'book', at: ['svc', 'konbini'], skill: 0.7, word: '本を読むのが好き' },
+  { id: 'mio', name: 'みお', g: 'f', shirt: 0xfdcb6e, pants: 0x00b894, hair: 0x8a5a2b, long: false, like: 'flower', at: ['svc', 'clothes'], skill: 0.6, word: 'お花ってきれいだよね' },
+  { id: 'sakura', name: 'さくら', g: 'f', shirt: 0xffffff, pants: 0xe84393, hair: 0x1d1d1d, long: true, like: 'game', at: ['place', 'engineer'], skill: 0.85, word: 'ゲームなら負けないよ' },
+  { id: 'ren', name: 'れん', g: 'm', shirt: 0x2d3436, pants: 0x0984e3, hair: 0x1d1d1d, long: false, like: 'ball', at: ['park', -1.5, 12], skill: 0.8, word: 'サッカーが得意なんだ' },
+  { id: 'sota', name: 'そうた', g: 'm', shirt: 0x00b894, pants: 0x2d3436, hair: 0x5d4037, long: false, like: 'bento', at: ['place', 'pizza'], skill: 0.5, word: 'おなかすいたなあ' },
+  { id: 'haruto', name: 'はると', g: 'm', shirt: 0xe17055, pants: 0x636e72, hair: 0x2a1d14, long: false, like: 'plush', at: ['svc', 'petshop'], skill: 0.6, word: '動物が大好き' },
+  { id: 'kaito', name: 'かいと', g: 'm', shirt: 0x6c5ce7, pants: 0x2d3436, hair: 0xd4a373, long: false, like: 'acc', at: ['svc', 'bank'], skill: 0.75, word: 'おしゃれには気をつかってるんだ' },
+];
+const FR = Object.fromEntries(FRIENDS.map(f => [f.id, f]));
+const GIFTS = [
+  { id: 'flower', name: '花束', e: '💐', price: 500 }, { id: 'cake', name: 'ケーキ', e: '🍰', price: 800 }, { id: 'book', name: '本', e: '📚', price: 600 },
+  { id: 'plush', name: 'ぬいぐるみ', e: '🧸', price: 1200 }, { id: 'game', name: 'ゲームソフト', e: '🎮', price: 3000 }, { id: 'ball', name: 'サッカーボール', e: '⚽', price: 900 },
+  { id: 'bento', name: 'お弁当', e: '🍱', price: 700 }, { id: 'acc', name: 'アクセサリー', e: '✨', price: 2500 },
+];
+const GIFT_BY = Object.fromEntries(GIFTS.map(g => [g.id, g]));
+const STAGES = [[0, '知り合い'], [20, '友だち'], [50, 'なかよし'], [80, '親友']];
+const fstate = id => { state.fr = state.fr || {}; return state.fr[id] || (state.fr[id] = { aff: 0, met: false }); };
+const stageOf = id => { const a = fstate(id).aff; let s = 0; STAGES.forEach((st, i) => { if (a >= st[0]) s = i; }); return s; };
+const partnerWord = f => f.g === 'f' ? '彼女' : '彼氏';
+const relLabel = id => state.partner === id ? `恋人（${partnerWord(FR[id])}）` : STAGES[stageOf(id)][1];
+function addAff(id, n, why) {
+  const s = fstate(id), before = stageOf(id);
+  s.aff = clamp(s.aff + n, 0, 100);
+  const after = stageOf(id);
+  if (why) toast(`${FR[id].name}の好感度 +${n}（${why}）`);
+  if (after > before) { toast(`${FR[id].name}と「${STAGES[after][1]}」になった！`, 'big'); sfx('lvl'); }
+  save();
+}
+const friendMeshes = {};
+function makeFriendMesh(f) {
+  const p = makePerson({ shirt: f.shirt, pants: f.pants, hair: f.hair });
+  if (f.long) { const h = new THREE.Mesh(BX(0.6, 0.72, 0.14), lam(f.hair)); h.position.set(0, 1.9, -0.28); h.castShadow = true; p.g.add(h); }
+  const lab = labelSprite(f.name, f.g === 'f' ? '#fd79a8' : '#74b9ff'); lab.scale.set(2.6, 0.6, 1); lab.position.y = 3; p.g.add(lab); p.lab = lab;
+  const heart = emojiSprite('💕', 0.7); heart.position.set(0.7, 2.9, 0); heart.visible = false; p.g.add(heart); p.heart = heart;
+  return p;
+}
+function friendSpot(f) {
+  const a = f.at;
+  if (a[0] === 'park') return { x: 30 + a[1], z: 30 + a[2] };
+  if (a[0] === 'svc') { const s = SVC[a[1]]; return { x: s.mx + s.sx * 1.2, z: s.mz + 3.2 }; }
+  const p = PLACES.find(q => q.id === a[1]); return { x: p.mx - p.face[1] * 6.5 + p.face[0] * 1, z: p.mz + p.face[0] * 6.5 + p.face[1] * 1 };
+}
+function buildFriends() {
+  for (const f of FRIENDS) {
+    const p = makeFriendMesh(f), sp = friendSpot(f);
+    p.g.position.set(sp.x, surf(sp.x, sp.z) - 0.02, sp.z);
+    scene.add(p.g);
+    friendMeshes[f.id] = { p, x: sp.x, z: sp.z, h: 0 };
+  }
+}
+function updateFriends(dt) {
+  const { x, z } = playerPos();
+  for (const f of FRIENDS) {
+    const m = friendMeshes[f.id];
+    const away = state.guest && state.guest.id === f.id;
+    m.p.g.visible = !away && !inHome;
+    if (!m.p.g.visible) continue;
+    const d = Math.hypot(x - m.x, z - m.z);
+    const want = d < 10 ? Math.atan2(x - m.x, z - m.z) : Math.sin(elapsed * 0.3 + m.x) * 1.2;
+    m.h += angDiff(m.h, want) * Math.min(1, dt * 3); m.p.g.rotation.y = m.h;
+    m.p.heart.visible = state.partner === f.id;
+    if (d < 4 && !P.inCar) wavePerson(m.p, elapsed); else animPerson(m.p, 0, 0);
+  }
+}
+function friendNear(x, z) {
+  for (const f of FRIENDS) { const m = friendMeshes[f.id]; if (m.p.g.visible && Math.hypot(x - m.x, z - m.z) < 2.4) return f; }
+  return null;
+}
+function talkLine(f) {
+  const st = stageOf(f.id), like = GIFT_BY[f.like];
+  if (state.partner === f.id) return pick([`いっしょにいると楽しいね`, `今日もおつかれさま！`, `こんどまた家に行ってもいい？`, `${like.name}、またいっしょに選びたいな`]);
+  return [
+    [`はじめまして！${f.name}です`, `この町には長く住んでるの？`, `いいお天気だね`],
+    [`${f.word}`, `${like.name}が好きなんだ`, `また話そうね！`],
+    [`いつもありがとう！`, `きみと話すと元気が出るよ`, `こんど家に遊びに行ってもいい？`],
+    [`きみは一番の友だちだよ`, `ずっと仲よくしようね`, `ねえ、大事な話があるんだけど…なんでもない！`],
+  ][st].map(s => s)[Math.floor(Math.random() * 3)];
+}
+function talkTo(f, from) {
+  const s = fstate(f.id);
+  s.met = true;
+  const line = talkLine(f);
+  if (s.talkDay !== state.day) { s.talkDay = state.day; toast(`${f.name}「${line}」`, 'big'); addAff(f.id, 5, '話した'); }
+  else toast(`${f.name}「${line}」（今日はもうたくさん話したね）`);
+  if (from === 'home') openGuestMenu(); else openFriendMenu(f.id);
+}
+function giveGift(f, gid, from) {
+  const g = GIFT_BY[gid], s = fstate(f.id);
+  if (s.giftDay === state.day) { toast(`${f.name}「今日はもうもらったよ。ありがとう！」`); return; }
+  if (!pay(g.price)) return;
+  s.giftDay = state.day;
+  const fav = f.like === gid;
+  toast(`${f.name}「${fav ? `わあ！${g.name}、大好きなの！` : `${g.name}、ありがとう！`}」`, 'big');
+  addAff(f.id, fav ? 20 : 10, fav ? '大好きなプレゼント' : 'プレゼント');
+  if (from === 'home') openGuestMenu(); else openFriendMenu(f.id);
+}
+function confess(f) {
+  if (state.partner) { toast(`いまは${FR[state.partner].name}が恋人です`); return; }
+  if (fstate(f.id).aff < 80) { toast(`${f.name}ともっと仲よくなってから（親友になると告白できます）`); return; }
+  state.partner = f.id; sfx('lvl');
+  svcScreen(`${f.name}が恋人になった！`, `<div style="font-size:64px;text-align:center">💕</div><div class="res-rows"><div><span>${esc(f.name)}</span><span>「うれしい…！これからよろしくね」</span></div></div><div class="muted">${f.name}はあなたの${partnerWord(f)}です。家にさそって、いっしょにご飯やゲームを楽しもう。</div>`);
+  save();
+}
+function invite(f, byPhone) {
+  if (stageOf(f.id) < 1 && state.partner !== f.id) { toast(`${f.name}ともう少し仲よくなってから（友だちになるとさそえます）`); return; }
+  state.guest = { id: f.id, day: state.day };
+  toast(byPhone ? `${f.name}「すぐ行くね！」 わが家で待っています` : `${f.name}「おじゃまします！」 わが家で待っています`, 'big');
+  sfx('ok'); save();
+  if (inHome) refreshInterior();
+}
+function sendHome() {
+  if (!state.guest) return;
+  const f = FR[state.guest.id];
+  state.guest = null; toast(`${f.name}「今日は楽しかった！またね」`);
+  if (inHome) refreshInterior();
+  save();
+}
+function giftsHtml(f) {
+  const known = stageOf(f.id) >= 1 || state.partner === f.id;
+  return `<h3>プレゼント（1日1回）${known ? `・好きなもの：${GIFT_BY[f.like].e} ${GIFT_BY[f.like].name}` : '・好きなものは友だちになるとわかる'}</h3>
+    <div class="list">${GIFTS.map(g => `<div class="item"><div class="name">${g.e} ${g.name}</div><button class="btn" data-gift="${g.id}" type="button" ${state.money < g.price ? 'disabled' : ''}>${yen(g.price)}でわたす</button></div>`).join('')}</div>`;
+}
+function relHtml(f) {
+  const a = fstate(f.id).aff;
+  return `<div class="item"><div style="flex:1"><div class="name">${f.g === 'f' ? '👧' : '👦'} ${esc(f.name)}・${relLabel(f.id)}</div><div class="xpbar" style="--c:var(--tomato)"><b style="width:${a}%"></b></div><div class="sub">好感度 ${a} / 100</div></div></div>`;
+}
+function openFriendMenu(id) {
+  const f = FR[id];
+  const canConfess = !state.partner && fstate(id).aff >= 80;
+  svcScreen(`${f.name}`, `${relHtml(f)}
+    <div class="row"><button class="btn primary" id="frTalk" type="button">話す</button>
+      <button class="btn" id="frInvite" type="button">家にさそう</button>
+      ${canConfess ? `<button class="btn danger" id="frConfess" type="button">💕 告白する</button>` : ''}</div>
+    ${giftsHtml(f)}`, b => {
+    b.querySelector('#frTalk').onclick = () => talkTo(f, 'town');
+    b.querySelector('#frInvite').onclick = () => { invite(f); closeScreen(); };
+    if (b.querySelector('#frConfess')) b.querySelector('#frConfess').onclick = () => confess(f);
+    b.querySelectorAll('[data-gift]').forEach(x => x.onclick = () => giveGift(f, x.dataset.gift, 'town'));
+  });
+}
+
+/* ---- 家に来た友だち ---- */
+function spawnGuestInside() {
+  inHome.guest = null;
+  if (!state.guest || !FR[state.guest.id]) return;
+  const f = FR[state.guest.id], p = makeFriendMesh(f);
+  p.lab.scale.set(1.6, 0.37, 1); p.lab.position.y = 2.7;
+  const e = inHome.entrance;
+  p.g.position.set(e.x + 1.5, 0, e.z); inHome.g.add(p.g);
+  inHome.guest = { f, p, x: e.x + 1.5, z: e.z, h: 0, t: 0 };
+}
+function updateGuestInside(dt) {
+  const g = inHome && inHome.guest; if (!g) return;
+  g.p.heart.visible = state.partner === g.f.id;
+  if (act && act.kind === 'eat' && act.guestSeat) return;
+  const tx = P.x - Math.sin(P.h) * 1.7 + Math.cos(P.h) * 1.1, tz = P.z - Math.cos(P.h) * 1.7 - Math.sin(P.h) * 1.1;
+  const dx = tx - g.x, dz = tz - g.z, d = Math.hypot(dx, dz);
+  if (d > 25) { g.x = tx; g.z = tz; }
+  else if (d > 0.4) { const v = Math.min(d * 2.5, 9) * dt; g.x += dx / d * v; g.z += dz / d * v; g.h += angDiff(g.h, Math.atan2(dx, dz)) * Math.min(1, dt * 8); g.t += dt * 10; animPerson(g.p, g.t, 1); }
+  else { g.h += angDiff(g.h, Math.atan2(P.x - g.x, P.z - g.z)) * Math.min(1, dt * 4); animPerson(g.p, 0, 0); }
+  g.p.g.position.set(g.x, 0, g.z); g.p.g.rotation.set(0, g.h, 0);
+}
+function openGuestMenu() {
+  const g = inHome && inHome.guest; if (!g) return;
+  const f = g.f, s = fstate(f.id), chefs = myOpts().some(o => OPT[o] && OPT[o].cat === 'chef') && HOUSE[state.house].tier >= 5;
+  const canConfess = !state.partner && s.aff >= 80;
+  svcScreen(`${f.name}と過ごす`, `${relHtml(f)}
+    <div class="list">
+      <div class="item"><div><div class="name">💬 話す</div><div class="sub">1日1回 好感度 +5</div></div><button class="btn" id="gTalk" type="button">話す</button></div>
+      <div class="item"><div><div class="name">🍽️ いっしょにご飯を食べる</div><div class="sub">${chefs ? '大食堂のシェフにたのむと、いっしょに食べます' : '出前をとって、ダイニングでいっしょに食べます（800円）'}・1日1回 好感度 +15</div></div><button class="btn primary" id="gEat" type="button">${chefs ? 'シェフのところへ' : '出前をとる'}</button></div>
+      <div class="item"><div><div class="name">🎮 いっしょにゲームをする</div><div class="sub">エアホッケーで対戦・1日1回 好感度 +8〜12</div></div><button class="btn primary" id="gGame" type="button">対戦する</button></div>
+      ${canConfess ? '<div class="item"><div class="name">💕 告白する</div><button class="btn danger" id="gConfess" type="button">告白する</button></div>' : ''}
+      <div class="item"><div class="name">👋 帰ってもらう</div><button class="btn" id="gBye" type="button">また明日</button></div>
+    </div>${giftsHtml(f)}`, b => {
+    b.querySelector('#gTalk').onclick = () => talkTo(f, 'home');
+    b.querySelector('#gEat').onclick = () => {
+      closeScreen();
+      if (chefs) { const hall = inHome.rooms.find(r => r.id === 'hall'); if (hall) { P.x = hall.x; P.z = hall.z + 6; } toast(`シェフに料理をたのもう。${f.name}もいっしょに食べます`); return; }
+      if (!pay(800)) return;
+      const d = pick([['宅配ピザ', '🍕'], ['おすし', '🍣'], ['ラーメン', '🍜'], ['カレー', '🍛'], ['ハンバーガー', '🍔']]);
+      toast(`出前の${d[0]}がとどいた！`); startEat([d[0], d[1], [], 0]);
+    };
+    b.querySelector('#gGame').onclick = () => openVersus(f);
+    if (b.querySelector('#gConfess')) b.querySelector('#gConfess').onclick = () => confess(f);
+    b.querySelector('#gBye').onclick = () => { closeScreen(); sendHome(); };
+    b.querySelectorAll('[data-gift]').forEach(x => x.onclick = () => giveGift(f, x.dataset.gift, 'home'));
+  });
+}
+function guestSeatFor(ch) {
+  let best = null, bd = 1e9;
+  for (const c of inHome.chairs) { if (c.face === ch.face) continue; const d = Math.abs(c.x - ch.x) + Math.abs(c.z - ch.z); if (d < bd && d < 5) { bd = d; best = c; } }
+  return best;
+}
+function guestEatPose(a) {
+  const g = inHome.guest, p = g.p, s = a.guestSeat;
+  p.g.position.set(s.x, -0.45, s.z); p.g.rotation.set(0, s.face, 0);
+  p.legL.rotation.x = p.legR.rotation.x = -1.4;
+  const bite = Math.max(0, Math.sin(a.t * 4 + 1.6));
+  p.armR.rotation.set(-1.2 - bite * 1.3, 0, 0); p.armL.rotation.set(-0.9, 0, 0);
+  const k = Math.max(0.05, 1 - a.t / a.dur); a.guestSprite.scale.set(0.9 * k, 0.9 * k, 1);
+}
+
+/* ---- エアホッケーで対戦 ---- */
+let vs = null;
+function openVersus(f) {
+  closeScreen();
+  $('#gTitle').textContent = `🎮 ${f.name}とエアホッケー`;
+  $('#gTimeWrap').hidden = true; setText($('#gScore'), '0 - 0'); $('#gIntro').hidden = true;
+  $('#gBody').innerHTML = `<div class="play-wrap"><canvas id="vsCan" width="${GW}" height="${GH}"></canvas>
+    <div class="pad"><div><button class="pb" data-vp="up" type="button" aria-label="上">▲</button><button class="pb" data-vp="down" type="button" aria-label="下">▼</button></div></div>
+    <div class="keys-help">↑↓キーか、画面をなぞって自分のバー（左）を動かそう。先に5点取ったら勝ち</div></div>`;
+  const cv = $('#vsCan');
+  vs = { f, py: GH / 2, fy: GH / 2, bx: GW / 2, by: GH / 2, vx: 0, vy: 0, ps: 0, fs: 0, serve: 1, wait: 1, done: false, target: null, up: false, down: false };
+  cv.style.width = 'min(100%, 760px)'; cv.style.aspectRatio = '480 / 280';
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); vsAim(e); });
+  cv.addEventListener('pointermove', e => { if (e.buttons || e.pointerType === 'touch') vsAim(e); });
+  $('#gBody').querySelectorAll('[data-vp]').forEach(b => { const k = b.dataset.vp; b.addEventListener('pointerdown', e => { vs[k] = true; e.preventDefault(); }); const off = () => { if (vs) vs[k] = false; }; b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off); });
+  showScreen('gig');
+  $('#gQuit').onclick = () => endVersus(true);
+  mini = { update: vsUpdate, key: k => { if (k === 'escape') endVersus(true); } };
+}
+function vsAim(e) { const cv = $('#vsCan'), r = cv.getBoundingClientRect(); vs.target = (e.clientY - r.top) / r.height * GH; }
+function vsServe(dir) { const a = rnd(-0.5, 0.5); vs.bx = GW / 2; vs.by = GH / 2; vs.vx = Math.cos(a) * 190 * dir; vs.vy = Math.sin(a) * 190; vs.wait = 0.8; }
+function vsUpdate(dt) {
+  if (!vs || vs.done) return;
+  const PH = 56, sk = vs.f.skill;
+  const inp = readPad();
+  let mv = ((inp.down || vs.down) ? 1 : 0) - ((inp.up || vs.up) ? 1 : 0);
+  if (vs.target != null && !mv) { const d = vs.target - vs.py; mv = Math.abs(d) < 4 ? 0 : Math.sign(d); }
+  vs.py = clamp(vs.py + mv * 320 * dt, PH / 2, GH - PH / 2);
+  const aim = vs.vx > 0 ? vs.by + Math.sin(elapsed * 2) * (1 - sk) * 40 : GH / 2;
+  vs.fy = clamp(vs.fy + clamp(aim - vs.fy, -1, 1) * (120 + sk * 170) * dt, PH / 2, GH - PH / 2);
+  if (vs.wait > 0) { vs.wait -= dt; if (vs.wait <= 0 && vs.vx === 0) vsServe(vs.serve); }
+  else {
+    vs.bx += vs.vx * dt; vs.by += vs.vy * dt;
+    if (vs.by < 6) { vs.by = 6; vs.vy = Math.abs(vs.vy); } if (vs.by > GH - 6) { vs.by = GH - 6; vs.vy = -Math.abs(vs.vy); }
+    const hit = (px, py, side) => { if (Math.abs(vs.bx - px) < 10 && Math.abs(vs.by - py) < PH / 2 + 6 && Math.sign(vs.vx) === side) { const off = (vs.by - py) / (PH / 2); const sp = Math.min(520, Math.hypot(vs.vx, vs.vy) * 1.06); vs.vx = -side * sp * Math.cos(off * 0.9); vs.vy = sp * Math.sin(off * 0.9); sfx('click'); } };
+    hit(24, vs.py, -1); hit(GW - 24, vs.fy, 1);
+    if (vs.bx < -10) { vs.fs++; sfx('bad'); vs.serve = 1; vs.vx = 0; vs.wait = 1; }
+    if (vs.bx > GW + 10) { vs.ps++; sfx('coin'); vs.serve = -1; vs.vx = 0; vs.wait = 1; }
+    setText($('#gScore'), `${vs.ps} - ${vs.fs}`);
+    if (vs.ps >= 5 || vs.fs >= 5) { vs.done = true; setTimeout(() => endVersus(false), 600); }
+  }
+  const c = $('#vsCan').getContext('2d');
+  c.fillStyle = '#0d3b2e'; c.fillRect(0, 0, GW, GH);
+  c.strokeStyle = 'rgba(255,255,255,.35)'; c.lineWidth = 3; c.setLineDash([10, 10]); c.beginPath(); c.moveTo(GW / 2, 0); c.lineTo(GW / 2, GH); c.stroke(); c.setLineDash([]);
+  c.beginPath(); c.arc(GW / 2, GH / 2, 40, 0, 7); c.stroke();
+  c.fillStyle = '#ffc928'; rrect(c, 16, vs.py - PH / 2, 12, PH, 5); c.fill();
+  c.fillStyle = '#' + new THREE.Color(vs.f.shirt).getHexString(); rrect(c, GW - 28, vs.fy - PH / 2, 12, PH, 5); c.fill();
+  c.fillStyle = '#fff'; c.beginPath(); c.arc(vs.bx, vs.by, 7, 0, 7); c.fill();
+  c.font = '16px "Zen Maru Gothic", sans-serif'; c.textAlign = 'center';
+  c.fillText(`あなた ${vs.ps}`, GW / 4, 24); c.fillText(`${vs.f.name} ${vs.fs}`, GW * 3 / 4, 24);
+  c.textAlign = 'left';
+}
+function endVersus(quit) {
+  const v = vs; vs = null; mini = null;
+  if (!v) return;
+  const f = v.f, s = fstate(f.id), won = v.ps > v.fs;
+  closeScreen();
+  if (quit && v.ps + v.fs === 0) { openGuestMenuOrFriend(f); return; }
+  let line = won ? pick(['くやしい～！もう1回！', 'つよいね！', 'まけちゃった！']) : pick(['やったー！わたしの勝ち！', 'へへ、また遊ぼうね', 'いい勝負だったね！']);
+  if (s.gameDay !== state.day) { s.gameDay = state.day; addAff(f.id, won ? 12 : 8, 'いっしょにゲーム'); }
+  svcScreen(won ? '勝った！' : '負けた…', `<div class="res-rows"><div><span>あなた</span><span>${v.ps}点</span></div><div><span>${esc(f.name)}</span><span>${v.fs}点</span></div></div><div class="item"><div class="name">${esc(f.name)}「${line}」</div></div><button class="btn primary" id="vsAgain" type="button">もう1回</button>`, b => {
+    b.querySelector('#vsAgain').onclick = () => openVersus(f);
+  });
+}
+function openGuestMenuOrFriend(f) { if (inHome && inHome.guest) openGuestMenu(); else openFriendMenu(f.id); }
+for (const [id, fn] of [['edPrev', () => selectEdit(-1)], ['edNext', () => selectEdit(1)], ['edRot', rotateEdit], ['edPlace', placeEdit], ['edNear', nearestEdit], ['edBack', unplaceEdit], ['edEnd', () => endEdit()]]) $('#' + id).addEventListener('click', () => { if (edit) fn(); });
+
 
 /* =========================================================
    boot
