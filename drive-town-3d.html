@@ -1141,10 +1141,13 @@ function resolve(x, z, r, self) {
   for (const c of circles) circ(c.x, c.z, c.r);
   for (const c of cars) if (c !== self && !(self === P && P.inCar === c)) circ(c.x, c.z, c.r || 1.7);
   for (const n of npcs) circ(n.x, n.z, 1.7);
-  if (x < -WORLD) { x = -WORLD; nx += 1; hit = true; }
-  if (x > WORLD) { x = WORLD; nx -= 1; hit = true; }
-  if (z < -WORLD) { z = -WORLD; nz += 1; hit = true; }
-  if (z > WORLD) { z = WORLD; nz -= 1; hit = true; }
+  // 家の中（町から離れた場所）では町の端の制限をかけない
+  if (!(inHome && Math.abs(x - IN_X) < 400)) {
+    if (x < -WORLD) { x = -WORLD; nx += 1; hit = true; }
+    if (x > WORLD) { x = WORLD; nx -= 1; hit = true; }
+    if (z < -WORLD) { z = -WORLD; nz += 1; hit = true; }
+    if (z > WORLD) { z = WORLD; nz -= 1; hit = true; }
+  }
   return { x, z, hit, nx, nz };
 }
 function insideBuilding(x, y, z) {
@@ -6105,6 +6108,9 @@ function finishMeal(d) {
 }
 function animateInterior(dt) {
   if (!inHome) return;
+  // 念のため：家の中の判定なのに体が家から離れていたら、外に出たことにする
+  const pp = playerPos();
+  if (Math.abs(pp.x - IN_X) > 300) { exitHome(true); return; }
   for (const n of inHome.npcs) {
     if (n.kind === 'chef') { n.p.armR.rotation.x = -0.9 + Math.sin(elapsed * 5) * 0.4; n.p.armL.rotation.x = -0.6; }
     else n.p.armR.rotation.x = Math.sin(elapsed * 1.5) * 0.1;
