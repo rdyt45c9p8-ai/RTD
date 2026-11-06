@@ -369,6 +369,18 @@
   .tbtn { width: 50px; height: 50px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); font-size: 11px; display: grid; place-items: center; line-height: 1.1; }
   .tbtn span { font-size: 18px; display: block; }
   #bJump { width: 62px; height: 62px; }
+  #cross { position: fixed; z-index: 5; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; pointer-events: none;
+    background: linear-gradient(#fff, #fff) center / 2px 9px no-repeat, linear-gradient(#fff, #fff) center / 9px 2px no-repeat; border: 2px solid rgba(255,255,255,.85); border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+  #cross[hidden], #gunHud[hidden], #rangeHud[hidden], #gunBtns[hidden] { display: none; }
+  #gunHud { position: fixed; z-index: 5; left: 50%; transform: translateX(-50%); bottom: calc(118px + env(safe-area-inset-bottom, 0px)); background: rgba(20, 22, 30, .82); color: #fff; border-radius: 14px; padding: 6px 14px; display: grid; gap: 2px; text-align: center; pointer-events: none; font-size: 13px; }
+  #gunHud span { font-size: 20px; font-weight: 700; color: var(--signal); }
+  #gunHud i { display: block; height: 4px; border-radius: 2px; background: rgba(255,255,255,.15); overflow: hidden; }
+  #gunHud i b { display: block; height: 100%; width: 0; background: var(--signal); }
+  #rangeHud { position: fixed; z-index: 5; left: 50%; transform: translateX(-50%); top: calc(64px + env(safe-area-inset-top, 0px)); background: rgba(20, 22, 30, .85); color: #fff; border-radius: 14px; padding: 8px 16px; font-weight: 700; pointer-events: none; }
+  #gunBtns { position: fixed; z-index: 5; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(190px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 8px; align-items: end; }
+  #gunBtns .rbtn { width: 58px; height: 58px; }
+  #gunBtns #bFire { width: 76px; height: 76px; background: #d63031; color: #fff; border-color: #ff7675; font-size: 15px; }
+  #gunBtns #bFire small { color: rgba(255,255,255,.75); }
   #editBar { position: fixed; z-index: 6; left: 50%; transform: translateX(-50%); top: calc(64px + env(safe-area-inset-top, 0px)); width: min(calc(100% - 32px), 720px); background: rgba(20, 22, 30, .88); color: #fff; border-radius: 16px; padding: 10px 12px; display: grid; gap: 8px; }
   #editBar[hidden] { display: none; }
   #editBar .row { flex-wrap: wrap; gap: 6px; }
@@ -474,6 +486,10 @@
     <button class="rbtn" id="bJump" type="button">ジャンプ<small class="kb">Space</small></button>
   </div>
 </div>
+<div id="cross" hidden></div>
+<div id="gunHud" hidden><b id="gunName"></b><span id="gunAmmo"></span><i><b id="gunReloadBar"></b></i></div>
+<div id="rangeHud" hidden></div>
+<div id="gunBtns" hidden><button class="rbtn" id="bGun" type="button">🔫 銃<small class="kb">Q</small></button><button class="rbtn" id="bReload" type="button">リロード<small class="kb">R</small></button><button class="rbtn" id="bFire" type="button">撃つ<small class="kb">F・クリック</small></button></div>
 <div id="editBar" hidden><div id="editName"></div><div class="row"><button class="btn" id="edPrev" type="button" aria-label="前の家具">◀</button><button class="btn" id="edNext" type="button" aria-label="次の家具">▶</button><button class="btn" id="edRot" type="button">回す (R)</button><button class="btn primary" id="edPlace" type="button">置く (F)</button><button class="btn" id="edNear" type="button">近くの家具</button><button class="btn" id="edBack" type="button">部屋にもどす</button><button class="btn danger" id="edEnd" type="button">終わる</button></div></div>
 <div id="photoBar" hidden><button class="btn primary" id="photoExit" type="button">写真モードを終わる</button></div>
 
@@ -1147,7 +1163,7 @@ function resolve(x, z, r, self) {
   for (const c of cars) if (c !== self && !(self === P && P.inCar === c)) circ(c.x, c.z, c.r || 1.7);
   for (const n of npcs) circ(n.x, n.z, 1.7);
   // 家の中（町から離れた場所）では町の端の制限をかけない
-  if (!(inHome && Math.abs(x - IN_X) < 400)) {
+  if (!(inHome && Math.abs(x - IN_X) < 400) && !(inRange && Math.abs(x - RG_X) < 400)) {
     if (x < -WORLD) { x = -WORLD; nx += 1; hit = true; }
     if (x > WORLD) { x = WORLD; nx -= 1; hit = true; }
     if (z < -WORLD) { z = -WORLD; nz += 1; hit = true; }
@@ -1253,7 +1269,7 @@ function spawnPlayer() {
   const home = PLACES.find(p => p.id === 'home');
   const person = makePerson({ shirt: 0xffc928, pants: 0x2b3a67, hair: 0x2a1d14, hat: 0xff5b3a });
   scene.add(person.g);
-  P = { x: 0, z: 0, h: home.sh, inCar: null, person, t: 0 };
+  P = { x: 0, z: 0, h: home.sh, inCar: null, person, t: 0, jy: 0, jv: 0 };
   placeAtHome();
   if (state.pos && Math.abs(state.pos.x) < WORLD && Math.abs(state.pos.z) < WORLD) {
     const r = resolve(state.pos.x, state.pos.z, 0.5, P); P.x = r.x; P.z = r.z;
@@ -1317,6 +1333,10 @@ function onKeyPress(k) {
   if (running) cheatKey(k);
   if (mini && mini.key) { mini.key(k); return; }
   if (!running) return;
+  if (!openScreen && !edit && !inHome && running) {
+    if (k === 'q') { cycleGun(); return; }
+    if (k === 'r' && gunCur) { reloadGun(); return; }
+  }
   if (edit && !openScreen) {
     if (k === 'r') rotateEdit(); else if (k === 'f' || k === 'e' || k === 'enter') placeEdit(); else if (k === ',') selectEdit(-1); else if (k === '.') selectEdit(1); else if (k === 'escape') endEdit();
     return;
@@ -1396,6 +1416,7 @@ canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointerc
 function playerPos() { return P.inCar ? { x: P.inCar.x, z: P.inCar.z } : { x: P.x, z: P.z }; }
 function getInteraction() {
   if (inHome) return homeInteraction();
+  if (inRange) return rangeInteraction();
   const { x, z } = playerPos();
   for (const p of PLACES) {
     const r = P.inCar ? 4.8 : 3.3;
@@ -3596,6 +3617,7 @@ function buildExtras() {
   buildFireworks();
   buildPin();
   rebuildHome();
+  buildGunShop();
   buildFriends();
 }
 
@@ -4492,6 +4514,9 @@ function migrateState() {
   for (const k of ['furn', 'furnOff', 'wallsOwned', 'floorsOwned', 'paints']) if (!Array.isArray(s[k])) s[k] = [];
   if (!s.furnPos || typeof s.furnPos !== 'object') s.furnPos = {};
   if (!s.fr || typeof s.fr !== 'object') s.fr = {};
+  if (!Array.isArray(s.guns)) s.guns = [];
+  if (s.gunSel === undefined) s.gunSel = null;
+  if (!s.rangeBest) s.rangeBest = 0;
   if (s.partner === undefined) s.partner = null;
   if (s.guest === undefined) s.guest = null;
   s.wallSel = s.wallSel || null; s.floorSel = s.floorSel || null; s.paintSel = s.paintSel || null;
@@ -5177,6 +5202,7 @@ let redKey = '', redCd = 0;
 function updateExtras(dt) {
   animateInterior(dt);
   updateFriends(dt);
+  gunTick(dt);
   if (inHome) { updateGuestInside(dt); updateEdit(); }
   cheatTick();
   animateHome(dt);
@@ -7191,10 +7217,363 @@ function allAdditions1000() {
   return L.map((r, i) => ({ no: i + 1, cat: r[0], name: r[1], desc: r[2] }));
 }
 
+
+/* =========================================================
+   銃（M4A1・AK47・M249・GLOCK 17・SPAS-12）と、ガンショップ＆射撃場
+   ========================================================= */
+const GUNS = [
+  { id: 'glock17', name: 'GLOCK 17', type: 'ハンドガン', price: 8000, dmg: 22, rate: 6, auto: false, mag: 17, reload: 1.4, spread: 0.008, pellets: 1, kick: 0.012, snd: [900, 0.09], len: 0.36, col: 0x2d3436 },
+  { id: 'm4a1', name: 'M4A1', type: 'アサルトライフル', price: 30000, dmg: 30, rate: 11, auto: true, mag: 30, reload: 2.2, spread: 0.012, pellets: 1, kick: 0.01, snd: [1400, 0.11], len: 0.95, col: 0x3a3f44 },
+  { id: 'ak47', name: 'AK47', type: 'アサルトライフル', price: 25000, dmg: 36, rate: 10, auto: true, mag: 30, reload: 2.5, spread: 0.02, pellets: 1, kick: 0.016, snd: [1000, 0.13], len: 0.95, col: 0x2b2b2b, wood: 0x8d5a2b },
+  { id: 'm249', name: 'M249', type: '軽機関銃', price: 60000, dmg: 32, rate: 13, auto: true, mag: 100, reload: 4.5, spread: 0.028, pellets: 1, kick: 0.012, snd: [1200, 0.12], len: 1.1, col: 0x3b3b30 },
+  { id: 'spas12', name: 'SPAS-12', type: 'ショットガン', price: 35000, dmg: 14, rate: 1.4, auto: false, mag: 8, reload: 3.2, spread: 0.075, pellets: 8, kick: 0.05, snd: [500, 0.25], len: 1.0, col: 0x1e1e1e },
+];
+const GUN = Object.fromEntries(GUNS.map(g => [g.id, g]));
+const gunMag = {};
+let gunTap = false, gunCur = null, gunFire = false, gunLatch = false, gunCd = 0, gunReloadT = 0, gunAimP = 0, inRange = false;
+const RG_X = -2000, RG_Z = 0;
+
+/* ---- 銃のモデル（+z が銃口） ---- */
+function gunModel(id) {
+  const g = new THREE.Group(), d = GUN[id], c = d.col;
+  const B = (w, h, l, col, x, y, z) => { const m = new THREE.Mesh(BX(w, h, l), imat(col)); m.position.set(x, y, z); g.add(m); return m; };
+  const barrel = (r, l, z, y = 0.03) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, l, 8), imat(0x111111)); m.rotation.x = Math.PI / 2; m.position.set(0, y, z); g.add(m); };
+  if (id === 'glock17') { B(0.07, 0.08, 0.3, c, 0, 0.05, 0.08); B(0.06, 0.16, 0.08, c, 0, -0.06, -0.02); B(0.05, 0.03, 0.06, 0x111111, 0, -0.01, 0.06); }
+  else if (id === 'm4a1') { B(0.07, 0.11, 0.42, c, 0, 0.03, 0.1); barrel(0.018, 0.42, 0.5); B(0.06, 0.09, 0.22, c, 0, 0.03, 0.4); B(0.05, 0.14, 0.07, c, 0, -0.08, 0.08); B(0.05, 0.13, 0.05, c, 0, -0.06, -0.06); B(0.06, 0.1, 0.26, c, 0, 0.0, -0.25); B(0.03, 0.06, 0.03, c, 0, 0.12, 0.42); B(0.04, 0.03, 0.18, c, 0, 0.1, 0.05); }
+  else if (id === 'ak47') { B(0.07, 0.11, 0.42, c, 0, 0.03, 0.1); barrel(0.018, 0.44, 0.52); B(0.07, 0.08, 0.2, d.wood, 0, 0.0, 0.38); B(0.05, 0.16, 0.07, c, 0, -0.1, 0.12).rotation.x = -0.35; B(0.05, 0.12, 0.05, d.wood, 0, -0.06, -0.06); B(0.06, 0.1, 0.28, d.wood, 0, -0.02, -0.26); B(0.03, 0.05, 0.03, c, 0, 0.1, 0.45); }
+  else if (id === 'm249') { B(0.09, 0.13, 0.5, c, 0, 0.03, 0.08); barrel(0.024, 0.55, 0.6); B(0.08, 0.08, 0.2, c, 0, -0.02, 0.42); B(0.13, 0.13, 0.13, 0x4b5320, 0.08, -0.08, 0.06); B(0.05, 0.12, 0.05, c, 0, -0.07, -0.08); B(0.07, 0.11, 0.3, c, 0, 0.0, -0.3); B(0.12, 0.05, 0.14, c, 0, 0.12, 0.1); for (const s of [-1, 1]) { const l = B(0.02, 0.22, 0.02, 0x111111, s * 0.05, -0.08, 0.72); l.rotation.z = s * 0.3; } }
+  else if (id === 'spas12') { B(0.08, 0.11, 0.38, c, 0, 0.03, 0.08); barrel(0.024, 0.52, 0.52, 0.05); barrel(0.02, 0.45, 0.5, -0.01); B(0.07, 0.07, 0.2, 0x4a4a4a, 0, -0.01, 0.38); B(0.05, 0.14, 0.05, c, 0, -0.07, -0.06); B(0.04, 0.04, 0.3, c, 0, 0.02, -0.26); B(0.04, 0.12, 0.04, c, 0, -0.04, -0.4); }
+  const muzzle = new THREE.Object3D(); muzzle.position.set(0, 0.03, d.len * 0.62 + 0.08); g.add(muzzle); g.userData.muzzle = muzzle;
+  const flash = new THREE.Mesh(new THREE.SphereGeometry(id === 'spas12' ? 0.14 : 0.09, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffd23f })); flash.visible = false; muzzle.add(flash); g.userData.flash = flash;
+  return g;
+}
+function attachGun() {
+  const p = P.person; if (!p) return;
+  if (p.gunId === gunCur) return;
+  if (p.gunMesh) { p.armR.remove(p.gunMesh); p.gunMesh = null; }
+  p.gunId = gunCur;
+  if (!gunCur) return;
+  const m = gunModel(gunCur); m.position.set(0, -0.72, 0.05); m.rotation.x = Math.PI / 2; m.scale.setScalar(1.25);
+  p.armR.add(m); p.gunMesh = m;
+}
+
+/* ---- 音 ---- */
+let noiseBuf = null;
+function gunSound(d) {
+  if (!actx || sfxVol() <= 0) return;
+  if (!noiseBuf) { noiseBuf = actx.createBuffer(1, actx.sampleRate * 0.4, actx.sampleRate); const a = noiseBuf.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = Math.random() * 2 - 1; }
+  const t = actx.currentTime, src = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
+  src.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.setValueAtTime(d.snd[0] * 3, t); f.frequency.exponentialRampToValueAtTime(200, t + d.snd[1]);
+  g.gain.setValueAtTime(0.35 * sfxVol(), t); g.gain.exponentialRampToValueAtTime(0.0001, t + d.snd[1]);
+  src.connect(f); f.connect(g); g.connect(actx.destination); src.start(t); src.stop(t + d.snd[1] + 0.02);
+}
+
+/* ---- 構える・しまう・持ちかえる ---- */
+const gunList = () => inRange ? GUNS.map(g => g.id) : GUNS.filter(g => state.guns.includes(g.id)).map(g => g.id);
+function drawGun(id) {
+  gunCur = id; gunReloadT = 0; gunCd = 0.2; gunFire = false;
+  if (id && gunMag[id] == null) gunMag[id] = GUN[id].mag;
+  if (id) { state.gunSel = id; sfx('click'); toast(`${GUN[id].name}を構えた（${inRange ? 'F・クリックで撃つ、R でリロード、Q で持ちかえ' : 'Q でしまう・持ちかえ'}）`); }
+  attachGun(); gunHud();
+  if (!id) unlockAim();
+}
+function cycleGun() {
+  if (inHome || P.inCar) { toast('ここでは銃を出せません'); return; }
+  const list = gunList();
+  if (!list.length) { toast('銃はガンショップ（公園の中）で買えます'); return; }
+  const seq = inRange ? list : [null, ...list];
+  const i = seq.indexOf(gunCur);
+  drawGun(seq[(i + 1) % seq.length]);
+  if (!gunCur) toast('銃をしまった');
+}
+function reloadGun() {
+  if (!gunCur || gunReloadT > 0 || gunMag[gunCur] >= GUN[gunCur].mag) return;
+  gunReloadT = GUN[gunCur].reload; tone(300, 0.08, 'square', 0.04);
+}
+
+/* ---- 撃つ ---- */
+const shotFx = [];
+const tracerMat = new THREE.LineBasicMaterial({ color: 0xffe08a, transparent: true, opacity: 0.9 });
+const sparkMat = new THREE.MeshBasicMaterial({ color: 0xffc928 });
+const sparkGeo = new THREE.SphereGeometry(0.07, 6, 4);
+function rayBox(o, d, b) {
+  let t0 = 0, t1 = 1e9;
+  for (const [oa, da, lo, hi] of [[o.x, d.x, b.x0, b.x1], [o.y, d.y, 0, b.h], [o.z, d.z, b.z0, b.z1]]) {
+    if (Math.abs(da) < 1e-9) { if (oa < lo || oa > hi) return null; continue; }
+    let a = (lo - oa) / da, c = (hi - oa) / da; if (a > c) [a, c] = [c, a];
+    t0 = Math.max(t0, a); t1 = Math.min(t1, c); if (t0 > t1) return null;
+  }
+  return t0;
+}
+function castShot(o, d) {
+  let best = { t: 160, kind: 'air' };
+  if (d.y < -1e-4) { const t = (0.05 - o.y) / d.y; if (t > 0 && t < best.t) best = { t, kind: 'ground' }; }
+  for (const b of boxes) { if (Math.abs((b.x0 + b.x1) / 2 - o.x) > 200 || Math.abs((b.z0 + b.z1) / 2 - o.z) > 200) continue; const t = rayBox(o, d, b); if (t != null && t > 0.2 && t < best.t) best = { t, kind: 'wall' }; }
+  if (inRange && range) for (const tg of range.targets) {
+    if (tg.down > 0) continue;
+    const t = (tg.z - o.z) / d.z; if (t <= 0 || t >= best.t) continue;
+    const hx = o.x + d.x * t, hy = o.y + d.y * t, r = Math.hypot(hx - tg.x, hy - tg.y);
+    if (r < tg.r) best = { t, kind: 'target', tg, ring: r / tg.r };
+  }
+  return best;
+}
+function fireGun() {
+  const d = GUN[gunCur];
+  gunMag[gunCur]--; gunCd = 1 / d.rate;
+  gunSound(d);
+  const pm = P.person.gunMesh; if (!pm) return;
+  pm.userData.flash.visible = true; pm.userData.flashT = 0.05;
+  const mz = new THREE.Vector3(); pm.userData.muzzle.getWorldPosition(mz);
+  const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
+  const moving = Math.hypot(readMove().x, readMove().y) > 0.1;
+  const o = camera.position.clone().addScaledVector(fwd, 4.4);
+  let hitAny = null;
+  for (let k = 0; k < d.pellets; k++) {
+    const sp = d.spread * (moving ? 1.8 : 1);
+    const dir = fwd.clone().add(new THREE.Vector3(rnd(-sp, sp), rnd(-sp, sp), rnd(-sp, sp))).normalize();
+    const h = castShot(o, dir);
+    const hp = o.clone().addScaledVector(dir, h.t);
+    const geo = new THREE.BufferGeometry().setFromPoints([mz, hp]);
+    const line = new THREE.Line(geo, tracerMat); scene.add(line); shotFx.push({ m: line, t: 0.06 });
+    if (h.kind !== 'air') { const s = new THREE.Mesh(sparkGeo, sparkMat); s.position.copy(hp); scene.add(s); shotFx.push({ m: s, t: 0.15 }); }
+    if (h.kind === 'target') { hitTarget(h.tg, h.ring, d); hitAny = h; }
+  }
+  if (hitAny) tone(1200, 0.05, 'square', 0.03);
+  cam.pitch = clamp(cam.pitch - d.kick * (gunCur === 'm249' && gunAimP > 0 ? 0.6 : 1), 0.05, 1.2); cam.yaw += rnd(-1, 1) * d.kick * 0.4; cam.shake = Math.max(cam.shake, d.kick * 2);
+  if (gunMag[gunCur] <= 0) reloadGun();
+}
+function gunTick(dt) {
+  for (let i = shotFx.length - 1; i >= 0; i--) { const f = shotFx[i]; f.t -= dt; if (f.t <= 0) { scene.remove(f.m); if (f.m.geometry !== sparkGeo) f.m.geometry.dispose(); shotFx.splice(i, 1); } }
+  if (gunCur && (P.inCar || inHome || !running)) drawGun(null);
+  if (openScreen && document.pointerLockElement === canvas) { gunFire = false; unlockAim(); }
+  attachGun();
+  const pm = P.person && P.person.gunMesh;
+  if (pm && pm.userData.flashT > 0) { pm.userData.flashT -= dt; if (pm.userData.flashT <= 0) pm.userData.flash.visible = false; }
+  if (inRange) updateRange(dt);
+  if (!gunCur) { gunHud(); return; }
+  gunAimP = clamp((cam.pitch - 0.32) * 1.4, -0.38, 1.0);
+  if (!act) {
+    P.h = cam.yaw; P.person.g.rotation.y = P.h;
+    const p = P.person;
+    p.armR.rotation.set(-Math.PI / 2 + gunAimP, 0, 0);
+    p.armL.rotation.set(-Math.PI / 2 + gunAimP + 0.15, 0, 0.55);
+  }
+  gunCd -= dt;
+  if (gunReloadT > 0) { gunReloadT -= dt; if (gunReloadT <= 0) { gunMag[gunCur] = GUN[gunCur].mag; tone(500, 0.08, 'square', 0.04); } }
+  const want = (gunFire || gunTap || keys.f) && !openScreen && !mini && !act && !cam.photo;
+  if (!want) gunLatch = false;
+  if (want && gunCd <= 0 && gunReloadT <= 0 && (GUN[gunCur].auto || !gunLatch)) {
+    gunLatch = true;
+    gunTap = false;
+    if (gunMag[gunCur] > 0) fireGun(); else { tone(200, 0.05, 'square', 0.03); reloadGun(); }
+  }
+  gunHud();
+}
+function gunHud() {
+  const show = !!gunCur && !openScreen;
+  $('#gunHud').hidden = !show; $('#cross').hidden = !show;
+  $('#gunBtns').hidden = !(state.guns.length || inRange) || !!P.inCar || !!inHome || !!openScreen;
+  $('#bFire').hidden = $('#bReload').hidden = !gunCur;
+  if (!show) return;
+  const d = GUN[gunCur];
+  setText($('#gunName'), `${d.name}（${d.type}）`);
+  setText($('#gunAmmo'), gunReloadT > 0 ? 'リロード中…' : `${gunMag[gunCur]} / ${d.mag}`);
+  $('#gunReloadBar').style.width = gunReloadT > 0 ? `${(1 - gunReloadT / d.reload) * 100}%` : '0%';
+}
+
+/* ---- 肩ごしカメラ ---- */
+function camAim(dt) {
+  for (const car of cars) car.mesh.visible = true;
+  P.person.g.visible = true;
+  const y = cam.yaw, p = gunAimP;
+  const fx = Math.sin(y), fz = Math.cos(y), rx = -Math.cos(y), rz = Math.sin(y);
+  const hx = P.x, hy = surf(P.x, P.z) + 1.9 + (P.jy || 0), hz = P.z;
+  let back = 4.3;
+  for (let i = 0; i < 5 && insideBuilding(hx - fx * back + rx * 1.05, hy + 0.45, hz - fz * back + rz * 1.05); i++) back *= 0.7;
+  tmpV.set(hx - fx * back * Math.cos(p) + rx * 1.05, hy + 0.45 + Math.sin(p) * back, hz - fz * back * Math.cos(p) + rz * 1.05);
+  camera.position.lerp(tmpV, Math.min(1, dt * 18));
+  if (cam.shake > 0) { camera.position.x += rnd(-1, 1) * cam.shake * 0.3; camera.position.y += rnd(-1, 1) * cam.shake * 0.3; cam.shake = Math.max(0, cam.shake - dt * 2); }
+  camera.lookAt(camera.position.x + fx * Math.cos(p) * 20, camera.position.y - Math.sin(p) * 20, camera.position.z + fz * Math.cos(p) * 20);
+}
+const camExtra0 = camExtra;
+camExtra = function (dt) {
+  if (gunCur && !cam.photo && !inHome && !P.inCar) { camAim(dt); return true; }
+  return camExtra0(dt);
+};
+
+/* ---- マウスで狙う（パソコン） ---- */
+function lockAim() { if (document.body.classList.contains('touch')) return; try { if (document.pointerLockElement !== canvas) canvas.requestPointerLock(); } catch (e) { /* ignore */ } }
+function unlockAim() { try { if (document.pointerLockElement === canvas) document.exitPointerLock(); } catch (e) { /* ignore */ } }
+canvas.addEventListener('mousedown', e => { if (!gunCur || openScreen || e.button !== 0) return; if (document.pointerLockElement !== canvas) lockAim(); gunFire = true; gunTap = true; });
+addEventListener('mouseup', e => { if (e.button === 0) gunFire = false; });
+addEventListener('mousemove', e => {
+  if (document.pointerLockElement !== canvas || !gunCur) return;
+  const ks = (state.settings ? state.settings.sens : 5) / 5;
+  cam.yaw -= e.movementX * 0.0025 * ks; cam.pitch = clamp(cam.pitch + e.movementY * 0.002 * ks, 0.05, 1.2);
+});
+
+/* ---- 町のガンショップ（公園の中） ---- */
+const GUNSHOP = { id: 'gunshop', name: 'ガンショップ＆射撃場', short: '銃', color: '#2d3436', prompt: '銃を買う・射撃場に入る' };
+function buildGunShop() {
+  const bx = 30, bz = 30;
+  let spot = null;
+  for (const [x, z] of [[bx + 14, bz - 14], [bx - 14, bz - 14], [bx + 14, bz + 14], [bx - 14, bz + 14], [bx + 12, bz - 10], [bx - 12, bz + 10]]) {
+    const ok = !circles.some(c => Math.abs(c.x - x) < 4.5 + c.r && Math.abs(c.z - z) < 3.5 + c.r);
+    if (ok) { spot = { x, z }; break; }
+  }
+  if (!spot) { spot = { x: bx + 14, z: bz - 14 }; for (let i = circles.length - 1; i >= 0; i--) { const c = circles[i]; if (Math.abs(c.x - spot.x) < 6 && Math.abs(c.z - spot.z) < 5) circles.splice(i, 1); } }
+  const sx = spot.x > bx ? -1 : 1;
+  const g = new THREE.Group(); scene.add(g);
+  const b = new THREE.Mesh(BX(6, 4, 5), lam(0x3d4248)); b.position.set(spot.x, 2.2, spot.z); b.castShadow = true; g.add(b);
+  const roof = new THREE.Mesh(BX(6.6, 0.4, 5.6), lam(0x1e1e1e)); roof.position.set(spot.x, 4.4, spot.z); g.add(roof);
+  const stripe = new THREE.Mesh(BX(6.05, 0.5, 5.05), lam(0xe67e22)); stripe.position.set(spot.x, 3.3, spot.z); g.add(stripe);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 1.3), new THREE.MeshBasicMaterial({ map: textTexture('ガンショップ＆射撃場', '#2d3436', '#ffffff', 640, 150, 54, '#e67e22') }));
+  sign.position.set(spot.x + sx * 3.03, 3.3, spot.z); sign.rotation.y = sx > 0 ? Math.PI / 2 : -Math.PI / 2; g.add(sign);
+  const door = new THREE.Mesh(BX(0.1, 2.4, 1.6), lam(0x111111)); door.position.set(spot.x + sx * 3.01, 1.4, spot.z); g.add(door);
+  addCollider(spot.x, spot.z, 6, 5, 4.6);
+  Object.assign(GUNSHOP, { mx: spot.x + sx * 6, mz: spot.z, sx, tx: spot.x + sx * 6, tz: spot.z });
+  GUNSHOP.marker = makeMarker(new THREE.Color(0xe67e22), GUNSHOP.name); GUNSHOP.marker.position.set(GUNSHOP.mx, 0, GUNSHOP.mz); GUNSHOP.marker.userData.sprite.scale.set(8, 1.8, 1); markers.push(GUNSHOP.marker);
+  SERVICES.push(GUNSHOP); SVC.gunshop = GUNSHOP;
+  buildRange();
+}
+const useService0 = useService;
+useService = function (s) { if (s.id === 'gunshop') { initAudio(); openGunShop(); return; } useService0(s); };
+
+function gunStatsHtml(d) {
+  const bar = (v, max) => `<i style="display:inline-block;width:80px;height:6px;border-radius:3px;background:rgba(255,255,255,.12);vertical-align:middle;margin:0 6px"><b style="display:block;height:100%;border-radius:3px;background:var(--signal);width:${Math.min(100, Math.round(v / max * 100))}%"></b></i>`;
+  return `<div class="sub">威力${bar(d.dmg * d.pellets, 112)}連射${bar(d.rate, 13)}弾数${bar(d.mag, 100)}精度${bar(0.08 - d.spread, 0.075)}</div><div class="sub">${d.type}・1マガジン ${d.mag}発・${d.auto ? '連射できる' : '1発ずつ'}${d.pellets > 1 ? `・1回で${d.pellets}発の弾が広がる` : ''}・リロード ${d.reload}秒</div>`;
+}
+function openGunShop() {
+  svcScreen('ガンショップ＆射撃場', `<div class="muted">買った銃は町でも Q（スマホは「銃」ボタン）で構えられます。射撃場ではお店の銃を全部ためし撃ちできます。弾はいくら撃ってもタダです。</div>
+    <div class="row"><button class="btn primary" id="gsRange" type="button">${inRange ? '射撃場にもどる' : '🎯 射撃場に入る'}</button></div>
+    <div class="list">${GUNS.map((d, i) => { const own = state.guns.includes(d.id); return `<div class="item"><div style="flex:1"><div class="name">${i + 1}. 🔫 ${d.name}</div>${gunStatsHtml(d)}</div>
+      ${own ? `<button class="btn" data-geq="${d.id}" type="button">${gunCur === d.id ? '構えている' : '構える'}</button>` : `<button class="btn primary" data-gbuy="${d.id}" type="button" ${state.money < d.price ? 'disabled' : ''}>${yen(d.price)}</button>`}</div>`; }).join('')}</div>
+    <div class="muted">射撃場のスコアアタック最高記録：${state.rangeBest ? `${state.rangeBest}点` : 'まだありません'}</div>`, b => {
+    b.querySelector('#gsRange').onclick = () => { closeScreen(); if (!inRange) enterRange(); };
+    b.querySelectorAll('[data-gbuy]').forEach(x => x.onclick = () => { const d = GUN[x.dataset.gbuy]; if (!pay(d.price, `${d.name}を買った！ Q で構えられます`)) return; state.guns.push(d.id); save(); openGunShop(); });
+    b.querySelectorAll('[data-geq]').forEach(x => x.onclick = () => { closeScreen(); drawGun(x.dataset.geq); });
+  });
+}
+
+/* ---- 射撃場（町から離れた場所に作る屋外レンジ） ---- */
+let range = null;
+function targetTex() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128; const g = cv.getContext('2d');
+  [['#ffffff', 64], ['#2d3436', 52], ['#ffffff', 40], ['#e74c3c', 28], ['#ffffff', 16], ['#e74c3c', 8]].forEach(([c, r]) => { g.fillStyle = c; g.beginPath(); g.arc(64, 64, r, 0, 7); g.fill(); });
+  return new THREE.CanvasTexture(cv);
+}
+function buildRange() {
+  const g = new THREE.Group(); scene.add(g);
+  const W = 32, z0 = -10, z1 = 70;
+  const B = (w, h, d, col, x, y, z, solid) => { const m = new THREE.Mesh(BX(w, h, d), typeof col === 'number' ? lam(col) : col); m.position.set(RG_X + x, y, RG_Z + z); m.receiveShadow = true; g.add(m); if (solid) addCollider(RG_X + x, RG_Z + z, w, d, h); return m; };
+  B(W + 60, 0.1, z1 - z0 + 60, 0x55603d, 0, -0.05, (z0 + z1) / 2);
+  B(W, 0.05, 12, 0x9a9590, 0, 0.0, -4);
+  B(W, 0.05, z1 - 2, 0xc2a878, 0, 0.0, (2 + z1) / 2);
+  B(W, 6, 0.6, 0x7f8c8d, 0, 3, z0, true); B(0.6, 6, z1 - z0, 0x7f8c8d, -W / 2, 3, (z0 + z1) / 2, true); B(0.6, 6, z1 - z0, 0x7f8c8d, W / 2, 3, (z0 + z1) / 2, true);
+  B(W, 8, 2, 0x8d6e4a, 0, 4, z1, true);
+  B(W, 1.1, 0.7, 0x5d4037, 0, 0.55, 1.6, true); B(W, 0.08, 0.9, 0x3e2723, 0, 1.14, 1.6);
+  for (let x = -12; x <= 12; x += 6) B(0.15, 2.2, 1.6, 0x95a5a6, x + 3, 1.1, 0.8);
+  for (let k = 0; k < 5; k++) { const lab = labelSprite(`${k + 1}番レーン`, '#ffc928'); lab.scale.set(2.6, 0.6, 1); lab.position.set(RG_X - 12 + k * 6, 2.6, RG_Z + 1.4); g.add(lab); }
+  for (const z of [20, 35, 50]) { const s = labelSprite(`${z}m`, '#ffffff'); s.scale.set(1.6, 0.45, 1); s.position.set(RG_X - W / 2 + 1.5, 0.6, RG_Z + z); g.add(s); B(W - 2, 0.03, 0.15, 0xffffff, 0, 0.04, z); }
+  const title = labelSprite('ガンショップ＆射撃場', '#e67e22'); title.scale.set(10, 2.2, 1); title.position.set(RG_X, 7.5, RG_Z + z1 - 1.5); g.add(title);
+  const tm = new THREE.MeshBasicMaterial({ map: targetTex(), side: THREE.DoubleSide });
+  const targets = [];
+  for (let i = 0; i < 6; i++) {
+    const t = new THREE.Group();
+    const face = new THREE.Mesh(new THREE.CircleGeometry(0.75, 28), tm); face.rotation.y = Math.PI; face.position.y = 1.6; t.add(face);
+    const post = new THREE.Mesh(BX(0.12, 1.25, 0.12), lam(0x5d4037)); post.position.y = 0.62; t.add(post);
+    g.add(t); targets.push({ m: t, face, x: 0, y: 1.6, z: 30, r: 0.75, down: 0, vx: 0 });
+  }
+  range = { g, targets, spots: [], attack: null, W };
+  const sp = (x, z, label, fn, r = 1.6) => { range.spots.push({ x: RG_X + x, z: RG_Z + z, label, fn, r }); const ring = new THREE.Mesh(new THREE.RingGeometry(r - 0.25, r, 32), new THREE.MeshBasicMaterial({ color: 0xffc928, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.set(RG_X + x, 0.06, RG_Z + z); g.add(ring); };
+  B(4, 1.1, 1.2, 0x2d3436, -10, 0.55, -7, true);
+  sp(-10, -5.2, 'カウンター（銃を買う・えらぶ）', openGunShop);
+  sp(0, -5.5, '🎯 スコアアタック（60秒）を始める', startRangeAttack);
+  sp(10, -7.5, '町にもどる', exitRange);
+  targets.forEach(placeTarget);
+}
+function placeTarget(tg) {
+  const lane = Math.floor(Math.random() * 5);
+  tg.z = 12 + Math.random() * 46; tg.x = -12 + lane * 6 + rnd(-1.5, 1.5);
+  tg.vx = range.attack && Math.random() < 0.45 ? rnd(1.5, 3.5) * (Math.random() < 0.5 ? -1 : 1) : 0;
+  tg.down = 0; tg.m.rotation.x = 0;
+  tg.m.position.set(RG_X + tg.x, 0, RG_Z + tg.z);
+  tg.x += RG_X; tg.z += RG_Z;
+}
+function hitTarget(tg, ring, d) {
+  tg.down = 0.7;
+  const dist = tg.z - RG_Z, pts = Math.round((10 + Math.floor(dist / 10) * 5) * (ring < 0.25 ? 2 : 1));
+  if (range.attack) { range.attack.score += pts; range.attack.hits++; }
+  const lab = labelSprite(`+${pts}${ring < 0.25 ? ' ど真ん中！' : ''}`, ring < 0.25 ? '#ffc928' : '#ffffff'); lab.scale.set(ring < 0.25 ? 4 : 2, 0.6, 1); lab.position.set(tg.x, 3, tg.z); scene.add(lab); shotFx.push({ m: lab, t: 0.6 });
+  void d;
+}
+function updateRange(dt) {
+  for (const tg of range.targets) {
+    if (tg.down > 0) { tg.down -= dt; tg.m.rotation.x = Math.min(Math.PI / 2, tg.m.rotation.x + dt * 8); if (tg.down <= 0) placeTarget(tg); continue; }
+    if (tg.vx) { tg.x += tg.vx * dt; if (Math.abs(tg.x - RG_X) > 14) tg.vx *= -1; tg.m.position.x = tg.x; }
+  }
+  const a = range.attack;
+  if (a) {
+    a.t -= dt;
+    setText($('#rangeHud'), `🎯 のこり ${Math.max(0, Math.ceil(a.t))}秒　スコア ${a.score}　命中 ${a.hits}`);
+    if (a.t <= 0) endRangeAttack();
+  }
+  $('#rangeHud').hidden = !a || !!openScreen;
+}
+function startRangeAttack() {
+  if (!gunCur) drawGun(state.gunSel && GUN[state.gunSel] ? state.gunSel : 'glock17');
+  range.attack = { t: 60, score: 0, hits: 0, shots0: 0 };
+  range.targets.forEach(placeTarget);
+  toast('スコアアタック開始！ 遠い的ほど高得点、ど真ん中は2倍', 'big'); sfx('ok');
+}
+function endRangeAttack() {
+  const a = range.attack; range.attack = null;
+  const best = a.score > (state.rangeBest || 0);
+  if (best) state.rangeBest = a.score;
+  const pay = Math.round(a.score * 2);
+  addMoney(pay); sfx('lvl'); save();
+  gunFire = false; unlockAim();
+  svcScreen('スコアアタック終了！', `<div class="res-rows"><div><span>スコア</span><span>${a.score}点${best ? '（最高記録！）' : ''}</span></div><div><span>命中した的</span><span>${a.hits}こ</span></div><div><span>使った銃</span><span>${GUN[gunCur] ? GUN[gunCur].name : '-'}</span></div><div><span>賞金</span><span>${yen(pay)}</span></div></div><div class="muted">最高記録：${state.rangeBest}点</div>`);
+}
+function enterRange() {
+  if (P.inCar) exitCar(true);
+  inRange = true; P.sit = false;
+  P.x = RG_X; P.z = RG_Z - 3; P.h = 0; cam.yaw = 0; cam.pitch = 0.32;
+  camera.position.set(P.x, 3, P.z - 4);
+  if (petObj) { petObj.x = P.x + 1; petObj.z = P.z - 1; }
+  range.targets.forEach(placeTarget);
+  drawGun(state.gunSel && GUN[state.gunSel] ? state.gunSel : 'glock17');
+  toast('射撃場に入った！ 的をねらって撃とう。パソコンは画面をクリックするとマウスでねらえます', 'big');
+}
+function exitRange() {
+  if (range.attack) range.attack = null;
+  inRange = false;
+  if (gunCur && !state.guns.includes(gunCur)) drawGun(null);
+  unlockAim();
+  P.x = GUNSHOP.mx + GUNSHOP.sx * 1.5; P.z = GUNSHOP.mz; P.h = Math.atan2(GUNSHOP.sx, 0); cam.yaw = P.h;
+  camera.position.set(P.x - Math.sin(P.h) * 8, 6, P.z - Math.cos(P.h) * 8);
+  if (petObj) { petObj.x = P.x - 1; petObj.z = P.z; }
+  $('#rangeHud').hidden = true; sfx('click');
+}
+function rangeInteraction() {
+  const { x, z } = playerPos();
+  let best = null, bd = 1e9;
+  for (const s of range.spots) { const d = Math.hypot(s.x - x, s.z - z); if (d < s.r && d < bd) { bd = d; best = s; } }
+  return best ? { label: best.label, fn: best.fn } : null;
+}
+
+/* ---- ボタン ---- */
+$('#bFire').addEventListener('pointerdown', e => { initAudio(); gunFire = true; gunTap = true; e.preventDefault(); });
+for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('#bFire').addEventListener(ev, () => { gunFire = false; });
+$('#bReload').addEventListener('click', () => reloadGun());
+$('#bGun').addEventListener('click', () => { initAudio(); if (!openScreen) cycleGun(); });
+
 /* =========================================================
    boot
    ========================================================= */
 function startGame(fresh) {
+  if (inRange) exitRange();
+  if (gunCur) drawGun(null);
   if (inHome) exitHome(true);
   initAudio();
   if (fresh) {
