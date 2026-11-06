@@ -206,6 +206,22 @@ body.photo .hud,body.photo .tools,body.photo .side,body.photo .log,body.photo .c
 details.nhist{margin:0 0 10px;font-size:12.5px}
 details.nhist summary{cursor:pointer;color:var(--muted)}
 details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
+.dex{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.dex span{font-size:11.5px;padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.dex span.on{color:var(--fg);border-color:rgba(228,180,94,.6);background:rgba(228,180,94,.08)}
+.tut{position:absolute;z-index:10;left:50%;transform:translateX(-50%);top:calc(var(--hud-h,70px) + 12px);width:min(430px,calc(100% - 32px));padding:14px 16px 12px;border-color:var(--brass)}
+.tut-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+.tut-h span{font-family:var(--f-pixel);color:var(--brass);font-size:14px;font-variant-numeric:tabular-nums}
+.tut-h .linkish{font-size:12px;color:var(--muted)}
+.tut b{display:block;font-family:var(--f-display);font-weight:400;font-size:18px;letter-spacing:.04em}
+.tut p{margin:6px 0 10px;font-size:13.5px;line-height:1.7}
+.tut-f{display:flex;align-items:center;gap:6px}
+.tut-f span{flex:1;font-size:12.5px;color:var(--muted)}
+.tut-f span.ok{color:var(--peace);font-weight:700}
+.tut-ring{position:absolute;z-index:10;pointer-events:none;border:2px solid var(--brass);border-radius:10px;box-shadow:0 0 0 4px rgba(228,180,94,.25),0 0 18px rgba(228,180,94,.6);animation:tutp 1.2s ease-in-out infinite}
+@keyframes tutp{50%{box-shadow:0 0 0 8px rgba(228,180,94,.1),0 0 26px rgba(228,180,94,.8)}}
+@media (max-width:760px){ .tut{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 150px)} .tut p{font-size:13px} }
+@media (prefers-reduced-motion:reduce){ .tut-ring{animation:none} }
 .banner{position:absolute;z-index:6;left:50%;top:30%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;padding-inline:16px}
 .banner.show{animation:ban 3.2s ease-out forwards}
 .banner small{display:block;font-family:var(--f-pixel);font-size:18px;color:var(--fg);letter-spacing:.2em;text-shadow:0 2px 8px rgba(0,0,0,.8)}
@@ -226,7 +242,7 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
 .intro li{display:grid;grid-template-columns:26px 1fr;gap:6px}
 .intro li span{font-family:var(--f-pixel);color:var(--brass);font-size:16px}
 .intro .acts .btn{padding:9px 14px;font-size:14px}
-.intro .btn.go{background:var(--brass);border-color:var(--brass);color:#1d1508;font-weight:700}
+.btn.go{background:var(--brass);border-color:var(--brass);color:#1d1508;font-weight:700}
 
 @media (max-width:760px){
   .brand{display:none}
@@ -342,6 +358,7 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
       <button class="sp" type="button" data-dis="fire" aria-pressed="false"><b>山火事</b><small>森が焼けて荒地に</small></button>
       <button class="sp" type="button" data-dis="fish" aria-pressed="false"><b style="color:#9fd4ff">大漁</b><small>港町の人が増える</small></button>
       <button class="sp" type="button" data-dis="gold" aria-pressed="false"><b style="color:#ffd36b">金の発見</b><small>人が押し寄せる</small></button>
+      <button class="sp" type="button" data-dis="sky" aria-pressed="false"><b style="color:#9fd4ff">空の現象</b><small>雨・花火・UFOなど</small></button>
     </div>
   </div>
 
@@ -369,6 +386,13 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
   <div class="log" id="log" aria-live="polite"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast"></div>
+  <div class="tut-ring" id="tutRing" hidden></div>
+  <div class="plate tut" id="tut" role="dialog" aria-labelledby="tutTitle" aria-live="polite" hidden>
+    <div class="tut-h"><span id="tutNo"></span><button class="linkish" type="button" id="tutQuit">チュートリアルをやめる</button></div>
+    <b id="tutTitle"></b>
+    <p id="tutText"></p>
+    <div class="tut-f"><span id="tutState"></span><button class="btn" type="button" id="tutBack">もどる</button><button class="btn go" type="button" id="tutNext">次へ</button></div>
+  </div>
   <button class="btn photoExit" type="button" id="photoExit" hidden>画面の表示を戻す</button>
   <div class="achpop" id="achPop" aria-live="polite"></div>
 
@@ -379,6 +403,7 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
         <button class="btn" type="button" data-mtab="help">遊び方</button>
         <button class="btn" type="button" data-mtab="log">年表</button>
         <button class="btn" type="button" data-mtab="ach">実績</button>
+        <button class="btn" type="button" data-mtab="dex">図鑑</button>
         <button class="btn" type="button" data-mtab="goal">目標</button>
         <button class="btn" type="button" data-mtab="rank">ランキング</button>
         <button class="btn" type="button" data-mtab="list">一覧</button>
@@ -401,7 +426,8 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
         <li><span>5</span><div>最初に生み出した国があなたの国です。画面下の命令ボタンで攻めたり、開拓したりできます。ほかの国と同盟を組むと、攻められたときに助けに来てくれます。</div></li>
       </ol>
       <div class="acts">
-        <button class="btn go" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
+        <button class="btn go" type="button" id="startTut">チュートリアルで遊び方を覚える</button>
+        <button class="btn" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
         <button class="btn" type="button" id="startFree">好きな場所に置く</button>
       </div>
       <p class="scen-h">シナリオで始める</p>
@@ -660,13 +686,13 @@ const nm = id => N[id] ? N[id].base + GOV[eraIdx][N[id].gov] : '？';
 const toHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 function createNation(){
   const id = N.length, hue = (id * 137.508 + 14) % 360, l = 48 + (id % 3) * 7, rgb = hsl(hue, 70, l);
-  const n = { id, base:uniqueName(), gov:rnd()*3|0, hue, rgb, css:`rgb(${rgb})`, cssA:`rgba(${rgb},.38)`, line:`rgb(${hsl(hue, 85, Math.min(78, l + 16))})`,
+  const n = { id, base:uniqueName(), gov:rnd()*6|0, hue, rgb, css:`rgb(${rgb})`, cssA:`rgba(${rgb},.38)`, line:`rgb(${hsl(hue, 85, Math.min(78, l + 16))})`,
     hex:toHex(rgb), hexDim:toHex(hsl(hue, 45, l*.62)), lineRGB:hsl(hue, 85, Math.min(78, l + 16)).map(v => v/255),
     alive:true, capital:-1, aggr:.6 + rnd()*.9, spec:pick(['trade', 'defense', 'war']), born:Math.floor(year), pop:0, count:0, tiles:0, cx:0, cy:0 };
   N.push(n); return n;
 }
 const aliveNations = () => N.filter(n => n.alive);
-function capOf(s){ return 70 * s.fert * ERAS[eraIdx].mult * (s.capital ? 1.6 : 1) * (s.wonders ? 1 + .2*s.wonders.length : 1) * pol(s.nation, 'cap'); }
+function capOf(s){ return 70 * s.fert * ERAS[eraIdx].mult * (s.capital ? 1.6 : 1) * (s.wonders ? 1 + .2*s.wonders.length : 1) * pol(s.nation, 'cap') * (1 + nextInv*.003) * (1 + .12*(s.resN || 0)); }
 function stageOf(s){ let st = 0; for (let k = 1; k < POP_ST.length; k++) if (s.pop >= POP_ST[k]) st = k; return Math.min(st, ERAS[eraIdx].maxStage); }
 function addSettlement(x, y, nid, pop){
   const s = { id:nextId++, x, y, nation:nid, pop, name:genName(), capital:false, seed:(rnd()*1e9)|0, fert:fertAround(x, y), stage:0, cd:0, alive:true, born:Math.floor(year) };
@@ -767,7 +793,8 @@ function recomputeTerritory(){
   terCtx.putImageData(terImg, 0, 0);
   borderSegs = segs;
   // 道
-  roadSegs = [];
+  if (tick - lastRoad >= 60 || tick < lastRoad || !roadSegs.length){
+  lastRoad = tick; roadSegs = [];
   if (eraIdx >= 1){
     const lim = eraIdx >= 4 ? 11 : 8;
     for (const s of S){
@@ -778,6 +805,7 @@ function recomputeTerritory(){
       for (const [, o] of near.slice(0, 2)) if (landPath(s.x, s.y, o.x, o.y, 0)) roadSegs.push(s.x + .5, s.y + .5, o.x + .5, o.y + .5);
     }
   }
+  }
   terrDirty = false; globeDirty = true; linesDirty = true; cityDirty = true;
 }
 // ===== 戦争 =====
@@ -787,6 +815,7 @@ const warCount = id => wars.reduce((c, w) => c + (w.a === id || w.b === id ? 1 :
 function declareWar(a, b, chain = true){
   if (a === b || !N[a].alive || !N[b].alive || warOf(a, b) || allied(a, b)) return;
   wars.push({ a, b, start:tick, end:tick + 500 + rnd()*700, capA:0, capB:0 });
+  if (chain && a === myNation) x2.decl++;
   log(chain ? `${nm(a)}が${nm(b)}に宣戦布告！` : `${nm(a)}が同盟国を助けて${nm(b)}との戦争に参戦した`, 'war');
   if (!chain) return;
   for (const ally of allyList(b)) if (ally !== a && !allied(ally, a) && !warOf(ally, a)) declareWar(ally, a, false);
@@ -809,7 +838,7 @@ function considerWars(){
     if (!N[a] || !N[b] || !N[a].alive || !N[b].alive || warOf(a, b) || allied(a, b)) continue;
     if ((truce.get(key) || 0) > tick) continue;
     const busy = 1 / (1 + warCount(a) + warCount(b));
-    const p = .006 * ef * (N[a].aggr*spec(a).aggr + N[b].aggr*spec(b).aggr) / 2 * Math.min(2, .5 + cnt/20) * busy * (a === myNation || b === myNation ? DIFF.war[CFG.difficulty] : 1);
+    const p = .006 * ef * (N[a].aggr*spec(a).aggr + N[b].aggr*spec(b).aggr) / 2 * Math.min(2, .5 + cnt/20) * busy * (a === myNation || b === myNation ? DIFF.war[CFG.difficulty] * pol(myNation, 'aggro') : 1);
     if (rnd() < p){ const [x, y] = N[a].pop >= N[b].pop ? [a, b] : [b, a]; if (x !== myNation) declareWar(x, y); }
   }
 }
@@ -1063,7 +1092,7 @@ function allyChance(from, to){
   if (N[to].spec === 'trade') c += .1;
   if (N[from].pop > N[to].pop) c += .15;
   if (allyList(to).length >= 3) c -= .3;
-  return clamp(c, 0, .95);
+  return clamp(c * pol(from, 'ally'), 0, .95);
 }
 function proposeAlliance(to){
   const n = N[to];
@@ -1109,12 +1138,12 @@ const POLICIES = {
   festival: { name:'祭り',     desc:'人がとても増えるが、攻める力は落ちる', growth:1.4, atk:.8 },
 };
 let myPolicy = 'none', scenarioBoost = 1, worldHist = [], stat = { dis:{}, peace:0, surr:0, cap:0, ren:0 }, eclipseT = 0, tornados = [], fires = [], rainbows = [];
-const pol = (id, k) => id === myNation && myNation >= 0 ? (POLICIES[myPolicy][k] ?? 1) : 1;
+const pol = (id, k) => (id === myNation && myNation >= 0 ? (POLICIES[myPolicy][k] ?? 1) : 1) * bm(id, k);
 const DIFF = { war:[.35, 1, 1.8], atk:[.7, 1, 1.35] };
 const GROW = [.6, 1, 1.6], DISF = [0, 1, 2.2], DAYS = [.5, 1, 2.5];
 function setPolicy(k){
   if (!POLICIES[k] || !isMine(myNation)) return;
-  myPolicy = k; cityDirty = true;
+  myPolicy = k; cityDirty = true; if (k !== 'none') addU(x2.pols, k);
   log(k === 'none' ? `${nm(myNation)}は特別な政策をやめた` : `${nm(myNation)}が「${POLICIES[k].name}」の政策をとった`, 'era');
 }
 const personality = id => { const v = N[id].aggr * spec(id).aggr; return v > 1.5 ? '好戦的' : v > .9 ? 'ふつう' : 'おだやか'; };
@@ -1138,9 +1167,10 @@ function doDisaster(x, y){
   else if (disaster === 'fire') wildfire(x, y);
   else if (disaster === 'fish') bigCatch(x, y);
   else if (disaster === 'gold') goldRush(x, y);
+  else if (disaster === 'sky') skyEvent(x, y);
   stat.dis[disaster] = (stat.dis[disaster] || 0) + 1;
 }
-const DIS_R = { meteor:3.2, quake:7, volcano:2.2, plague:10, typhoon:2.6, bless:6, tsunami:10, tornado:1.3, cold:6, fire:3.5, fish:9, gold:2 };
+const DIS_R = { meteor:3.2, quake:7, volcano:2.2, plague:10, typhoon:2.6, bless:6, tsunami:10, tornado:1.3, cold:6, fire:3.5, fish:9, gold:2, sky:3 };
 function quake(x, y){
   shake = Math.max(shake, .9); sfx('rumble'); markEvent(x, y, 2);
   let hit = 0;
@@ -1325,6 +1355,7 @@ function unlock(k){
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
 }
 function checkAch(){
+  for (const a of ACH2) if (ACH2_FN[a[0]]()) unlock(a[0]);
   if (started) unlock('birth');
   if (firstStage[3]) unlock('city');
   if (eraIdx >= 4) unlock('ind');
@@ -1525,11 +1556,155 @@ function cmdNuke(t){
   const mine = S.filter(s => s.alive && s.nation === myNation && s.stage >= 3);
   if (!mine.length){ toast('核ミサイルを撃てる大きな街がありません'); return; }
   ensureWar(t.nation);
-  const [from, d] = nearestOf(mine, t); n.nukeCd = tick + 700;
+  const [from, d] = nearestOf(mine, t); n.nukeCd = tick + 700; x2.nukes++;
   missiles.push({ x0:from.x + .5, y0:from.y + .5, x1:t.x + .5, y1:t.y + .5, t:0, dur:25 + d*.4, target:t.id, nation:myNation });
   log(`${nm(myNation)}が${t.name}へ核ミサイルを発射した！`, 'war'); sfx('siren');
 }
 const CMD_HINT = { cmdAttack:'攻めたい相手の街をタップしてください。近くの街から軍が出ます。', cmdSettle:'新しい街をつくりたい陸地をタップしてください。', cmdJet:'爆撃したい相手の街をタップしてください。', cmdNuke:'核ミサイルを落とす相手の街をタップしてください。' };
+
+// ===== さらに500の要素：データ =====
+INVENTIONS.push(...[[-9800, "火をおこす技を身につけた"], [-9700, "石のおのがつくられた"], [-9600, "骨の針で服をぬうようになった"], [-9400, "毛皮の服で寒さをしのぐようになった"], [-9300, "犬を飼いならした"], [-8800, "羊や山羊を飼うようになった"], [-8500, "石臼で穀物をひくようになった"], [-8000, "日干しれんがの家が建った"], [-7500, "布を織るようになった"], [-7000, "漁の網がつくられた"], [-6500, "果物から酒がつくられた"], [-6000, "畑に水を引く用水路が掘られた"], [-5500, "銅をとかして道具にするようになった"], [-5000, "牛に引かせるすきで畑を耕すようになった"], [-4500, "ろくろで器をつくるようになった"], [-4000, "荷車で荷物を運ぶようになった"], [-3800, "数を記録するようになった"], [-3300, "帳簿で穀物の出し入れをつけるようになった"], [-2700, "天秤で重さをはかるようになった"], [-2600, "ピラミッドを建てる測量術が生まれた"], [-2500, "ガラスがつくられた"], [-2000, "馬に引かせる戦車が生まれた"], [-1800, "法律が石碑に刻まれた"], [-1500, "日時計で時刻をはかるようになった"], [-1400, "アルファベットが生まれた"], [-1000, "鉄のすきで固い土も耕せるようになった"], [-700, "金貨がつくられた"], [-600, "地図が描かれた"], [-500, "そろばんで計算するようになった"], [-400, "投石機がつくられた"], [-350, "図形の学問（幾何学）が生まれた"], [-300, "水道橋で街に水を引くようになった"], [-250, "てこと滑車のしくみがわかった"], [-200, "コンクリートで建物をつくるようになった"], [-100, "歯車の仕掛けで星の動きを計算した"], [-50, "吹きガラスで器をつくるようになった"], [132, "地震計がつくられた"], [200, "手押し車が使われるようになった"], [300, "馬に乗るためのあぶみが生まれた"], [600, "水車で粉をひくようになった"], [700, "白く美しい磁器が焼かれた"], [900, "風車で粉をひくようになった"], [950, "星を観測する天文台が建った"], [1024, "紙のお金（紙幣）が使われはじめた"], [1088, "学問の場である大学が開かれた"], [1202, "アラビア数字での計算が広まった"], [1286, "眼鏡が発明された"], [1300, "歯車で動く機械時計がつくられた"], [1420, "大きな帆船で遠くの海へ出られるようになった"], [1500, "鉄砲が広まった"], [1590, "顕微鏡が発明された"], [1620, "計算尺が発明された"], [1643, "気圧計が発明された"], [1656, "振り子時計が発明された"], [1701, "種まき機が発明された"], [1733, "布を速く織る飛び杼が発明された"], [1752, "避雷針が発明された"], [1764, "糸を速くつむぐ紡績機が発明された"], [1783, "熱気球が空を飛んだ"], [1796, "病気を防ぐ予防接種が始まった"], [1800, "電池が発明された"], [1807, "蒸気船が川を走った"], [1814, "蒸気機関車が走った"], [1826, "写真が撮られた"], [1837, "電信で遠くへ文字を送れるようになった"], [1846, "ミシンが発明された"], [1847, "手術の麻酔が広まった"], [1867, "ダイナマイトが発明された"], [1877, "蓄音機で音を記録できるようになった"], [1885, "自動車が走った"], [1895, "X線で体の中が見えるようになった"], [1896, "無線で信号を送れるようになった"], [1897, "映画が上映された"], [1913, "流れ作業で自動車がつくられるようになった"], [1920, "ラジオ放送が始まった"], [1928, "抗生物質が見つかった"], [1935, "レーダーが発明された"], [1947, "トランジスタが発明された"], [1954, "原子力で電気がつくられた"], [1957, "人工衛星が打ち上げられた"], [1960, "レーザーが発明された"], [1961, "人が初めて宇宙へ飛び立った"], [1964, "高速鉄道が走りはじめた"], [1971, "マイクロプロセッサが生まれた"], [1973, "持ち運べる電話が生まれた"], [1981, "くり返し使える宇宙船が飛んだ"], [1995, "衛星で位置がわかるようになった"], [2003, "人の遺伝情報がすべて読まれた"], [2007, "スマートフォンが広まった"], [2015, "電気自動車が広まりはじめた"], [2017, "くり返し使えるロケットが着陸した"], [2025, "自動で走る車が街を走りはじめた"], [2035, "量子コンピューターが実用化された"], [2060, "海の底に人が住む街ができた"], [2080, "月に工場が建った"], [2110, "重力にさからって浮かぶ乗り物が生まれた"], [2130, "小惑星から金属を掘るようになった"], [2160, "長い旅のための人工冬眠ができるようになった"], [2200, "火星を緑の星にする計画が始まった"], [2300, "銀河の地図が完成した"]]); INVENTIONS.sort((a, b) => a[0] - b[0]);
+const HERO_ROLES = [["学者", "growth", 1.25, "人口の伸びが上がる"], ["将軍", "atk", 1.4, "攻める力が上がる"], ["築城家", "def", 1.5, "守りが固くなる"], ["商人", "trade", 1.8, "交易が増える"], ["探検家", "expand", 2.0, "新しい街をよく開く"], ["建築家", "cap", 1.15, "街が大きく育つ"], ["医師", "growth", 1.2, "人口の伸びが上がる"], ["外交官", "ally", 1.6, "同盟を結びやすくなる"], ["発明家", "cap", 1.1, "街が大きく育つ"], ["芸術家", "growth", 1.15, "人口の伸びが上がる"]];
+const HEROES = [["アストラ", 0, 0], ["ベルカ", 1, 0], ["シオン", 2, 0], ["ドラン", 3, 0], ["エルマ", 4, 0], ["フィオ", 5, 0], ["ガルド", 6, 0], ["ハンナ", 7, 0], ["イリス", 8, 0], ["ジュノ", 9, 0], ["カイル", 0, 1], ["ルミナ", 1, 1], ["マルコ", 2, 1], ["ニーナ", 3, 1], ["オルガ", 4, 1], ["ピエタ", 5, 1], ["ラウル", 6, 1], ["セレナ", 7, 1], ["トーマ", 8, 1], ["ユリア", 9, 1], ["ヴィクト", 0, 2], ["ワルド", 1, 2], ["ザイン", 2, 2], ["アイラ", 3, 2], ["ブラム", 4, 2], ["カミラ", 5, 2], ["ディーノ", 6, 2], ["エミル", 7, 2], ["フリーダ", 8, 2], ["ゴラン", 9, 2], ["ヒルダ", 0, 3], ["イザク", 1, 3], ["ヤナ", 2, 3], ["クラウ", 3, 3], ["レオナ", 4, 3], ["ミロ", 5, 3], ["ノエラ", 6, 3], ["オスカ", 7, 3], ["パオラ", 8, 3], ["クイン", 9, 3], ["ロッサ", 0, 4], ["ソラン", 1, 4], ["ティア", 2, 4], ["ウルス", 3, 4], ["ヴェラ", 4, 4], ["ウィレム", 5, 4], ["ゼノ", 6, 4], ["アデル", 7, 4], ["ボリス", 8, 4], ["セシル", 9, 4], ["ダリア", 0, 5], ["エンゾ", 1, 5], ["ファラ", 2, 5], ["ギルベ", 3, 5], ["ホルン", 4, 5], ["イネス", 5, 5], ["ジャン", 6, 5], ["カティア", 7, 5], ["ルドル", 8, 5], ["マヤ", 9, 5]];
+const ACH2 = [["p1e4", "はじめての町", "あなたの国の人口が1万人をこえた"], ["p1e5", "にぎわう国", "あなたの国の人口が10万人をこえた"], ["p1e6", "百万の民", "あなたの国の人口が100万人をこえた"], ["p1e7", "千万の民", "あなたの国の人口が1000万人をこえた"], ["p1e8", "一億の国", "あなたの国の人口が1億人をこえた"], ["p1e9", "十億の国", "あなたの国の人口が10億人をこえた"], ["c10", "街づくり", "あなたの国の街が10になった"], ["c25", "広がる国", "あなたの国の街が25になった"], ["c50", "大地に満ちる", "あなたの国の街が50になった"], ["c200", "大帝国", "あなたの国の街が200になった"], ["c300", "地上の覇者", "あなたの国の街が300になった"], ["e1", "文明の夜明け", "古代をむかえた"], ["e2", "騎士の時代", "中世をむかえた"], ["e3", "大航海", "近世をむかえた"], ["e5", "現代へ", "現代をむかえた"], ["k3", "初陣の勝利", "あなたの国が3つの街を占領した"], ["k25", "歴戦の国", "あなたの国が25の街を占領した"], ["k50", "征服王", "あなたの国が50の街を占領した"], ["k100", "百城の主", "あなたの国が100の街を占領した"], ["dMeteor", "星を落とす者", "隕石を落とした"], ["dPlague", "病の神", "疫病を起こした"], ["dBless", "恵みの神", "恵みの雨を降らせた"], ["dTsunami", "大波の神", "津波を起こした"], ["dTornado", "つむじ風", "竜巻を起こした"], ["dCold", "氷の神", "大寒波を起こした"], ["dFire", "炎の神", "山火事を起こした"], ["dFish", "海の恵み", "大漁をもたらした"], ["dGold", "黄金の神", "金を見つけさせた"], ["w5", "驚異の都", "あなたの国が驚異を5つ持った"], ["w10", "世界の宝庫", "あなたの国が驚異を10持った"], ["a5", "大同盟", "あなたの国の同盟国が5つになった"], ["i25", "知恵の芽", "発明が25をこえた"], ["i50", "知恵の森", "発明が50をこえた"], ["i100", "知恵の海", "発明が100をこえた"], ["i120", "すべてを知る者", "発明が120をこえた"], ["h1", "偉人の誕生", "あなたの国に偉人が現れた"], ["h10", "偉人の国", "あなたの国に偉人が10人現れた"], ["h30", "偉人の殿堂", "世界に偉人が30人現れた"], ["r5", "資源の国", "資源を5種類見つけた"], ["r15", "資源の宝庫", "資源を15種類見つけた"], ["z10", "動物好き", "動物を10種類見つけた"], ["z30", "動物博士", "動物を30種類すべて見つけた"], ["s10", "星読み", "星座を10見つけた"], ["s30", "星の博士", "星座を30すべて見つけた"], ["pl5", "政治家", "政策を5つためした"], ["pl20", "政策の達人", "政策を20ためした"], ["y0", "紀元の年", "紀元0年をこえた"], ["y1000", "千年紀", "1000年をこえた"], ["y2000", "二千年紀", "2000年をこえた"], ["decl", "宣戦布告", "あなたの国が宣戦布告した"], ["peace10", "和平の達人", "あなたの国が10回講和した"], ["photo", "写真家", "写真モードを使った"], ["bgm", "音楽家", "BGMを流した"], ["saver", "記録係", "世界を保存した"], ["night", "夜景を見た", "夜景をつけて夜の街明かりを見た"], ["wp1e9", "十億の地球", "世界の人口が10億人をこえた"], ["rank10", "列強入り", "国の格が「大国」になった"], ["rank19", "銀河の盟主", "国の格が最高になった"], ["lm10", "名所めぐり", "名所を10種類見つけた"], ["nukeMe", "最終兵器", "あなたの国が核ミサイルを撃った"]];
+ACH.push(...ACH2);
+const ACH2_FN = {p1e4:() => !!(myPop() >= 1e4), p1e5:() => !!(myPop() >= 1e5), p1e6:() => !!(myPop() >= 1e6), p1e7:() => !!(myPop() >= 1e7), p1e8:() => !!(myPop() >= 1e8), p1e9:() => !!(myPop() >= 1e9), c10:() => !!(myCount() >= 10), c25:() => !!(myCount() >= 25), c50:() => !!(myCount() >= 50), c200:() => !!(myCount() >= 200), c300:() => !!(myCount() >= 300), e1:() => !!(eraIdx >= 1), e2:() => !!(eraIdx >= 2), e3:() => !!(eraIdx >= 3), e5:() => !!(eraIdx >= 5), k3:() => !!(myCaptures >= 3), k25:() => !!(myCaptures >= 25), k50:() => !!(myCaptures >= 50), k100:() => !!(myCaptures >= 100), dMeteor:() => !!(stat.dis.meteor), dPlague:() => !!(stat.dis.plague), dBless:() => !!(stat.dis.bless), dTsunami:() => !!(stat.dis.tsunami), dTornado:() => !!(stat.dis.tornado), dCold:() => !!(stat.dis.cold), dFire:() => !!(stat.dis.fire), dFish:() => !!(stat.dis.fish), dGold:() => !!(stat.dis.gold), w5:() => !!(myWonders() >= 5), w10:() => !!(myWonders() >= 10), a5:() => !!(allyList(myNation).length >= 5), i25:() => !!(nextInv >= 25), i50:() => !!(nextInv >= 50), i100:() => !!(nextInv >= 100), i120:() => !!(nextInv >= 120), h1:() => !!(x2.heroMine >= 1), h10:() => !!(x2.heroMine >= 10), h30:() => !!(x2.heroes.length >= 30), r5:() => !!(x2.res.length >= 5), r15:() => !!(x2.res.length >= 15), z10:() => !!(x2.animals.length >= 10), z30:() => !!(x2.animals.length >= 30), s10:() => !!(x2.stars.length >= 10), s30:() => !!(x2.stars.length >= 30), pl5:() => !!(x2.pols.length >= 5), pl20:() => !!(x2.pols.length >= 20), y0:() => !!(year >= 0), y1000:() => !!(year >= 1000), y2000:() => !!(year >= 2000), decl:() => !!(x2.decl >= 1), peace10:() => !!(stat.peace >= 10), photo:() => !!(x2.photo), bgm:() => !!(x2.bgm), saver:() => !!(x2.saved), night:() => !!(dayNight && started), wp1e9:() => !!(worldPop() >= 1e9), rank10:() => !!(myRank() >= 10), rank19:() => !!(myRank() >= 19), lm10:() => !!(x2.lms.length >= 10), nukeMe:() => !!(x2.nukes >= 1)};
+const EVENTS3 = [[0, "np", 1.15, "{n}の狩人たちが大きなマンモスをしとめた"], [0, "np", 0.85, "{n}をきびしい冬がおそった"], [0, "exp", 2, "{n}の人々が新しい狩り場を求めて旅に出た"], [0, "cp", 1.3, "{c}の近くに実りの多い森が見つかった"], [0, "np", 1.1, "{n}で洞窟に壁画が描かれた"], [0, "cp", 0.8, "{c}でたき火が燃え広がった"], [0, "def", 1.3, "{n}が木の柵で集落を囲んだ"], [0, "np", 1.12, "{n}で子どもがたくさん生まれた"], [0, "cp", 0.85, "{c}が猛獣の群れにおそわれた"], [0, "np", 1.08, "{n}の人々が歌と踊りの祭りを開いた"], [1, "np", 1.15, "{n}の川があふれ、畑が肥えた"], [1, "trade", 1.5, "{n}に遠くの国から商人がやってきた"], [1, "cp", 1.25, "{c}に大きな市場が開かれた"], [1, "war", 1, "{n}の王が領土を広げようと兵を集めた"], [1, "np", 0.85, "{n}でいなごの大群が畑を食べつくした"], [1, "atk", 1.3, "{n}の兵士が鉄の剣を手にした"], [1, "ally", 1, "{n}が隣の国に使者を送った"], [1, "cp", 1.2, "{c}で大きな神殿の祭りが開かれた"], [1, "np", 0.9, "{n}で王位をめぐる争いが起きた"], [1, "exp", 2, "{n}の人々が海を渡って新しい土地を探した"], [1, "growth", 1.3, "{n}で新しい法律が定められ、国がまとまった"], [1, "np", 1.1, "{n}で詩と物語が書き残された"], [2, "def", 1.4, "{n}の騎士たちが城の守りを固めた"], [2, "np", 0.85, "{n}で長い雨が続き、不作になった"], [2, "cp", 1.25, "{c}に大学が開かれた"], [2, "war", 1, "{n}で聖なる土地をめぐる戦いが呼びかけられた"], [2, "trade", 1.6, "{n}に絹の道を通って隊商が着いた"], [2, "np", 1.12, "{n}で水車が広まり、粉ひきが楽になった"], [2, "cp", 0.8, "{c}で大火事が起きた"], [2, "ally", 1, "{n}が近くの国と婚姻で結ばれた"], [2, "atk", 1.3, "{n}が強い弓兵隊をつくった"], [2, "np", 0.9, "{n}で農民の一揆が起きた"], [2, "cp", 1.2, "{c}の職人たちが組合をつくった"], [2, "exp", 2, "{n}の修道士たちが新しい村を開いた"], [3, "exp", 3, "{n}の船団が新しい大陸へ向かった"], [3, "trade", 1.7, "{n}に香辛料を積んだ船が帰ってきた"], [3, "np", 1.12, "{n}で新大陸の作物（じゃがいも）が広まった"], [3, "cp", 0.75, "{c}で疫病が流行した"], [3, "atk", 1.35, "{n}の軍が大砲をそろえた"], [3, "np", 1.1, "{n}で印刷された本が広まり、学問がさかんになった"], [3, "war", 1, "{n}が海の支配をめぐって艦隊を出した"], [3, "cp", 1.25, "{c}の港がにぎわった"], [3, "ally", 1, "{n}が同盟の条約を結ぼうと動いた"], [3, "growth", 1.3, "{n}で新しい農法が広まった"], [3, "np", 0.9, "{n}で大きな飢饉が起きた"], [3, "cp", 1.2, "{c}に壮麗な宮殿が建った"], [4, "growth", 1.4, "{n}で鉄道が国中に広がった"], [4, "cp", 1.3, "{c}に大きな工場がいくつも建った"], [4, "np", 0.9, "{n}の工場の煙で空気がよごれた"], [4, "trade", 1.6, "{n}で万国博覧会が開かれた"], [4, "war", 1, "{n}で軍備を広げる声が強まった"], [4, "np", 1.12, "{n}で病院と上下水道が整った"], [4, "cp", 0.8, "{c}で大きな恐慌が起き、仕事がなくなった"], [4, "atk", 1.35, "{n}が新しい戦艦をつくった"], [4, "exp", 3, "{n}から多くの移民が新天地へ渡った"], [4, "ally", 1, "{n}で国どうしの協調を求める会議が開かれた"], [4, "np", 1.1, "{n}で学校が義務になり、読み書きが広まった"], [4, "cp", 1.25, "{c}に電灯がともり、夜もにぎやかになった"], [5, "growth", 1.35, "{n}で高度経済成長が始まった"], [5, "cp", 1.3, "{c}でオリンピックが開かれた"], [5, "wp", 0.95, "世界で石油の値段が大きく上がった"], [5, "trade", 1.7, "{n}がたくさんの国と自由貿易協定を結んだ"], [5, "np", 1.1, "{n}で新しい薬が開発された"], [5, "cp", 0.8, "{c}で大停電が起きた"], [5, "war", 1, "{n}と隣国の間で国境の緊張が高まった"], [5, "ally", 1, "{n}が国際機関に加わった"], [5, "def", 1.4, "{n}がミサイル防衛網を整えた"], [5, "np", 1.12, "{n}でベビーブームが起きた"], [5, "cp", 1.25, "{c}に新しい空港が開かれた"], [5, "wp", 1.03, "世界中がインターネットでつながった"], [6, "growth", 1.4, "{n}で人工知能が街を管理しはじめた"], [6, "cp", 1.3, "{c}が空に浮かぶ新しい街区を建てた"], [6, "np", 1.15, "{n}で寿命が大きくのびる治療法が見つかった"], [6, "trade", 1.8, "{n}が月との定期航路を開いた"], [6, "cp", 0.8, "{c}でロボットの暴走事故が起きた"], [6, "war", 1, "{n}で宇宙資源をめぐる争いが起きた"], [6, "ally", 1, "{n}が惑星連合の会議を呼びかけた"], [6, "def", 1.5, "{n}が都市を守るエネルギーの盾を張った"], [6, "exp", 3, "{n}の開拓団が火星へ旅立った"], [6, "wp", 1.05, "地球の気候がととのえられ、豊かな年が続いた"]];
+WONDERS.push(...[{"era": 1, "name": "空中庭園"}, {"era": 1, "name": "大灯台"}, {"era": 1, "name": "黄金神殿"}, {"era": 2, "name": "大仏"}, {"era": 2, "name": "巨石の顔"}, {"era": 2, "name": "水上宮殿"}, {"era": 3, "name": "凱旋門"}, {"era": 3, "name": "大運河"}, {"era": 3, "name": "天文台"}, {"era": 3, "name": "大劇場"}, {"era": 4, "name": "大鉄橋"}, {"era": 4, "name": "大観覧車"}, {"era": 5, "name": "電波塔"}, {"era": 5, "name": "摩天楼"}, {"era": 5, "name": "巨大望遠鏡"}, {"era": 6, "name": "宇宙港"}, {"era": 6, "name": "星の門"}, {"era": 6, "name": "浮遊島"}, {"era": 6, "name": "気象タワー"}, {"era": 6, "name": "光の大樹"}]);
+const WSHAPES = [[["box", 0, 0, 0, 1.2, 0.25, 1.2, "#c9b48a"], ["box", 0, 0, 0.25, 0.85, 0.25, 0.85, "#c9b48a"], ["box", 0, 0, 0.5, 0.5, 0.25, 0.5, "#c9b48a"], ["box", 0, 0, 0.25, 1.22, 0.03, 1.22, "#5f9a4a"], ["box", 0, 0, 0.5, 0.87, 0.03, 0.87, "#5f9a4a"], ["box", 0, 0, 0.75, 0.52, 0.03, 0.52, "#5f9a4a"], ["cone", 0.4, 0.4, 0.28, 0.15, 0.3, 0.15, "#3f7a3a"], ["cone", -0.3, 0.25, 0.53, 0.12, 0.25, 0.12, "#3f7a3a"]], [["box", 0, 0, 0, 0.8, 0.4, 0.8, "#e6dfcf"], ["box", 0, 0, 0.4, 0.5, 0.8, 0.5, "#e6dfcf"], ["cyl", 0, 0, 1.2, 0.32, 0.5, 0.32, "#efe9db"], ["glow", 0, 0, 1.7, 0.25, 0.22, 0.25, "#ffe08a"]], [["box", 0, 0, 0, 1.05, 0.15, 0.72, "#e0c060"], ["cyl", -0.36, 0.22, 0.15, 0.08, 0.4, 0.08, "#f2d77a"], ["cyl", -0.12, 0.22, 0.15, 0.08, 0.4, 0.08, "#f2d77a"], ["cyl", 0.12, 0.22, 0.15, 0.08, 0.4, 0.08, "#f2d77a"], ["cyl", 0.36, 0.22, 0.15, 0.08, 0.4, 0.08, "#f2d77a"], ["box", 0, -0.05, 0.15, 0.8, 0.4, 0.4, "#e8cf72"], ["pyr", 0, 0, 0.55, 1.25, 0.22, 0.85, "#d4b04a"]], [["box", 0, 0, 0, 0.9, 0.25, 0.9, "#8b8477"], ["cone", 0, 0, 0.25, 0.8, 0.9, 0.8, "#a89060"], ["dome", 0, 0, 1.1, 0.4, 0.45, 0.4, "#a89060"], ["box", 0, 0, 1.05, 0.5, 0.08, 0.3, "#a89060"]], [["box", -0.6, 0, 0, 0.2, 0.7, 0.25, "#7d7a74"], ["box", -0.3, 0, 0, 0.2, 0.75, 0.25, "#7d7a74"], ["box", 0, 0, 0, 0.2, 0.8, 0.25, "#7d7a74"], ["box", 0.3, 0, 0, 0.2, 0.75, 0.25, "#7d7a74"], ["box", 0.6, 0, 0, 0.2, 0.7, 0.25, "#7d7a74"], ["box", 0, 0.14, 0.55, 0.06, 0.18, 0.08, "#6a6762"]], [["cyl", 0, 0, -0.02, 1.7, 0.04, 1.7, "#3b78c2"], ["box", 0, 0, 0.02, 0.85, 0.35, 0.5, "#f3eee2"], ["dome", -0.25, 0, 0.37, 0.25, 0.25, 0.25, "#e0c060"], ["dome", 0.25, 0, 0.37, 0.25, 0.25, 0.25, "#e0c060"], ["dome", 0, 0, 0.37, 0.35, 0.35, 0.35, "#e0c060"]], [["box", -0.33, 0, 0, 0.25, 0.8, 0.4, "#d8d0bc"], ["box", 0.33, 0, 0, 0.25, 0.8, 0.4, "#d8d0bc"], ["box", 0, 0, 0.8, 0.92, 0.28, 0.42, "#d8d0bc"]], [["box", 0, 0, -0.01, 2.6, 0.03, 0.32, "#3b78c2"], ["box", 0, 0.2, 0, 2.6, 0.06, 0.06, "#9a968e"], ["box", 0, -0.2, 0, 2.6, 0.06, 0.06, "#9a968e"], ["box", 0.6, 0, 0.05, 0.3, 0.04, 0.16, "#8a6440"]], [["cyl", 0, 0, 0, 0.6, 0.5, 0.6, "#efe9db"], ["dome", 0, 0, 0.5, 0.62, 0.45, 0.62, "#f4f1ea"], ["box", 0.1, 0, 0.75, 0.35, 0.08, 0.08, "#3c4046"]], [["box", 0, 0, 0, 0.9, 0.06, 0.5, "#cbb994"], ["box", 0, -0.3, 0, 0.6, 0.35, 0.15, "#b8a47e"], ["box", -0.45, 0.1, 0, 0.12, 0.3, 0.5, "#cbb994"], ["box", 0.45, 0.1, 0, 0.12, 0.3, 0.5, "#cbb994"], ["pyr", 0, -0.3, 0.35, 0.75, 0.15, 0.25, "#7b2e22"]], [["box", 0, 0, 0.3, 2.6, 0.06, 0.26, "#b84a3a"], ["box", -0.8, 0, 0, 0.12, 1.0, 0.3, "#b84a3a"], ["box", 0.8, 0, 0, 0.12, 1.0, 0.3, "#b84a3a"], ["box", 0, 0, 0.95, 1.8, 0.03, 0.04, "#8a3a2c"]], [["box", 0, 0, 0, 0.08, 0.75, 0.08, "#d9dde2"], ["box", 0, 0, 0.75, 0.06, 0.06, 0.06, "#d9dde2"], ["box", 0.65, 0, 0.75, 0.12, 0.12, 0.12, "#e05a4a"], ["box", -0.65, 0, 0.75, 0.12, 0.12, 0.12, "#2b8fd6"], ["box", 0, 0, 1.4, 0.12, 0.12, 0.12, "#f2c94c"], ["box", 0, 0, 0.1, 0.12, 0.12, 0.12, "#4aa36a"], ["box", 0.46, 0, 1.21, 0.12, 0.12, 0.12, "#9b59b6"], ["box", -0.46, 0, 1.21, 0.12, 0.12, 0.12, "#e0a83a"], ["box", 0.46, 0, 0.29, 0.12, 0.12, 0.12, "#e05a4a"], ["box", -0.46, 0, 0.29, 0.12, 0.12, 0.12, "#2b8fd6"]], [["cone", 0, 0, 0, 0.7, 2.6, 0.7, "#e05a4a"], ["cyl", 0, 0, 1.1, 0.4, 0.08, 0.4, "#f2f4f6"], ["cyl", 0, 0, 1.8, 0.28, 0.06, 0.28, "#f2f4f6"]], [["sky", 0, 0, 0, 0.5, 3.2, 0.5, "#8fb0c8"], ["cyl", 0, 0, 3.2, 0.04, 0.6, 0.04, "#cfd6dc"], ["box", 0, 0, 3.8, 0.06, 0.06, 0.06, "#ff4a3a"]], [["box", 0, 0, 0, 0.2, 0.5, 0.2, "#b7b9b6"], ["dome", 0, 0, 0.5, 1.2, 0.35, 1.2, "#f2f4f6"], ["cyl", 0, 0, 0.85, 0.05, 0.4, 0.05, "#b7b9b6"]], [["cyl", 0, 0, 0, 1.6, 0.06, 1.6, "#9aa1a8"], ["sky", 0.4, 0, 0.06, 0.3, 1.4, 0.3, "#e8eef2"], ["cone", -0.3, 0.1, 0.06, 0.25, 1.2, 0.25, "#f4f8fb"], ["ring", 0, 0, 0.1, 1.8, 1, 1.8, "#5fe3ff"]], [["glow", 0.7, 0, 0.7, 0.12, 0.12, 0.12, "#7fe8ff"], ["glow", -0.7, 0, 0.7, 0.12, 0.12, 0.12, "#7fe8ff"], ["glow", 0, 0, 1.4, 0.12, 0.12, 0.12, "#7fe8ff"], ["glow", 0, 0, 0, 0.12, 0.12, 0.12, "#7fe8ff"], ["glow", 0.5, 0, 1.2, 0.12, 0.12, 0.12, "#c48bff"], ["glow", -0.5, 0, 1.2, 0.12, 0.12, 0.12, "#c48bff"], ["glow", 0.5, 0, 0.2, 0.12, 0.12, 0.12, "#c48bff"], ["glow", -0.5, 0, 0.2, 0.12, 0.12, 0.12, "#c48bff"], ["glow", 0, 0, 0.62, 0.3, 0.3, 0.04, "#ffffff"]], [["glow", 0, 0, 0, 0.06, 1.0, 0.06, "#7fe8ff"], ["cyl", 0, 0, 1.0, 1.1, 0.35, 1.1, "#7a5a3a"], ["cyl", 0, 0, 1.35, 1.15, 0.06, 1.15, "#5f9a4a"], ["cone", 0.3, 0.2, 1.41, 0.2, 0.35, 0.2, "#3f7a3a"], ["cone", -0.25, -0.2, 1.41, 0.18, 0.3, 0.18, "#3f7a3a"]], [["cyl", 0, 0, 0, 0.3, 2.4, 0.3, "#eef3f7"], ["ring", 0, 0, 0.8, 0.9, 1, 0.9, "#5fe3ff"], ["ring", 0, 0, 1.6, 0.7, 1, 0.7, "#c48bff"], ["glow", 0, 0, 2.4, 0.16, 0.16, 0.16, "#ffffff"]], [["cyl", 0, 0, 0, 0.25, 1.3, 0.25, "#8a6a4a"], ["dome", 0, 0, 1.1, 1.4, 1.0, 1.4, "#7ad88a"], ["glow", 0.4, 0.3, 1.4, 0.08, 0.08, 0.08, "#fff2a0"], ["glow", -0.35, -0.2, 1.6, 0.08, 0.08, 0.08, "#fff2a0"], ["glow", 0.1, -0.45, 1.3, 0.08, 0.08, 0.08, "#fff2a0"]]];
+const RESOURCES = [{"name": "金", "era": 1, "color": "#ffd36b", "terr": [5, 4, 2]}, {"name": "銀", "era": 1, "color": "#d9dde2", "terr": [5]}, {"name": "銅", "era": 1, "color": "#c8743a", "terr": [5, 2]}, {"name": "鉄", "era": 1, "color": "#8a8f96", "terr": [5, 2, 3]}, {"name": "塩", "era": 0, "color": "#f4f1ea", "terr": [4, 2]}, {"name": "石材", "era": 0, "color": "#a39c8f", "terr": [5]}, {"name": "木材", "era": 0, "color": "#7a5634", "terr": [3]}, {"name": "小麦", "era": 0, "color": "#e0c060", "terr": [2]}, {"name": "米", "era": 1, "color": "#f2efe0", "terr": [2]}, {"name": "ぶどう", "era": 1, "color": "#7b3f8c", "terr": [2]}, {"name": "茶", "era": 2, "color": "#5f8a3a", "terr": [3, 5]}, {"name": "絹", "era": 2, "color": "#f2d0e0", "terr": [3, 2]}, {"name": "香辛料", "era": 3, "color": "#d0533c", "terr": [3]}, {"name": "綿", "era": 3, "color": "#ffffff", "terr": [2, 4]}, {"name": "コーヒー", "era": 3, "color": "#5a3a28", "terr": [3]}, {"name": "石炭", "era": 4, "color": "#2b2b2e", "terr": [5, 3, 6]}, {"name": "石油", "era": 4, "color": "#151515", "terr": [4, 6, 2]}, {"name": "ゴム", "era": 4, "color": "#3a4a2a", "terr": [3]}, {"name": "ウラン", "era": 5, "color": "#7fe86a", "terr": [5, 4]}, {"name": "レアメタル", "era": 5, "color": "#9fd4ff", "terr": [5, 6]}];
+const CONST_NAMES = ["テント座", "かがり火座", "弓矢座", "麦穂座", "土器座", "車輪座", "城壁座", "王冠座", "竜座", "帆船座", "風車座", "歯車座", "望遠鏡座", "汽車座", "ロケット座", "円盤座", "大鯨座", "剣と盾座", "ランプ座", "時計塔座", "ピラミッド座", "ふくろう座", "花かんむり座", "鐘座", "灯台座", "錨座", "羽ペン座", "虹の橋座", "宇宙エレベーター座", "地球儀座"];
+Object.assign(POLICIES, {"merc": {"name": "重商主義", "desc": "交易で国を富ませる", "trade": 1.6, "growth": 1.1, "atk": 0.9}, "agri": {"name": "農業改革", "desc": "畑を広げて人口を増やす", "growth": 1.3, "trade": 0.9}, "arms": {"name": "軍拡", "desc": "兵を増やし、攻めも守りも強くする", "atk": 1.5, "def": 1.2, "growth": 0.8}, "disarm": {"name": "軍縮", "desc": "兵を減らして暮らしを豊かにする", "atk": 0.7, "growth": 1.25}, "neutral": {"name": "中立", "desc": "どの国の争いにも加わらない（攻められにくい）", "aggro": 0.4, "atk": 0.9}, "edu": {"name": "教育改革", "desc": "学校を増やし、街を大きく育てる", "cap": 1.12, "growth": 1.05}, "industry": {"name": "産業振興", "desc": "工場と交易を伸ばす", "cap": 1.1, "trade": 1.2, "growth": 0.95}, "eco": {"name": "環境保護", "desc": "自然を守り、ゆっくり豊かになる", "growth": 1.1, "expand": 0.8, "cap": 1.05}, "space": {"name": "宇宙開発", "desc": "技術に力を入れて街を大きくする", "cap": 1.15, "trade": 0.9}, "immig": {"name": "移民歓迎", "desc": "ほかの国から人を受け入れる", "growth": 1.35, "def": 0.9}, "border": {"name": "国境封鎖", "desc": "国境を閉じて守りを固める", "def": 1.4, "trade": 0.5, "expand": 0.7}, "tourism": {"name": "観光立国", "desc": "旅人を呼び、交易を増やす", "trade": 1.5, "growth": 1.1, "def": 0.9}, "welfare": {"name": "福祉国家", "desc": "暮らしを支えて人口を増やす", "growth": 1.2, "atk": 0.85}, "techn": {"name": "技術立国", "desc": "技術で街も兵も強くする", "cap": 1.12, "atk": 1.1}, "ocean": {"name": "海洋進出", "desc": "海の向こうへ街を広げる", "expand": 1.6, "trade": 1.2}, "bousai": {"name": "防災", "desc": "災害に備え、守りを固める", "def": 1.2, "growth": 1.05}, "culture": {"name": "文化振興", "desc": "文化を広め、同盟を結びやすくする", "growth": 1.15, "ally": 1.4}, "police": {"name": "治安強化", "desc": "国内を固めて守りを強くする", "def": 1.3, "growth": 0.95}, "pioneer": {"name": "開拓団", "desc": "人を送り出して新しい街をどんどん開く", "expand": 2.5, "growth": 0.9}, "peacedip": {"name": "平和外交", "desc": "戦わずに仲間を増やす", "aggro": 0.5, "ally": 1.8, "atk": 0.9}});
+const ANIMALS = [{"name": "ライオン", "kind": "quad", "color": "#c9a35a", "size": 1, "terr": [2, 4], "la0": -35, "la1": 20, "lo0": -20, "lo1": 55}, {"name": "ゾウ", "kind": "quad", "color": "#8d8a86", "size": 1.6, "terr": [2, 3], "la0": -35, "la1": 25, "lo0": -20, "lo1": 110}, {"name": "キリン", "kind": "tall", "color": "#d9a54a", "size": 1.3, "terr": [2], "la0": -30, "la1": 15, "lo0": -20, "lo1": 55}, {"name": "シマウマ", "kind": "quad", "color": "#e8e8e8", "size": 0.9, "terr": [2], "la0": -35, "la1": 10, "lo0": -20, "lo1": 55}, {"name": "サイ", "kind": "quad", "color": "#7d7a76", "size": 1.2, "terr": [2], "la0": -35, "la1": 15, "lo0": -20, "lo1": 55}, {"name": "カバ", "kind": "quad", "color": "#7a6a78", "size": 1.2, "terr": [2, 3], "la0": -30, "la1": 15, "lo0": -20, "lo1": 55}, {"name": "ゴリラ", "kind": "quad", "color": "#2b2b2b", "size": 0.9, "terr": [3], "la0": -10, "la1": 10, "lo0": -20, "lo1": 40}, {"name": "トラ", "kind": "quad", "color": "#e08a3a", "size": 1, "terr": [3], "la0": 0, "la1": 50, "lo0": 70, "lo1": 140}, {"name": "パンダ", "kind": "quad", "color": "#f0f0f0", "size": 0.9, "terr": [3, 5], "la0": 20, "la1": 40, "lo0": 95, "lo1": 120}, {"name": "コアラ", "kind": "up", "color": "#9a9a9a", "size": 0.5, "terr": [3, 2], "la0": -45, "la1": -10, "lo0": 110, "lo1": 155}, {"name": "カンガルー", "kind": "up", "color": "#b8885a", "size": 0.8, "terr": [4, 2], "la0": -45, "la1": -10, "lo0": 110, "lo1": 155}, {"name": "ラクダ", "kind": "quad", "color": "#c9a46a", "size": 1.2, "terr": [4], "la0": 10, "la1": 50, "lo0": -20, "lo1": 110}, {"name": "ペンギン", "kind": "up", "color": "#2b2b2b", "size": 0.5, "terr": [7], "la0": -90, "la1": -55, "lo0": -180, "lo1": 180}, {"name": "シロクマ", "kind": "quad", "color": "#f4f4f4", "size": 1.1, "terr": [7, 6], "la0": 60, "la1": 90, "lo0": -180, "lo1": 180}, {"name": "トナカイ", "kind": "quad", "color": "#8a6a4a", "size": 1, "terr": [6], "la0": 55, "la1": 90, "lo0": -180, "lo1": 180}, {"name": "オオカミ", "kind": "quad", "color": "#8a8a8a", "size": 0.8, "terr": [3, 6], "la0": 35, "la1": 75, "lo0": -180, "lo1": 180}, {"name": "クマ", "kind": "quad", "color": "#5a3f2c", "size": 1.1, "terr": [3], "la0": 30, "la1": 70, "lo0": -180, "lo1": 180}, {"name": "シカ", "kind": "quad", "color": "#b07a4a", "size": 0.9, "terr": [3, 2], "la0": 20, "la1": 60, "lo0": -180, "lo1": 180}, {"name": "バイソン", "kind": "quad", "color": "#5a3f2c", "size": 1.2, "terr": [2], "la0": 30, "la1": 60, "lo0": -125, "lo1": -80}, {"name": "ワシ", "kind": "fly", "color": "#5a4030", "size": 0.8, "terr": [5, 2], "la0": -60, "la1": 70, "lo0": -180, "lo1": 180}, {"name": "ユキヒョウ", "kind": "quad", "color": "#dcdcd8", "size": 0.9, "terr": [5], "la0": 25, "la1": 55, "lo0": 60, "lo1": 110}, {"name": "アルパカ", "kind": "quad", "color": "#efe6d6", "size": 0.8, "terr": [5], "la0": -40, "la1": 5, "lo0": -80, "lo1": -60}, {"name": "ジャガー", "kind": "quad", "color": "#d9a03a", "size": 0.9, "terr": [3], "la0": -30, "la1": 20, "lo0": -90, "lo1": -35}, {"name": "ナマケモノ", "kind": "up", "color": "#8a7a6a", "size": 0.5, "terr": [3], "la0": -20, "la1": 12, "lo0": -85, "lo1": -35}, {"name": "オランウータン", "kind": "up", "color": "#c0602a", "size": 0.8, "terr": [3], "la0": -10, "la1": 10, "lo0": 95, "lo1": 125}, {"name": "ワニ", "kind": "low", "color": "#4a6a3a", "size": 1, "terr": [3, 2], "la0": -30, "la1": 30, "lo0": -180, "lo1": 180}, {"name": "ウミガメ", "kind": "swim", "color": "#5a7a4a", "size": 0.7, "terr": [1], "la0": -35, "la1": 35, "lo0": -180, "lo1": 180}, {"name": "イルカ", "kind": "swim", "color": "#7a9ab8", "size": 0.8, "terr": [1, 0], "la0": -60, "la1": 60, "lo0": -180, "lo1": 180}, {"name": "サメ", "kind": "swim", "color": "#6a7a88", "size": 1, "terr": [0], "la0": -50, "la1": 50, "lo0": -180, "lo1": 180}, {"name": "アザラシ", "kind": "swim", "color": "#8a8a90", "size": 0.7, "terr": [1], "la0": 45, "la1": 90, "lo0": -180, "lo1": 180}];
+const GOV2 = [["部族連合", "氏族", "狩猟団"], ["首長国", "都市同盟", "神権国"], ["大公国", "騎士団国", "神聖王国"], ["侯国", "交易都市国", "連合王国"], ["立憲王国", "民主共和国", "自治領"], ["人民共和国", "共同体", "評議国"], ["星間共和国", "銀河連邦", "惑星連合"]]; GOV.forEach((row, i) => row.push(...GOV2[i]));
+const SKYEV = [["rain", "にわか雨", "雨雲が通りすぎ、雨がふった", 0], ["storm", "雷雨", "いなずまが光り、はげしい雨がふった", 0], ["snow", "大雪", "寒い土地に雪がつもった", 0], ["fog", "霧", "深い霧が大地をおおった", 0], ["sand", "砂嵐", "砂漠で砂嵐が吹き荒れた", 0], ["sakura", "桜吹雪", "春の風に花びらが舞った", 1], ["leaves", "紅葉の舞", "色づいた葉が風に舞った", 0], ["firefly", "ホタルの光", "夜の水辺でホタルが光った", 0], ["butterfly", "蝶の大群", "たくさんの蝶がひらひらと飛んだ", 0], ["fireworks", "花火大会", "街の上に花火が打ち上がった", 3], ["comet", "彗星", "長い尾を引く彗星が空を横切った", 0], ["meteors", "流星群", "たくさんの流れ星が降った", 0], ["lunar", "月食", "月が赤く染まった", 0], ["nova", "超新星", "夜空に新しい明るい星が現れた", 0], ["ufo", "UFOの目撃", "正体不明の光る円盤が目撃された", 0], ["sats", "人工衛星の列", "人工衛星が列になって空を通った", 5], ["balloons", "気球大会", "色とりどりの気球が空に浮かんだ", 3], ["migration", "鳥の大移動", "鳥の大群が空をわたった", 0], ["double", "二重の虹", "空に二つの虹がかかった", 0], ["milky", "天の川", "天の川がくっきりと見えた", 0]];
+const LANDMARKS = [["市場", 1, 1, false, [["box", 0, 0, 0, 0.3, 0.12, 0.3, "#c9a36a"], ["pyr", 0, 0, 0.12, 0.42, 0.12, 0.42, "#e05a4a"]]], ["神殿", 1, 2, false, [["box", 0, 0, 0, 0.4, 0.22, 0.28, "#ece2cd"], ["pyr", 0, 0, 0.22, 0.5, 0.12, 0.36, "#c8b088"]]], ["工房", 1, 2, false, [["box", 0, 0, 0, 0.3, 0.2, 0.24, "#9c7a58"], ["cyl", 0.1, 0, 0.2, 0.06, 0.2, 0.06, "#5a4a44"]]], ["学校", 2, 2, false, [["box", 0, 0, 0, 0.5, 0.22, 0.22, "#e8dcc4"], ["pyr", 0, 0, 0.22, 0.6, 0.1, 0.3, "#7b5d4d"]]], ["図書館", 2, 2, false, [["box", 0, 0, 0, 0.42, 0.26, 0.3, "#d8d0bc"], ["dome", 0, 0, 0.26, 0.22, 0.18, 0.22, "#6a7a8a"]]], ["教会", 2, 2, false, [["box", 0, 0, 0, 0.24, 0.28, 0.4, "#efe9db"], ["box", 0, 0.18, 0, 0.14, 0.55, 0.14, "#efe9db"], ["cone", 0, 0.18, 0.55, 0.16, 0.22, 0.16, "#5e6b7c"]]], ["港", 2, 2, true, [["box", 0, 0, -0.01, 0.5, 0.04, 0.2, "#7a5a3a"], ["box", 0.15, 0, 0.03, 0.12, 0.12, 0.12, "#8a6440"]]], ["劇場", 3, 3, false, [["box", 0, 0, 0, 0.42, 0.3, 0.32, "#cbb994"], ["pyr", 0, 0, 0.3, 0.5, 0.12, 0.4, "#7b2e22"]]], ["大学", 3, 3, false, [["box", 0, 0, 0, 0.6, 0.28, 0.3, "#b9a07a"], ["box", 0, 0, 0.28, 0.14, 0.25, 0.14, "#b9a07a"], ["pyr", 0, 0, 0.53, 0.2, 0.12, 0.2, "#4a5a6a"]]], ["公園", 3, 2, false, [["cyl", 0, 0, -0.02, 0.6, 0.03, 0.6, "#6fae5a"], ["cone", 0.12, 0.1, 0, 0.14, 0.3, 0.14, "#3f7a3a"], ["cone", -0.12, -0.08, 0, 0.12, 0.25, 0.12, "#3f7a3a"]]], ["病院", 4, 3, false, [["box", 0, 0, 0, 0.45, 0.35, 0.3, "#f4f6f8"], ["box", 0, 0.16, 0.2, 0.12, 0.04, 0.02, "#e05a4a"], ["box", 0, 0.16, 0.2, 0.04, 0.12, 0.02, "#e05a4a"]]], ["銀行", 4, 3, false, [["box", 0, 0, 0, 0.4, 0.32, 0.3, "#d8d0bc"], ["pyr", 0, 0, 0.32, 0.5, 0.12, 0.38, "#b8a07a"]]], ["駅", 4, 3, false, [["box", 0, 0, 0, 0.6, 0.2, 0.24, "#a0523d"], ["box", 0, 0, 0.2, 0.2, 0.18, 0.12, "#a0523d"], ["glow", 0, 0.07, 0.3, 0.08, 0.08, 0.02, "#fff2c8"]]], ["発電所", 4, 3, false, [["box", 0, 0, 0, 0.4, 0.25, 0.3, "#7d7a76"], ["cyl", 0.25, 0, 0, 0.16, 0.55, 0.16, "#b7b9b6"]]], ["空港", 5, 4, false, [["box", 0, 0, -0.01, 1.0, 0.02, 0.16, "#3a3d42"], ["box", 0, 0.3, 0, 0.4, 0.16, 0.2, "#d9dde2"]]], ["スタジアム", 5, 4, false, [["cyl", 0, 0, 0, 0.6, 0.2, 0.6, "#d9dde2"], ["cyl", 0, 0, 0.18, 0.45, 0.04, 0.45, "#4aa36a"]]], ["研究所", 5, 4, false, [["sky", 0, 0, 0, 0.3, 0.5, 0.3, "#c4cfd6"], ["dome", 0.2, 0.1, 0, 0.25, 0.2, 0.25, "#e8eef2"]]], ["美術館", 4, 3, false, [["box", 0, 0, 0, 0.45, 0.22, 0.35, "#f3f1ea"], ["pyr", 0, 0, 0.22, 0.3, 0.18, 0.3, "#9fd4ff"]]], ["宇宙港", 6, 5, false, [["cyl", 0, 0, 0, 0.6, 0.04, 0.6, "#9aa1a8"], ["cone", 0, 0, 0.04, 0.12, 0.6, 0.12, "#f4f8fb"]]], ["量子センター", 6, 5, false, [["dome", 0, 0, 0, 0.45, 0.35, 0.45, "#bfeaff"], ["ring", 0, 0, 0.2, 0.6, 1, 0.6, "#c48bff"]]]];
+const RANKS = ["小さな集落", "村の寄り合い", "小国", "地方の国", "新興国", "中堅国", "有力国", "地域大国", "強国", "列強", "大国", "覇権国", "超大国", "世界の盟主", "惑星の守護者", "月の開拓者", "星の航海者", "太陽系の盟主", "星間の大国", "銀河の盟主"];
+// ===== さらに500の要素：しくみ =====
+let x2 = { heroes:[], heroMine:0, res:[], animals:[], stars:[], pols:[], decl:0, photo:false, bgm:false, saved:false, nukes:0, lms:[], events:[], sky:[], titles:[], ranks:[] };
+let deposits = [], depGrid = new Map(), lastTerr = 0, lastRoad = -999;
+function buildDepGrid(){ depGrid = new Map(); for (const d of deposits){ const k = d.y*W + d.x; if (!depGrid.has(k)) depGrid.set(k, []); depGrid.get(k).push(d); } }
+const addU = (arr, v) => { if (!arr.includes(v)){ arr.push(v); return true; } return false; };
+const myPop = () => isMine(myNation) ? S.reduce((a, s) => a + (s.alive && s.nation === myNation ? s.pop : 0), 0) : 0;
+const myCount = () => isMine(myNation) ? S.reduce((a, s) => a + (s.alive && s.nation === myNation ? 1 : 0), 0) : 0;
+const myWonders = () => isMine(myNation) ? S.reduce((a, s) => a + (s.alive && s.nation === myNation && s.wonders ? s.wonders.length : 0), 0) : 0;
+const worldPop = () => S.reduce((a, s) => a + (s.alive ? s.pop : 0), 0);
+// 国の格（20段）
+function rankOf(id){
+  if (!N[id] || !N[id].alive) return 0;
+  let pop = 0, cnt = 0, won = 0;
+  for (const s of S) if (s.alive && s.nation === id){ pop += s.pop; cnt++; if (s.wonders) won += s.wonders.length; }
+  const score = Math.log10(pop + 1)*1.6 + cnt*.03 + won + eraIdx*1.2 + allyList(id).length*.5;
+  return clamp(Math.floor(score / 1.8), 0, RANKS.length - 1);
+}
+const myRank = () => isMine(myNation) ? rankOf(myNation) : 0;
+// 偉人・出来事のかけ算（政策と合わせて効く）
+function bm(id, k){
+  const n = N[id]; if (!n) return 1;
+  let m = 1;
+  if (n.hero && n.hero.until > tick){ const r = HERO_ROLES[HEROES[n.hero.i][1]]; if (r[1] === k) m *= r[2]; }
+  if (n.buff && n.buff[k] && n.buff[k].until > tick) m *= n.buff[k].v;
+  return m;
+}
+function considerHero(){
+  const alive = aliveNations(); if (!alive.length) return;
+  const avail = HEROES.map((h, i) => i).filter(i => !x2.heroes.some(e => e.i === i) && HEROES[i][2] <= eraIdx);
+  if (!avail.length) return;
+  nationStats();
+  let r = rnd() * alive.reduce((a, n) => a + n.pop, 0), n = alive[0];
+  for (const o of alive){ r -= o.pop; if (r <= 0){ n = o; break; } }
+  const i = pick(avail), h = HEROES[i], role = HERO_ROLES[h[1]];
+  n.hero = { i, until:tick + 1500 };
+  x2.heroes.push({ i, n:nm(n.id), y:Math.floor(year) }); if (n.id === myNation) x2.heroMine++;
+  log(`${nm(n.id)}に${role[0]}${h[0]}が現れた（${role[3]}）`, 'tech');
+}
+// 時代ごとの出来事（80）
+function runEvent3(){
+  const list = EVENTS3.filter(e => e[0] === eraIdx); if (!list.length) return;
+  const alive = aliveNations(); if (!alive.length) return;
+  const ev = pick(list), n = pick(alive), cities = S.filter(s => s.alive && s.nation === n.id); if (!cities.length) return;
+  const c = pick(cities), [, type, v, text] = ev;
+  if (type === 'np') for (const s of cities) s.pop *= v;
+  else if (type === 'cp') c.pop *= v;
+  else if (type === 'wp') for (const s of S){ if (s.alive) s.pop *= v; }
+  else if (type === 'exp') for (let k = 0; k < v && S.length < MAXS; k++) tryExpand(c);
+  else if (type === 'war'){
+    if (CFG.peace || n.id === myNation) return;
+    let foe = -1;
+    for (const key of contacts.keys()){ const a = (key / 1000) | 0, b = key % 1000; const o = a === n.id ? b : b === n.id ? a : -1; if (o >= 0 && N[o].alive && !allied(n.id, o) && !warOf(n.id, o)){ foe = o; break; } }
+    if (foe < 0) return;
+    log(text.replace('{n}', nm(n.id)), 'war'); declareWar(n.id, foe); addU(x2.events, EVENTS3.indexOf(ev)); return;
+  } else if (type === 'ally'){
+    if (n.id === myNation) return;
+    const others = alive.filter(o => o.id !== n.id && o.id !== myNation && !warOf(o.id, n.id) && !allied(o.id, n.id));
+    if (!others.length || allyList(n.id).length >= 3) return;
+    log(text.replace('{n}', nm(n.id)), 'peace'); formAlliance(n.id, pick(others).id); addU(x2.events, EVENTS3.indexOf(ev)); return;
+  } else { n.buff = n.buff || {}; n.buff[type] = { v, until:tick + 800 }; }
+  addU(x2.events, EVENTS3.indexOf(ev));
+  log(text.replace('{n}', nm(n.id)).replace('{c}', c.name), v < 1 ? 'war' : 'peace');
+  markEvent(c.x, c.y, 1);
+}
+// 資源（20種類）
+function genDeposits(){
+  deposits = [];
+  RESOURCES.forEach((r, ri) => {
+    let n = 0;
+    for (let k = 0; k < 500 && n < 4; k++){
+      const x = Math.floor(rnd()*W), y = Math.floor(4 + rnd()*(H - 12)), t = terr[y*W + x];
+      if (!r.terr.includes(t) || deposits.some(d => Math.abs(d.x - x) + Math.abs(d.y - y) < 4)) continue;
+      deposits.push({ x, y, r:ri }); n++;
+    }
+  });
+  buildDepGrid();
+}
+function resNear(s){
+  const out = [];
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){
+    const x = s.x + dx, y = s.y + dy; if (x < 0 || y < 0 || x >= W || y >= H) continue;
+    const l = depGrid.get(y*W + x); if (l) for (const d of l) if (RESOURCES[d.r].era <= eraIdx) out.push(d);
+  }
+  return out;
+}
+function checkResources(){
+  for (const s of S){
+    if (!s.alive) continue;
+    const near = resNear(s); s.resN = Math.min(3, near.length);
+    for (const d of near) if (addU(x2.res, d.r)) log(`${nm(s.nation)}の${s.name}の近くで${RESOURCES[d.r].name}が見つかった`, 'tech');
+  }
+  if (tick % 120 !== 0) return;
+  for (const s of S) if (s.alive) for (const l of landmarksOf(s)) addU(x2.lms, l);
+  for (const n of N) if (n.alive) addU(x2.titles, GOV[eraIdx][n.gov]);
+  if (isMine(myNation)) addU(x2.ranks, myRank());
+}
+// 名所（20種類）
+function landmarksOf(s){
+  const si = siteInfo(s), el = LANDMARKS.map((l, i) => i).filter(i => LANDMARKS[i][1] <= eraIdx && LANDMARKS[i][2] <= s.stage && (!LANDMARKS[i][3] || si.coast));
+  if (!el.length) return [];
+  const h = hash2(s.id, 31, 7), out = [LANDMARKS[el[Math.floor(h*el.length)]][0]];
+  if (s.stage >= 3 && el.length > 1){ const b = LANDMARKS[el[Math.floor(hash2(s.id, 32, 7)*el.length)]][0]; if (b !== out[0]) out.push(b); }
+  return out;
+}
+// 図鑑
+function dexHTML(){
+  const ER = ['原始時代','古代','中世','近世','近代','現代','未来'];
+  const sec = (title, items, found) => { const f = items.filter((_, i) => found(i)).length; return `<h3>${title}（${f}/${items.length}）</h3><div class="dex">${items.map((t, i) => `<span class="${found(i) ? 'on' : ''}">${found(i) ? t : '？？？'}</span>`).join('')}</div>`; };
+  const polKeys = Object.keys(POLICIES).filter(k => k !== 'none');
+  const wNew = WONDERS.slice(16);
+  return `<p class="hint" style="margin:0 0 6px">さらに追加した500の要素を、見つけたものから明かしていきます。まだのものは「？？？」です。</p>`
+    + sec('発明', INVENTIONS.map(v => v[1]), i => i < nextInv)
+    + sec('偉人', HEROES.map(h => HERO_ROLES[h[1]][0] + h[0]), i => x2.heroes.some(e => e.i === i))
+    + sec('出来事', EVENTS3.map(e => e[3].replace('{n}', '〇〇').replace('{c}', '〇〇')), i => x2.events.includes(i))
+    + sec('世界の驚異', WONDERS.map(w => w.name), i => !!wonderBuilt[i])
+    + sec('資源', RESOURCES.map(r => r.name), i => x2.res.includes(i))
+    + sec('星座', CONST_NAMES, i => x2.stars.includes(i))
+    + sec('政策', polKeys.map(k => POLICIES[k].name), i => x2.pols.includes(polKeys[i]))
+    + sec('動物', ANIMALS.map(a => a.name), i => x2.animals.includes(i))
+    + sec('国の称号', GOV2.flat(), i => x2.titles.includes(GOV2.flat()[i]))
+    + sec('空の現象', SKYEV.map(k => k[1]), i => x2.sky.includes(SKYEV[i][0]))
+    + sec('街の名所', LANDMARKS.map(l => l[0]), i => x2.lms.includes(LANDMARKS[i][0]))
+    + sec('国の格', RANKS, i => x2.ranks.some(r => r >= i))
+    + `<p class="hint" style="margin-top:10px">驚異は${WONDERS.length}（うち新しい${wNew.length}）、発明は${INVENTIONS.length}あります。</p>`;
+}
 
 // ===== 時代 =====
 function advanceEra(){
@@ -1561,11 +1736,15 @@ function step(){
     if (st !== s.stage){ if (st > s.stage) terrDirty = true; s.stage = st; if (!firstStage[st]){ firstStage[st] = true; log(`${STAGE_FIRST[st]}（${nm(s.nation)}の${s.name}）`, 'era'); } }
     if (s.pop > cap * .55 && s.pop >= 16 && S.length < MAXS && rnd() < .012 * sp.expand * pol(s.nation, 'expand') * scenarioBoost) tryExpand(s);
   }
-  if (terrDirty || tick % 15 === 0) recomputeTerritory();
+  if ((terrDirty && tick - lastTerr >= 4) || tick - lastTerr >= 15 || tick < lastTerr){ recomputeTerritory(); lastTerr = tick; }
   if (tick % 10 === 0) considerWars();
   updateTyphoons();
   if (tick % 50 === 0) recordHistory();
   if (tick % 30 === 0) checkAch();
+  if (tick % 400 === 0 && rnd() < .7) considerHero();
+  if (tick % 150 === 0 && rnd() < .5 * DISF[CFG.disFreq]) runEvent3();
+  if (tick % 30 === 0) checkResources();
+  if (tick % 220 === 0 && rnd() < .4 * DISF[CFG.disFreq]) skyEvent();
   if (tick % 120 === 0) considerAlliances();
   if (tick % 600 === 0) considerBetrayal();
   if (offer && (offer.until < tick || !N[offer.from].alive || !isMine(myNation))) offer = null;
@@ -1749,6 +1928,7 @@ function displaceGlobe(){
   globeGeo.attributes.position.needsUpdate = true; globeGeo.computeVertexNormals();
 }
 // 大気と星
+let starMat = null;
 scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.06, 64, 32), new THREE.ShaderMaterial({
   side:THREE.BackSide, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
   vertexShader:'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
@@ -1758,7 +1938,7 @@ scene.add(new THREE.Mesh(new THREE.SphereGeometry(R*1.06, 64, 32), new THREE.Sha
   const g = new THREE.BufferGeometry(), a = new Float32Array(2000*3), v = new THREE.Vector3();
   for (let i = 0; i < 2000; i++){ v.set(rnd()*2 - 1, rnd()*2 - 1, rnd()*2 - 1).normalize().multiplyScalar(1600 + rnd()*400); a[i*3] = v.x; a[i*3+1] = v.y; a[i*3+2] = v.z; }
   g.setAttribute('position', new THREE.BufferAttribute(a, 3));
-  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color:0xd6defa, size:1.5, sizeAttenuation:false })));
+  starMat = new THREE.PointsMaterial({ color:0xd6defa, size:1.5, sizeAttenuation:false }); scene.add(new THREE.Points(g, starMat));
 }
 
 // 建物の部品（インスタンス描画）
@@ -1914,10 +2094,11 @@ function wonderParts(P, s, wi, slot){
   } else if (wi === 14){
     for (let k = 0; k < 7; k++){ const m = -.9 + k*.3; A('box', Math.cos(m)*.9 - .5, Math.sin(m)*.9, 0, .32, .6, .14, '#b7b9b6', Math.atan2(-Math.cos(m), -Math.sin(m))); }
     A('box', -.85, 0, 0, .7, .45, 1.2, '#3b78c2');
-  } else {
+  } else if (wi === 15){
     A('dome', 0, 0, 0, 2, 1.3, 2, '#bfeaff'); for (let k = 0; k < 5; k++){ const a = k / 5 * TAU; A('cyl', Math.cos(a)*.4, Math.sin(a)*.4, 0, .16, .7 + k*.08, .16, '#eef3f7'); }
     A('cyl', 0, 0, 0, .2, 1.1, .2, '#f4f8fb'); A('ring', 0, 0, .7, 2.1, 1, 2.1, '#5fe3ff');
   }
+  if (wi >= 16) for (const q of WSHAPES[wi - 16] || []) A(q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
 }
 // 街のまわりの景色（畑・風車・灯台・桟橋・風力発電）
 function siteInfo(s){
@@ -1948,6 +2129,7 @@ function sceneryParts(P, s){
     const a2 = si.ang + .6;
     for (const o of [-.12, .12]) A('box', Math.cos(a2)*(r0 + .35) - Math.sin(a2)*o, Math.sin(a2)*(r0 + .35) + Math.cos(a2)*o, -.02, .7, .04, .07, '#7a5a3a', -a2);
   }
+  landmarksOf(s).forEach((name, j) => { const l = LANDMARKS.find(v => v[0] === name), a = 3.9 + j*1.1 + hs, r = r0 + .45, ox = Math.cos(a)*r, oz = Math.sin(a)*r; for (const q of l[4]) A(q[0], ox + q[1], oz + q[2], q[3], q[4], q[5], q[6], q[7]); });
   if (eraIdx >= 5 && st >= 3 && hs < .5) for (let k = 0; k < 2; k++){
     const a = hs*TAU + k*.5 + 2, x = Math.cos(a)*(r0 + .5), z = Math.sin(a)*(r0 + .5);
     A('cyl', x, z, 0, .05, 1.1, .05, '#f2f4f6'); A('box', x, z, .8, .03, .6, .03, '#f2f4f6'); A('box', x, z, 1.08, .6, .03, .03, '#f2f4f6');
@@ -1997,6 +2179,12 @@ function rebuildCities(){
     if (s.capital) capitals.push([b, pc.top]);
   }
   for (const k in CITY) flush(CITY[k]);
+  for (const d of deposits){
+    const r = RESOURCES[d.r]; if (r.era > eraIdx) continue;
+    frameAt(d.x + .5, d.y + .5, 0, 0, _W2);
+    _p.set(0, .06*U, 0); _sc.set(.2*U, .2*U, .2*U); _L.compose(_p, IDQ, _sc); _W.multiplyMatrices(_W2, _L); put(CITY.glow, _W, r.color);
+    _p.set(0, 0, 0); _sc.set(.4*U, .06*U, .4*U); _L.compose(_p, IDQ, _sc); _W.multiplyMatrices(_W2, _L); put(CITY.cyl, _W, '#5a5048');
+  }
   boats = [];
   if (eraIdx >= 1) for (const s of S){
     if (!s.alive || s.stage < 1 || boats.length >= 80) continue;
@@ -2109,6 +2297,13 @@ function rebuildMobiles(time){
   }
   for (const f of flyers){
     const t = f.t / f.dur;
+    if (f.kind === 'ufo' || f.kind === 'satdot'){
+      if (f.t < 0) continue;
+      planePos(f, clamp(t, 0, 1), _pa); basisUp(_pa, _W2); _W2.setPosition(_pa);
+      if (f.kind === 'ufo'){ part('cyl', _W2, 1.2, 0, 0, 0, 1, .1, 1, '#c9d2da'); part('dome', _W2, 1.2, 0, .08, 0, .45, .4, .45, '#9fe8ff'); part('glow', _W2, 1.2, 0, -.05, 0, .8, .03, .8, '#7dff9a'); }
+      else part('glow', _W2, 1, 0, 0, 0, .14, .14, .14, '#ffffff');
+      continue;
+    }
     if (f.kind === 'balloon' || f.kind === 'heli'){
       if (f.kind === 'balloon') slerpDir(f.a, f.b, t, _pa); else _pa.copy(f.a);
       basisUp(_pa, _W2);
@@ -2130,6 +2325,7 @@ function rebuildMobiles(time){
       addSpark(_pa, _tv.set(0, 0, 0), _up, 0, .8, U*.15, [.5, .9, 1], true);
     }
   }
+  drawHerds(time);
   for (const j of jets){
     frameAt(j.x, j.y, U*2.2, Math.atan2(-j.hy, j.hx), _W2);
     const c = eraIdx >= 6 ? '#dfe7ee' : '#5b6470';
@@ -2375,7 +2571,7 @@ function updateDisasterFx(dt, time){
 // 流れ星（画面の上に描く）
 let shooters = [];
 function updateShooters(dt){
-  if (camS.alt > 110 && rnd() < .012){
+  if ((camS.alt > 110 && rnd() < .012) || (showerT > 0 && rnd() < .3)){
     const x = rnd()*vw, y = rnd()*vh*.6;
     if (Math.hypot(x - vw/2, y - vh/2) > Math.min(vw, vh)*.42) shooters.push({ x, y, vx:-(260 + rnd()*260), vy:120 + rnd()*140, t:0 });
   }
@@ -2419,7 +2615,7 @@ function updateWavesRain(dt){
   for (const r of rainbows){
     r.t += dt; let g = rainMeshes.get(r);
     if (!g){ g = new THREE.Group(); g.matrixAutoUpdate = false; RAINBOW.forEach((c, i) => g.add(new THREE.Mesh(rainGeos[i], new THREE.MeshBasicMaterial({ color:c, transparent:true, depthWrite:false })))); scene.add(g); rainMeshes.set(r, g); }
-    frameAt(r.x, r.y, 0, r.yaw, g.matrix); g.matrix.scale(_sc.setScalar(U*3.2));
+    frameAt(r.x, r.y, 0, r.yaw, g.matrix); g.matrix.scale(_sc.setScalar(U*3.2*(r.sc || 1)));
     const op = clamp(Math.min(r.t, 8 - r.t) / 1.5, 0, 1) * .7; g.children.forEach(c => { c.material.opacity = op; });
   }
   rainbows = rainbows.filter(r => r.t < 8);
@@ -2437,7 +2633,117 @@ function clearTransient(){
   tyMeshes.clear();
   for (const [, m] of waveMeshes) scene.remove(m); waveMeshes.clear(); for (const [, g] of rainMeshes) scene.remove(g); rainMeshes.clear();
   armies = []; traders = []; jets = []; missiles = []; sparks = []; planes = []; rockets = []; meteors = []; nukeFx = []; typhoons = []; volcanoes = []; shooters = [];
-  flyers = []; whales = []; birds = []; tornados = []; fires = []; waves = []; rainbows = [];
+  flyers = []; whales = []; birds = []; tornados = []; fires = []; waves = []; rainbows = []; herds = []; emitters = []; comets = [];
+}
+// 星座（30）
+const constel = CONST_NAMES.map((name, i) => {
+  const k = i + .5, phi = Math.acos(1 - 2*k / CONST_NAMES.length), th = Math.PI*(1 + Math.sqrt(5))*k;
+  const c = new THREE.Vector3(Math.sin(phi)*Math.cos(th), Math.cos(phi), Math.sin(phi)*Math.sin(th)).multiplyScalar(1700);
+  const n = c.clone().normalize(), e = new THREE.Vector3(0, 1, 0).cross(n); if (e.lengthSq() < 1e-4) e.set(1, 0, 0); e.normalize();
+  const s = new THREE.Vector3().crossVectors(e, n), cnt = 5 + Math.floor(hash2(i, 3, 3)*3), pts = [];
+  for (let j = 0; j < cnt; j++){ const a = j / cnt * TAU + hash2(i, j, 4)*1.2, r = 60 + hash2(i, j, 5)*90; pts.push(c.clone().addScaledVector(e, Math.cos(a)*r).addScaledVector(s, Math.sin(a)*r)); }
+  return { name, c, pts };
+});
+{
+  const lp = [], sp = [];
+  for (const k of constel){ k.pts.forEach((p, j) => { sp.push(p.x, p.y, p.z); if (j > 0){ const q = k.pts[j - 1]; lp.push(q.x, q.y, q.z, p.x, p.y, p.z); } }); }
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+  scene.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color:0x7f96c8, transparent:true, opacity:.4, depthWrite:false })));
+  const sg2 = new THREE.BufferGeometry(); sg2.setAttribute('position', new THREE.Float32BufferAttribute(sp, 3));
+  scene.add(new THREE.Points(sg2, new THREE.PointsMaterial({ color:0xeaf0ff, size:3, sizeAttenuation:false })));
+}
+const _globeSph = new THREE.Sphere(new THREE.Vector3(), R + 1), _ray2 = new THREE.Ray();
+// 超新星・彗星
+const novaPt = new THREE.Points(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3)), new THREE.PointsMaterial({ color:0xffffff, size:9, sizeAttenuation:false, transparent:true }));
+novaPt.visible = false; scene.add(novaPt);
+const cometMesh = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 12), new THREE.MeshBasicMaterial({ color:0xdff2ff }));
+cometMesh.visible = false; scene.add(cometMesh);
+// 動物の群れ（30種類）
+let herds = [];
+function spawnHerds(dt){
+  if (speed > 0) for (const h of herds){ h.t += dt; h.x += Math.cos(h.ang)*dt*.05; h.y += Math.sin(h.ang)*dt*.04; }
+  herds = herds.filter(h => h.t < h.dur && h.y > 1 && h.y < H - 1);
+  if (speed <= 0 || herds.length >= 24 || rnd() > .04) return;
+  const ai = Math.floor(rnd()*ANIMALS.length), a = ANIMALS[ai];
+  for (let k = 0; k < 60; k++){
+    const x = Math.floor(rnd()*W), y = Math.floor(rnd()*H), la = latOf(y), lo = lonOf(x);
+    if (!a.terr.includes(terr[y*W + x]) || la < a.la0 || la > a.la1 || lo < a.lo0 || lo > a.lo1) continue;
+    if (a.kind !== 'swim' && a.kind !== 'fly' && nearSettlement(x, y, 1.5)) continue;
+    herds.push({ ai, x:x + .5, y:y + .5, ang:rnd()*TAU, t:0, dur:45, ph:rnd()*6 }); return;
+  }
+}
+function drawHerds(time){
+  for (const h of herds){
+    const a = ANIMALS[h.ai], s = a.size*.55, n = a.kind === 'fly' || a.kind === 'swim' ? 2 : 3, col = a.color, dk = '#3a3026';
+    for (let j = 0; j < n; j++){
+      frameAt(h.x + (j - 1)*.35, h.y + ((j*37) % 3 - 1)*.25, a.kind === 'fly' ? U*2.4 : 0, -h.ang, _W2);
+      const bob = Math.abs(Math.sin(time*6 + h.ph + j))*.03;
+      if (a.kind === 'quad'){ part('box', _W2, s, 0, .14 + bob, 0, .5, .22, .2, col); part('box', _W2, s, .3, .26 + bob, 0, .16, .16, .14, col); part('box', _W2, s, .16, 0, 0, .06, .14, .14, dk); part('box', _W2, s, -.16, 0, 0, .06, .14, .14, dk); }
+      else if (a.kind === 'tall'){ part('box', _W2, s, 0, .5, 0, .4, .2, .18, col); part('box', _W2, s, .18, .6, 0, .08, .55, .08, col); part('box', _W2, s, .24, 1.12, 0, .16, .1, .1, col); part('box', _W2, s, .14, 0, 0, .06, .5, .12, dk); part('box', _W2, s, -.14, 0, 0, .06, .5, .12, dk); }
+      else if (a.kind === 'up'){ part('box', _W2, s, 0, bob, 0, .2, .4, .18, col); part('box', _W2, s, 0, .4 + bob, 0, .16, .16, .16, col); }
+      else if (a.kind === 'low'){ part('box', _W2, s, 0, .02, 0, .7, .08, .18, col); part('box', _W2, s, .42, .02, 0, .2, .06, .12, col); }
+      else if (a.kind === 'swim'){ const b = Math.sin(time*2 + h.ph + j)*.05; part('box', _W2, s, 0, -.04 + b, 0, .6, .1, .18, col); part('box', _W2, s, 0, .06 + b, 0, .08, .12, .03, col); }
+      else { const f = Math.sin(time*8 + j)*.15; part('box', _W2, s, 0, 0, 0, .25, .06, .08, col); part('box', _W2, s, 0, f*.3, 0, .1, .02, .7, col); }
+    }
+  }
+}
+// 空の現象（20）
+let emitters = [], comets = [], novaT = 0, moonRedT = 0, starBoostT = 0, flashT = 0, showerT = 0;
+const LOCAL_SKY = ['rain', 'storm', 'snow', 'fog', 'sand', 'sakura', 'leaves', 'firefly', 'butterfly', 'fireworks'];
+function skyEvent(x, y, key){
+  const ev = key ? SKYEV.find(k => k[0] === key) : pick(SKYEV.filter(k => k[3] <= eraIdx));
+  if (!ev) return;
+  const k = ev[0];
+  if (x === undefined){ const c = S.length ? pick(S) : null; x = c ? c.x : Math.floor(rnd()*W); y = c ? c.y : Math.floor(H/2); }
+  const vec = () => new THREE.Vector3(rnd() - .5, rnd() - .5, rnd() - .5).normalize();
+  if (LOCAL_SKY.includes(k)) emitters.push({ k, x:x + .5, y:y + .5, t:0, dur:k === 'fireworks' ? 6 : 10 });
+  else if (k === 'comet') comets.push({ t:0, dur:22, a:vec().multiplyScalar(430), b:vec().multiplyScalar(430) });
+  else if (k === 'meteors') showerT = 8;
+  else if (k === 'lunar') moonRedT = 18;
+  else if (k === 'nova'){ novaT = 30; novaPt.position.copy(vec().multiplyScalar(1650)); }
+  else if (k === 'ufo') flyers.push({ kind:'ufo', a:surfPos(x + .5, y + .5).normalize(), b:surfPos(x + .5 + (rnd() - .5)*40, clamp(y + .5 + (rnd() - .5)*20, 2, H - 2)).normalize(), t:0, dur:6, h:6 });
+  else if (k === 'sats'){ const a = surfPos(x + .5, y + .5).normalize(), b = vec(); for (let j = 0; j < 6; j++) flyers.push({ kind:'satdot', a, b, t:-j*.5, dur:12, h:16 }); }
+  else if (k === 'balloons') for (let j = 0; j < 10; j++) flyers.push({ kind:'balloon', a:surfPos(x + .5 + (rnd() - .5)*4, y + .5 + (rnd() - .5)*3).normalize(), b:surfPos(x + .5 + (rnd() - .5)*8, y + .5 + (rnd() - .5)*5).normalize(), t:0, dur:20, h:2 + rnd()*2, col:pick(['#e05a4a','#f2c94c','#2b8fd6','#9b59b6','#4aa36a']) });
+  else if (k === 'migration') for (let j = 0; j < 8; j++) birds.push({ x:x + (rnd() - .5)*8, y:y + (rnd() - .5)*6, a:rnd()*.6 + Math.PI*.9, t:0, dur:18 });
+  else if (k === 'double'){ const yaw = rnd()*TAU; rainbows.push({ x:x + .5, y:y + .5, t:0, yaw }); rainbows.push({ x:x + .5, y:y + .5, t:0, yaw, sc:1.35 }); }
+  else if (k === 'milky') starBoostT = 20;
+  addU(x2.sky, k);
+  log(LOCAL_SKY.includes(k) || k === 'ufo' || k === 'balloons' || k === 'migration' || k === 'double' ? `${nearestCityName(x, y)}：${ev[2]}` : ev[2], 'tech');
+  if (LOCAL_SKY.includes(k) || k === 'ufo' || k === 'double') markEvent(x, y, 1);
+}
+const SKY_COL = { rain:[.65, .8, 1], snow:[1, 1, 1], fog:[.9, .92, .95], sand:[.85, .72, .5], sakura:[1, .75, .85], firefly:[.8, 1, .4] };
+function updateSkyFx(dt){
+  for (const e of emitters){
+    e.t += dt; const k = e.k;
+    const at = lift => { const c = surfPos(e.x + (rnd() - .5)*5, e.y + (rnd() - .5)*4, lift); _up.copy(c).normalize(); return c; };
+    if (k === 'rain' || k === 'storm'){
+      for (let j = 0; j < 4; j++){ const c = at(U*3); addSpark(c, _f.copy(_up).multiplyScalar(-U*5), _up, 0, .55, U*.05, SKY_COL.rain, false); }
+      if (rnd() < .4){ const c = at(U*3.3); addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.2), _up, 0, 2, U*.7, [.55, .58, .62], true); }
+      if (k === 'storm' && rnd() < .03){ flashT = .15; sfx('rumble', .3); }
+    } else if (k === 'snow' || k === 'sakura' || k === 'leaves'){
+      for (let j = 0; j < 3; j++){ const c = at(U*2.5); addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.4).addScaledVector(_up, -U*.8), _up, 0, 3, U*.07, k === 'leaves' ? (rnd() < .5 ? [.9, .45, .2] : [.95, .7, .25]) : SKY_COL[k], false); }
+    } else if (k === 'fog'){
+      if (rnd() < .5){ const c = at(U*.4); addSpark(c, _f.set(0, 0, 0), _up, 0, 3, U*.8, SKY_COL.fog, true); }
+    } else if (k === 'sand'){
+      for (let j = 0; j < 3; j++){ const c = at(U*.5); addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*2), _up, 0, 1.2, U*.08, SKY_COL.sand, false); }
+    } else if (k === 'firefly'){
+      for (let j = 0; j < 2; j++){ const c = at(U*.3); addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.2), _up, 0, .6, U*.06, SKY_COL.firefly, false); }
+    } else if (k === 'butterfly'){
+      for (let j = 0; j < 2; j++){ const c = at(U*.8); addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).multiplyScalar(U*.6), _up, 0, 1.5, U*.07, hexRGB(pick(['#ffd36b','#9fd4ff','#ff9ad0','#ffffff'])), false); }
+    } else if (k === 'fireworks'){
+      if (rnd() < .04){ const c = at(U*(3.5 + rnd()*1.5)), col = hexRGB(pick(['#ff5a5a','#ffd36b','#7fe8ff','#c48bff','#7dff9a','#ffffff'])); for (let j = 0; j < 30; j++) addSpark(c, _f.set(rnd() - .5, rnd() - .5, rnd() - .5).normalize().multiplyScalar(U*1.6), _up, U*.5, 1.2, U*.09, col, false); sfx('boom', .4); }
+    }
+  }
+  emitters = emitters.filter(e => e.t < e.dur);
+  for (const c of comets){
+    c.t += dt; cometMesh.position.copy(c.a).lerp(c.b, c.t / c.dur);
+    addSpark(cometMesh.position, _f.copy(cometMesh.position).normalize().multiplyScalar(6), _up.copy(cometMesh.position).normalize(), 0, 2.5, 8, [.7, .85, 1], true);
+  }
+  comets = comets.filter(c => c.t < c.dur); cometMesh.visible = comets.length > 0;
+  novaT = Math.max(0, novaT - dt); novaPt.visible = novaT > 0; novaPt.material.size = 6 + Math.sin(performance.now()/300)*3; novaPt.material.opacity = clamp(novaT / 5, 0, 1);
+  moonRedT = Math.max(0, moonRedT - dt); moon.material.color.setRGB(1, moonRedT > 0 ? .45 : 1, moonRedT > 0 ? .35 : 1);
+  starBoostT = Math.max(0, starBoostT - dt); if (starMat) starMat.size = starBoostT > 0 ? 2.8 : 1.5;
+  flashT = Math.max(0, flashT - dt); showerT = Math.max(0, showerT - dt);
 }
 // 隕石
 const meteorGeo = new THREE.SphereGeometry(1, 16, 12), meteorMat = new THREE.MeshBasicMaterial({ color:0xfff0c8 });
@@ -2525,6 +2831,25 @@ function strokeRing(pts, color, dash){
 }
 function drawOverlay(){
   octx.setTransform(dpr, 0, 0, dpr, 0, 0); octx.clearRect(0, 0, vw, vh);
+  if (flashT > 0){ octx.fillStyle = `rgba(255,255,255,${Math.min(.6, flashT*4)})`; octx.fillRect(0, 0, vw, vh); }
+  if (camS.alt > 170){
+    octx.font = "400 11px 'Zen Kaku Gothic New', sans-serif"; octx.textAlign = 'center'; octx.fillStyle = 'rgba(170,190,230,.85)';
+    constel.forEach((k, i) => {
+      const p = project(k.c); if (!p || p[0] < 0 || p[1] < 0 || p[0] > vw || p[1] > vh) return;
+      const d = k.c.distanceTo(camera.position); _ray2.set(camera.position, _tv.copy(k.c).sub(camera.position).normalize());
+      const hit = _ray2.intersectSphere(_globeSph, _pb); if (hit && hit.distanceTo(camera.position) < d) return;
+      octx.fillText(k.name, p[0], p[1] + 14); addU(x2.stars, i);
+    });
+  }
+  {
+    const cp = _pb.copy(camera.position).normalize().multiplyScalar(R), ppt = pxPerTile(cp);
+    if (ppt >= 10) for (const h of herds){
+      const v = surfPos(h.x, h.y, .3, _pa); if (facing(v) < .2) continue;
+      const p = project(v); if (!p || p[0] < 0 || p[1] < 0 || p[0] > vw || p[1] > vh) continue;
+      if (addU(x2.animals, h.ai)) log(`動物図鑑に${ANIMALS[h.ai].name}が加わった`, 'tech');
+      if (ppt >= 18 && CFG.labels){ octx.font = "700 11px 'Zen Kaku Gothic New', sans-serif"; octx.textAlign = 'center'; octx.lineWidth = 3; octx.strokeStyle = 'rgba(8,12,18,.8)'; octx.strokeText(ANIMALS[h.ai].name, p[0], p[1] - 14); octx.fillStyle = '#d8f0c8'; octx.fillText(ANIMALS[h.ai].name, p[0], p[1] - 14); }
+    }
+  }
   for (const sh of shooters){
     const g = octx.createLinearGradient(sh.x, sh.y, sh.x - sh.vx*.12, sh.y - sh.vy*.12), a = 1 - sh.t / .9;
     g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(1, 'rgba(255,255,255,0)');
@@ -2590,7 +2915,7 @@ function frame(now){
   aurMeshes.forEach(m => { m.visible = !CFG.lite; });
   if (CFG.autoRotate && performance.now() - lastInput > 8000) camG.lon = wrapLon(camG.lon + dt*3);
   spawnAmbient(dt); updateWavesRain(dt);
-  updateDisasterFx(dt, time); updateShooters(dt);
+  updateDisasterFx(dt, time); updateShooters(dt); spawnHerds(dt); updateSkyFx(dt);
   if (liveCam && lastEvt && !lastEvt.shown && now - lastFocusT > 3500){ focusOn(lastEvt.x, lastEvt.y, 55); lastEvt.shown = true; lastFocusT = now; }
   if (speed > 0){
     for (const p of planes) p.t += dt * Math.min(speed, 3);
@@ -2684,13 +3009,13 @@ function applyCfg(k){
   if (k === 'lite') resize();
   if (k === 'maxCities' || k === 'all') MAXS = CFG.maxCities;
   if (k === 'volume' && master) master.gain.value = CFG.volume;
-  if (k === 'bgm'){ if (CFG.bgm){ soundOn = true; syncOpts(); const a = audio(); if (a) a.resume().then(startBgm).catch(() => {}); } else stopBgm(); }
+  if (k === 'bgm'){ if (CFG.bgm){ x2.bgm = true; soundOn = true; syncOpts(); const a = audio(); if (a) a.resume().then(startBgm).catch(() => {}); } else stopBgm(); }
   if (k === 'quiet') renderLog();
   saveCfg();
 }
 applyCfg('all');
 // 写真モード
-function setPhoto(on){ document.body.classList.toggle('photo', on); $('photoExit').hidden = !on; if (on) closeMenu(); }
+function setPhoto(on){ if (on) x2.photo = true; document.body.classList.toggle('photo', on); $('photoExit').hidden = !on; if (on) closeMenu(); }
 $('photoExit').addEventListener('click', () => setPhoto(false));
 // 色を変える
 const HUES = [8, 32, 52, 95, 150, 190, 220, 265, 300, 335];
@@ -2731,6 +3056,7 @@ let rankBy = 'pop';
 function menuExtra(tab){
   nationStats();
   const alive = aliveNations();
+  if (tab === 'dex') return dexHTML();
   if (tab === 'goal'){
     const mine = isMine(myNation) ? N[myNation] : null;
     const myW = mine ? S.reduce((a, c) => a + (c.alive && c.nation === myNation && c.wonders ? c.wonders.length : 0), 0) : 0;
@@ -2784,14 +3110,83 @@ $('menu').addEventListener('change', e => {
   const k = e.target.dataset.cfgsel; if (!k) return;
   CFG[k] = +e.target.value; applyCfg(k); renderMenu();
 });
+// ===== チュートリアル（13ステップ） =====
+const q$ = sel => document.querySelector(sel);
+const TUT = [
+  { t:'ようこそ', d:'地球文明記へようこそ。これから13のステップで遊び方を案内します。案内のとおりに操作すると、自動で次へ進みます。' },
+  { t:'地球を回す', d:'画面をドラッグして（スマホは指でなぞって）、地球を回してみましょう。',
+    enter(){ this.l0 = camS.lon; this.a0 = camS.lat; }, done(){ return Math.abs(wrapLon(camS.lon - this.l0)) + Math.abs(camS.lat - this.a0) > 12; } },
+  { t:'近づく', d:'ホイールかピンチ、または道具の「近く」ボタンで、地球に近づきましょう。', target:() => $('zoomIn'),
+    enter(){ this.h0 = camS.alt; }, done(){ return camS.alt < this.h0*.6 || camS.alt < 60; } },
+  { t:'人類を生み出す', d:'道具の「人類」を選んで、陸地をタップしましょう。最初のテントが建ち、それがあなたの国になります。', target:() => q$('[data-tool="human"]'),
+    done(){ return started && isMine(myNation); } },
+  { t:'時間を早める', d:'上の「3倍」を押して、時間を早く進めましょう。「停止」で止めることもできます。', target:() => q$('[data-speed="3"]'),
+    done(){ return speed >= 3; } },
+  { t:'時代を進める', d:'人が増えると、テントは村や町に育ちます。待ちきれないときは「次の時代へ」で時代を進められます。押してみましょう。', target:() => $('nextEra'),
+    enter(){ this.e0 = eraIdx; }, done(){ return eraIdx > this.e0 || eraIdx >= ERAS.length - 1; } },
+  { t:'街を調べる', d:'道具の「見る」を選んで、自分の街をタップしましょう。パネルに、人口や名所などの街のようすが出ます。', target:() => q$('[data-tool="look"]'),
+    done(){ const c = sel && sel.type === 'city' && sById.get(sel.id); return !!c && c.nation === myNation; } },
+  { t:'街を開拓する', d:'画面下の命令バーで「開拓」を押してから、自分の街の近くの陸地をタップしましょう。新しい街ができます。', target:() => q$('[data-cmd="cmdSettle"]'),
+    enter(){ this.c0 = myCount(); }, done(){ return myCount() > this.c0; } },
+  { t:'ライバルの国をつくる', d:'道具の「建国」を選び、特化（貿易・防衛・戦争）を選んでから、自分の国から離れた陸地をタップしましょう。', target:() => q$('[data-tool="nation"]'),
+    enter(){ this.n0 = N.length; }, done(){ return N.length > this.n0; } },
+  { t:'ほかの国と付き合う', d:'「見る」でライバルの国の土地をタップしましょう。パネルから、宣戦布告や同盟の申し込みができます。', target:() => innerWidth <= 760 && !$('side').classList.contains('open') ? $('sideToggle') : q$('[data-tool="look"]'),
+    done(){ return !!(sel && sel.type === 'nation' && sel.id !== myNation && N[sel.id] && N[sel.id].alive); } },
+  { t:'天災を起こす', d:'道具の「天災」を選ぶと、隕石・地震・恵みの雨・空の現象など、13種類から選べます。どれかを起こしてみましょう。', target:() => q$('[data-tool="meteor"]'),
+    enter(){ this.d0 = disCount; }, done(){ return disCount > this.d0; } },
+  { t:'メニューを開く', d:'上の「メニュー」から、図鑑・実績・目標・ランキング・設定・保存などが開けます。開いてみましょう。', target:() => $('menuBtn'),
+    done(){ return !$('menu').hidden; } },
+  { t:'これで準備完了', d:'おつかれさまでした。図鑑の500の要素や実績を集めながら、テントから「銀河の盟主」をめざしましょう。遊び方はメニューの「遊び方」タブでいつでも読めます。' },
+];
+let tutI = -1, tutOkAt = 0;
+function tutShow(i){
+  tutI = i; tutOkAt = 0;
+  const st = TUT[i]; if (st.enter) st.enter();
+  $('tut').hidden = false;
+  $('tutNo').textContent = `${i + 1} / ${TUT.length}`;
+  $('tutTitle').textContent = st.t; $('tutText').textContent = st.d;
+  $('tutBack').hidden = i === 0;
+  const el = st.target && st.target(); if (el && el.scrollIntoView) try { el.scrollIntoView({ block:'nearest', inline:'center' }); } catch (e) {}
+  tutTick();
+}
+function startTutorial(){
+  closeMenu(); $('intro').hidden = true; setPhoto(false);
+  tutShow(0);
+}
+function endTutorial(done){
+  tutI = -1; $('tut').hidden = true; $('tutRing').hidden = true;
+  if (done){ try { localStorage.setItem('chikyu-bunmeiki-tut', '1'); } catch (e) {} toast('チュートリアルを終えました'); }
+}
+function tutTick(){
+  if (tutI < 0) return;
+  const st = TUT[tutI], ok = !st.done || st.done();
+  const last = tutI === TUT.length - 1;
+  $('tutState').textContent = !st.done ? '' : ok ? 'できた！' : 'やってみよう';
+  $('tutState').className = ok && st.done ? 'ok' : '';
+  $('tutNext').textContent = last ? 'おわる' : ok ? '次へ' : 'とばす';
+  if (ok && st.done){ if (!tutOkAt) tutOkAt = performance.now(); else if (performance.now() - tutOkAt > 1200){ tutShow(tutI + 1); return; } }
+  const el = st.target && st.target(), ring = $('tutRing');
+  const r = el && el.getBoundingClientRect();
+  if (!r || r.width === 0 || ok){ ring.hidden = true; return; }
+  ring.hidden = false;
+  Object.assign(ring.style, { left:(r.left - 5) + 'px', top:(r.top - 5) + 'px', width:(r.width + 10) + 'px', height:(r.height + 10) + 'px' });
+}
+setInterval(tutTick, 250);
+$('tutNext').addEventListener('click', () => { if (tutI < 0) return; if (tutI >= TUT.length - 1) endTutorial(true); else tutShow(tutI + 1); });
+$('tutBack').addEventListener('click', () => { if (tutI > 0) tutShow(tutI - 1); });
+$('tutQuit').addEventListener('click', () => endTutorial(false));
+$('startTut').addEventListener('click', startTutorial);
 // メニュー（遊び方・年表・実績・保存）
 let menuTab = 'help', logFilter = 'all', resetArm = false;
 const SAVE_KEY = 'chikyu-bunmeiki-save';
 const HELP_HTML = `
+<div class="acts" style="margin:0 0 6px"><button class="btn go" type="button" data-tutstart="1">チュートリアルをはじめる</button></div>
 <h3>基本の操作</h3>
 <ol><li>ドラッグで地球を回します。</li><li>ホイールかピンチで近づいたり離れたりします。近づくと視点が傾いて街並みが見えます。</li><li>「見る」を選んで国や街をタップすると、右のパネルに詳しく出ます。</li></ol>
 <h3>神さまの道具</h3>
-<ol><li>人類：テントを建てて人類を生み出します。</li><li>建国：新しい国をつくります。特化（貿易・防衛・戦争）を選べます。</li><li>陸地・海・森・山：ドラッグして地形を描きかえます。</li><li>天災：隕石・地震・火山・疫病・台風・恵みの雨から選んで起こします。</li></ol>
+<ol><li>人類：テントを建てて人類を生み出します。</li><li>建国：新しい国をつくります。特化（貿易・防衛・戦争）を選べます。</li><li>陸地・海・森・山：ドラッグして地形を描きかえます。</li><li>天災：隕石・地震・火山・疫病・台風・恵みの雨・津波・竜巻・大寒波・山火事・大漁・金の発見・空の現象から選んで起こします。</li></ol>
+<h3>図鑑</h3>
+<ol><li>発明・偉人・出来事・驚異・資源・星座・政策・動物・称号・空の現象・名所・国の格を、見つけたものから図鑑に記録します。</li><li>動物は地球に近づいて見つけ、星座は遠くから夜空をながめると見つかります。</li></ol>
 <h3>自分の国</h3>
 <ol><li>最初に生み出した国があなたの国です。ほかの国は「この国をあやつる」で選べます。</li><li>画面下の命令バーで、攻める・開拓・総攻撃・守りを固める・戦闘機・核が使えます。</li><li>戦争中の相手には「降伏を迫る」、ほかの国には「同盟を申し込む」ができます。</li><li>自分の国と街は、名前を変えたり、首都を移したりできます。</li></ol>
 <h3>画面の上のボタン</h3>
@@ -2800,6 +3195,7 @@ const HELP_HTML = `
 <ul><li><kbd>Space</kbd> 停止と再開</li><li><kbd>1</kbd>〜<kbd>4</kbd> 1倍・3倍・10倍・30倍</li><li><kbd>+</kbd> <kbd>-</kbd> 近づく・離れる、矢印キーで回す</li><li><kbd>N</kbd> 夜景、<kbd>C</kbd> 実況、<kbd>H</kbd> このメニュー、<kbd>Esc</kbd> 閉じる</li></ul>`;
 function readSave(){ try { const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; } catch (e) { return null; } }
 function saveWorld(){
+  x2.saved = true;
   try { const d = serialize(); d.savedAt = Date.now(); localStorage.setItem(SAVE_KEY, JSON.stringify(d)); toast('世界を保存した'); }
   catch (e) { toast('保存できませんでした。ブラウザの設定で保存が止められているかもしれません'); }
   renderMenu();
@@ -2813,7 +3209,7 @@ function loadWorld(){
 }
 function openMenu(tab){ if (tab) menuTab = tab; resetArm = false; $('menu').hidden = false; renderMenu(); }
 function closeMenu(){ $('menu').hidden = true; }
-const MTITLE = { help:'遊び方', log:'年表', ach:'実績', goal:'目標', rank:'ランキング', list:'一覧', set:'設定', save:'保存' };
+const MTITLE = { dex:'図鑑', help:'遊び方', log:'年表', ach:'実績', goal:'目標', rank:'ランキング', list:'一覧', set:'設定', save:'保存' };
 function renderMenu(){
   $('mtitle').textContent = MTITLE[menuTab] || 'メニュー';
   document.querySelectorAll('[data-mtab]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mtab === menuTab ? 'true' : 'false'));
@@ -2848,6 +3244,7 @@ $('menu').addEventListener('click', e => {
   else if (b.dataset.rank){ rankBy = b.dataset.rank; renderMenu(); }
   else if (b.dataset.cfg){ const k = b.dataset.cfg; CFG[k] = !CFG[k]; applyCfg(k); renderMenu(); }
   else if (b.dataset.photo) setPhoto(true);
+  else if (b.dataset.tutstart) startTutorial();
   else if (b.dataset.jump){ const c = sById.get(+b.dataset.jump); if (c){ closeMenu(); sel = { type:'city', id:c.id }; focusOn(c.x, c.y, 30); openSide(); } }
   else if (b.dataset.mpeace){ const [a, c] = b.dataset.mpeace.split('-').map(Number); const w = warOf(a, c); if (w){ makePeace(w); stat.peace++; } renderMenu(); }
   else if (b.dataset.reset){ if (resetArm) location.reload(); else { resetArm = true; renderMenu(); } }
@@ -3008,7 +3405,7 @@ function updateCmdBar(){
   const n = N[myNation];
   if ($('myFlag').dataset.k !== String(myNation)){ $('myFlag').innerHTML = flagSVG(n, 22, 15); $('myFlag').dataset.k = String(myNation); } $('myName').textContent = '★ ' + nm(myNation);
   const wc = warCount(myNation);
-  $('myStat').textContent = `${fmtPop(n.pop)}・${n.count}の街${wc ? `・${wc}か国と交戦中` : ''}`;
+  $('myStat').textContent = `${RANKS[myRank()]}・${fmtPop(n.pop)}・${n.count}の街${wc ? `・${wc}か国と交戦中` : ''}`;
   const jetOk = n.spec === 'war' && eraIdx >= 4, nukeOk = n.spec === 'war' && eraIdx >= 5;
   $('cJet').disabled = !jetOk; $('cNuke').disabled = !nukeOk;
   $('cNuke').textContent = nukeOk && (n.nukeCd || 0) > tick ? `核（あと${secs(n.nukeCd - tick)}秒）` : '核';
@@ -3063,7 +3460,7 @@ function updateUI(force){
     else {
       k2 = `c${s.id}|${s.nation}|${s.capital}|${s.stage}|${eraIdx}|${(s.wonders || []).length}|${myNation}|${renaming}|${s.name}`;
       if (k2 !== infoKey || force) html = `<div class="ihead">${flagSVG(N[s.nation], 26, 17)}<b>${s.name}</b>${s.capital ? '<span class="tag">首都</span>' : ''}</div>
-        <dl><dt>すがた</dt><dd>${STAGE_NAME[s.stage]}</dd><dt>人口</dt><dd data-f="cpop"></dd><dt>国</dt><dd><button class="linkish" type="button" data-nation="${s.nation}">${nm(s.nation)}</button></dd><dt>地形</dt><dd>${TNAME[terr[s.y*W + s.x]]}</dd><dt>創設</dt><dd>${fmtYear(s.born)}</dd>${s.wonders && s.wonders.length ? `<dt>驚異</dt><dd>${wonderNames(s)}</dd>` : ''}</dl>${isMine(myNation) && s.nation === myNation ? (renaming === 'c:' + s.id ? renBox(s.name) : `<div class="acts">${s.capital ? '' : `<button class="btn" type="button" data-cap="${s.id}">ここを首都にする</button>`}<button class="btn" type="button" data-ren="c:${s.id}">名前を変える</button></div>`) : ''}`;
+        <dl><dt>すがた</dt><dd>${STAGE_NAME[s.stage]}</dd><dt>人口</dt><dd data-f="cpop"></dd><dt>国</dt><dd><button class="linkish" type="button" data-nation="${s.nation}">${nm(s.nation)}</button></dd><dt>地形</dt><dd>${TNAME[terr[s.y*W + s.x]]}</dd><dt>創設</dt><dd>${fmtYear(s.born)}</dd>${s.wonders && s.wonders.length ? `<dt>驚異</dt><dd>${wonderNames(s)}</dd>` : ''}${(() => { const lm = landmarksOf(s), rs = [...new Set(resNear(s).map(d => RESOURCES[d.r].name))]; return (lm.length ? `<dt>名所</dt><dd>${lm.join('・')}</dd>` : '') + (rs.length ? `<dt>資源</dt><dd>${rs.join('・')}</dd>` : ''); })()}</dl>${isMine(myNation) && s.nation === myNation ? (renaming === 'c:' + s.id ? renBox(s.name) : `<div class="acts">${s.capital ? '' : `<button class="btn" type="button" data-cap="${s.id}">ここを首都にする</button>`}<button class="btn" type="button" data-ren="c:${s.id}">名前を変える</button></div>`) : ''}`;
     }
   }
   if (sel && sel.type === 'nation'){
@@ -3075,7 +3472,7 @@ function updateUI(force){
       const allies = allyList(n.id), meOk = isMine(myNation) && n.id !== myNation;
       k2 = `n${n.id}|${ws.map(w => w.a + '-' + w.b).join(',')}|${warPick}|${others.map(o => o.id).join(',')}|${n.capital}|${eraIdx}|${n.spec}|${myNation}|${allies.join('.')}|${meOk && allied(n.id, myNation)}|${renaming || (n.hist || []).length}|${n.base}|${n.hue}|${myPolicy}`;
       if (k2 !== infoKey || force) html = `<div class="ihead">${flagSVG(n, 26, 17)}<b>${nm(n.id)}</b>${n.id === myNation ? '<span class="tag me">あなたの国</span>' : ''}${meOk && allied(n.id, myNation) ? '<span class="tag al">同盟国</span>' : ''}${ws.length ? '<span class="tag w">交戦中</span>' : ''}</div>
-        <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd><dt>特化</dt><dd><b style="color:${spec(n.id).color}">${spec(n.id).name}</b><br><small class="sdesc">${spec(n.id).desc}</small></dd><dt>性格</dt><dd>${personality(n.id)}</dd>${n.id === myNation ? `<dt>政策</dt><dd>${POLICIES[myPolicy].name}</dd>` : ''}<dt>同盟国</dt><dd>${allies.length ? allies.map(a => `<button class="linkish" type="button" data-nation="${a}">${nm(a)}</button>`).join('、') : 'なし'}</dd></dl>
+        <dl><dt>人口</dt><dd data-f="npop"></dd><dt>街の数</dt><dd data-f="ncount"></dd><dt>領土</dt><dd data-f="narea"></dd><dt>首都</dt><dd>${cap ? `<button class="linkish" type="button" data-city="${cap.id}">${cap.name}</button>` : '—'}</dd><dt>建国</dt><dd>${fmtYear(n.born)}</dd><dt>特化</dt><dd><b style="color:${spec(n.id).color}">${spec(n.id).name}</b><br><small class="sdesc">${spec(n.id).desc}</small></dd><dt>性格</dt><dd>${personality(n.id)}</dd><dt>国の格</dt><dd>${RANKS[rankOf(n.id)]}</dd>${n.hero && n.hero.until > tick ? `<dt>偉人</dt><dd>${HERO_ROLES[HEROES[n.hero.i][1]][0]}${HEROES[n.hero.i][0]}</dd>` : ''}${n.id === myNation ? `<dt>政策</dt><dd>${POLICIES[myPolicy].name}</dd>` : ''}<dt>同盟国</dt><dd>${allies.length ? allies.map(a => `<button class="linkish" type="button" data-nation="${a}">${nm(a)}</button>`).join('、') : 'なし'}</dd></dl>
         ${histSVG(n)}${renaming === 'n:' + n.id ? renBox(n.base) : ''}
         ${(() => { const h = logs.filter(l => l.t.includes(n.base)).slice(0, 8); return h.length ? `<details class="nhist"><summary>この国の出来事（${h.length}）</summary><ol>${h.map(l => `<li>${fmtYear(l.y)} ${l.t}</li>`).join('')}</ol></details>` : ''; })()}
         ${n.id === myNation ? `<div class="acts colors" role="group" aria-label="国の色">${HUES.map(h => `<button type="button" data-recolor="${h}" aria-pressed="${Math.round(n.hue) === h}" title="国の色を変える" style="background:rgb(${hsl(h, 70, 52)})"></button>`).join('')}</div>` : ''}
@@ -3119,7 +3516,7 @@ document.getElementById('side').addEventListener('click', e => {
 function focusOn(x, y, alt = 40){ const [la, lo] = llOfTile(x + .5, y + .5); camG.lat = clamp(la - Math.min(6, alt*.05), -70, 78); camG.lon = lo; camG.alt = Math.min(camG.alt, alt); }
 // ===== 保存と復元（ページ更新時に世界を引き継ぐ） =====
 function serialize(){
-  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, myNation, autoArmy, fortifyUntil, fortifyCd, alliances:[...alliances], achDone, myCaptures, disCount, unified, myPolicy, worldHist, stat, camS:{ ...camS }, camG:{ ...camG } };
+  return { v:2, terr:Array.from(terr), S:S.filter(s => s.alive), N, wars, truce:[...truce], tick, year, eraIdx, nextId, logs, firstStage, started, speed, nextInv, wonderBuilt, firstLaunch, myNation, autoArmy, fortifyUntil, fortifyCd, alliances:[...alliances], achDone, myCaptures, disCount, unified, myPolicy, worldHist, stat, x2, deposits, camS:{ ...camS }, camG:{ ...camG } };
 }
 function restore(d){
   if (!d || d.v !== 2 || !d.terr || d.terr.length !== W*H) return;
@@ -3131,6 +3528,8 @@ function restore(d){
   nextInv = d.nextInv || 0; wonderBuilt = d.wonderBuilt || []; firstLaunch = !!d.firstLaunch;
   alliances = new Set(d.alliances || []);
   achDone = d.achDone || {}; myCaptures = d.myCaptures || 0; disCount = d.disCount || 0; unified = !!d.unified;
+  x2 = Object.assign({ heroes:[], heroMine:0, res:[], animals:[], stars:[], pols:[], decl:0, photo:false, bgm:false, saved:false, nukes:0, lms:[], events:[], sky:[], titles:[], ranks:[] }, d.x2 || {});
+  if (d.deposits && d.deposits.length){ deposits = d.deposits; buildDepGrid(); }
   myPolicy = d.myPolicy || 'none'; worldHist = d.worldHist || []; stat = Object.assign({ dis:{}, peace:0, surr:0, cap:0, ren:0 }, d.stat || {});
   myNation = d.myNation ?? -1; autoArmy = d.autoArmy ?? true; fortifyUntil = d.fortifyUntil || 0; fortifyCd = d.fortifyCd || 0;
   Object.assign(camS, d.camS || {}); Object.assign(camG, d.camG || {});
@@ -3139,7 +3538,7 @@ function restore(d){
 }
 
 function start(data){
-  genWorld();
+  genWorld(); genDeposits();
   try { restore(data && data.game); } catch (err) { /* 古いデータは使わない */ }
   paintAll(); computeElev(); resize();
   recomputeTerritory(); renderLog(); updateUI(true);
