@@ -3176,9 +3176,9 @@ const FEATURES = [
 function allAdditions() {
   const list = [];
   for (const k of KIND_ORDER) for (const g of GIGS.filter(x => x.kind === k)) list.push(['仕事', `${g.e} ${g.name}`, g.desc]);
-  for (const a of ACH) list.push(['実績', a[1], a[2]]);
+  for (const a of ACH.slice(0, 30)) list.push(['実績', a[1], a[2]]);
   for (const t of Object.keys(NEW_CARS)) list.push(['乗り物', NEW_CARS[t].name, NEW_CARS[t].desc]);
-  for (const o of OUTFITS) list.push(['着せかえ', o[2], `${yen(o[3])}・洋服屋で買える`]);
+  for (const o of OUTFITS.slice(0, 20)) list.push(['着せかえ', o[2], `${yen(o[3])}・洋服屋で買える`]);
   for (const f of FEATURES) list.push(['機能', f[0], f[1]]);
   return list.map((r, i) => ({ no: i + 1, cat: r[0], name: r[1], desc: r[2] }));
 }
@@ -4472,7 +4472,8 @@ const staminaMult = () => state.stamina <= 0 ? 0.8 : 1;
 const sfxVol = () => (state.settings ? state.settings.vol : 7) / 7;
 function migrateState() {
   const s = state;
-  s.stats = Object.assign({ jobs: 0, earned: 0, dist: 0, wetDist: 0, lost: 0, air: 0, lottoWins: 0, daily: 0, hanabi: 0, bumps: 0, redLights: 0, vend: 0 }, s.stats || {});
+  s.stats = Object.assign({ jobs: 0, earned: 0, dist: 0, wetDist: 0, lost: 0, air: 0, lottoWins: 0, daily: 0, hanabi: 0, bumps: 0, redLights: 0, vend: 0, gifts: 0, meals: 0, vsWins: 0 }, s.stats || {});
+  if (!Array.isArray(s.ate)) s.ate = [];
   s.tried = s.tried || {}; s.best = s.best || {}; s.ach = s.ach || {};
   s.coins = Array.isArray(s.coins) ? s.coins : [];
   s.owned = Array.isArray(s.owned) ? s.owned : [];
@@ -4976,9 +4977,9 @@ function extraInteraction(x, z) {
 const APPS = [
   ['jobs', '💼', 'しごと'], ['map', '🗺️', 'マップ'], ['mission', '✅', 'ミッション'], ['ach', '🏆', '実績'],
   ['levels', '📈', 'レベル'], ['stats', '📊', '統計'], ['weather', '🌤️', '天気'], ['cars', '🚗', 'マイカー'],
-  ['games', '🎮', 'マイゲーム'], ['settings', '⚙️', '設定'], ['list', '🆕', '追加要素200'], ['list400', '🎁', '追加要素400'], ['friends', '💕', 'ともだち'], ['save', '💾', 'セーブ'],
+  ['games', '🎮', 'マイゲーム'], ['settings', '⚙️', '設定'], ['list', '🆕', '追加要素200'], ['list400', '🎁', '追加要素400'], ['friends', '💕', 'ともだち'], ['list1000', '🎉', '追加要素1000'], ['save', '💾', 'セーブ'],
 ];
-let jobFilter = 'all', listFilter = 'all', list4Filter = 'all';
+let jobFilter = 'all', listFilter = 'all', list4Filter = 'all', list1Filter = 'all';
 function phoneHead(title, back = true) {
   return `<div class="row" style="justify-content:space-between"><div class="row">${back ? '<button class="btn" data-home type="button">もどる</button>' : ''}<h2>${esc(title)}</h2></div><button class="btn" data-close type="button">とじる</button></div>`;
 }
@@ -5054,6 +5055,12 @@ function openPhone(view = 'home') {
       <div class="list">${FRIENDS.map(f => { const fs = fstate(f.id), known = fs.met; return `<div class="item"><div style="flex:1"><div class="name">${f.g === 'f' ? '👧' : '👦'} ${known ? esc(f.name) : '？？？'}・${known ? relLabel(f.id) : 'まだ会っていない'}</div><div class="xpbar" style="--c:var(--tomato)"><b style="width:${fs.aff}%"></b></div><div class="sub">好感度 ${fs.aff} / 100</div></div>
         <div class="row"><button class="btn" data-frpin="${f.id}" type="button">場所</button>${known ? `<button class="btn primary" data-frcall="${f.id}" type="button" ${stageOf(f.id) < 1 && state.partner !== f.id ? 'disabled' : ''}>家に呼ぶ</button>` : ''}</div></div>`; }).join('')}</div>
       ${g ? '<button class="btn" id="frSend" type="button">家に来ている人に帰ってもらう</button>' : ''}`;
+  } else if (view === 'list1000') {
+    const all = allAdditions1000(), cats = ['all', '家具', '壁紙', '床', '車', '着せかえ', '家', '町の人', 'プレゼント', '出前の料理', '実績'];
+    const shown = list1Filter === 'all' ? all : all.filter(r => r.cat === list1Filter);
+    html = `${phoneHead('追加要素 1000')}<div class="muted">さらにふえた1000個を、1から1000まで番号順にならべています。</div>
+      <div class="chips">${cats.map(c => `<button class="chipb${list1Filter === c ? ' on' : ''}" data-l1="${c}" type="button">${c === 'all' ? 'すべて' : c}（${c === 'all' ? all.length : all.filter(r => r.cat === c).length}）</button>`).join('')}</div>
+      <ol class="add-list">${shown.map(r => `<li value="${r.no}"><b>${r.no}. ${esc(r.name)}</b><span>${esc(r.cat)}・${esc(r.desc)}</span></li>`).join('')}</ol>`;
   } else if (view === 'list400') {
     const all = allAdditions400(), cats = ['all', '家具', '壁紙', '床', '車', '車の塗装'];
     const shown = list4Filter === 'all' ? all : all.filter(r => r.cat === list4Filter);
@@ -5076,6 +5083,7 @@ function openPhone(view = 'home') {
   if ($('#phCamp')) $('#phCamp').onclick = () => { closeScreen(); rest(); };
   body.querySelectorAll('[data-jf]').forEach(b => b.onclick = () => { jobFilter = b.dataset.jf; openPhone('jobs'); });
   body.querySelectorAll('[data-l4]').forEach(b => b.onclick = () => { list4Filter = b.dataset.l4; openPhone('list400'); });
+  body.querySelectorAll('[data-l1]').forEach(b => b.onclick = () => { list1Filter = b.dataset.l1; openPhone('list1000'); });
   body.querySelectorAll('[data-lf]').forEach(b => b.onclick = () => { listFilter = b.dataset.lf; openPhone('list'); });
   body.querySelectorAll('[data-gig]').forEach(b => b.onclick = () => { closeScreen(); startGig(GIG[b.dataset.gig]); });
   body.querySelectorAll('[data-pin]').forEach(b => b.onclick = () => { const p = PLACES.find(q => q.id === b.dataset.pin); setPin(p.mx, p.mz); closeScreen(); });
@@ -5614,7 +5622,7 @@ function sellPrice(id) {
 function moveIn(id) { state.house = id; rebuildHome(); toast(`「${HOUSE[id].name}」に引っ越した！`, 'big'); sfx('lvl'); save(); }
 function openRealEstate() {
   const cur = HOUSE[state.house];
-  const tabs = [['buy', '家を買う（50種類）'], ['opts', 'オプション（40種類）'], ['mine', '持っている家']];
+  const tabs = [['buy', `家を買う（${HOUSES.length}種類）`], ['opts', 'オプション（40種類）'], ['mine', '持っている家']];
   let body = `<div class="chips">${tabs.map(t => `<button class="chipb${reTab === t[0] ? ' on' : ''}" data-ret="${t[0]}" type="button">${t[1]}</button>`).join('')}</div>
     <div class="item"><div><div class="name">いま住んでいる家：${esc(cur.name)}</div><div class="sub">${HOUSE_TIERS[cur.tier]}・オプション ${myOpts().length}こ</div></div></div>`;
   if (reTab === 'buy') {
@@ -5864,7 +5872,7 @@ function buildRoom(r, g, cx, cz) {
     for (let i = 0; i < 6; i++) { const x = cx - 2 + (i % 3) * 2, z = cz + (i < 3 ? -1.7 : 1.7); B(0.7, 0.5, 0.7, 0xa0522d, x, 0.25, z); B(0.7, 0.9, 0.12, 0xa0522d, x, 0.95, z + (i < 3 ? -0.3 : 0.3)); inHome.chairs.push({ x, z, face: i < 3 ? 0 : Math.PI }); }
     inHome.table = { x: cx, z: cz };
     M(new THREE.CylinderGeometry(0.4, 0.4, 0.05, 16), 0xffffff, cx - 2, 1.04, cz - 0.6);
-    spot(cx, cz - 2.6, 'テーブルにつく', () => { if (inHome.dish) startEat(inHome.dish); else toast(HOUSE[state.house].tier >= 5 ? 'シェフの部屋で料理をたのもう' : '大豪邸ならシェフに料理をたのめます'); }, 2.6);
+    spot(cx, cz - 2.6, 'テーブルにつく（出前をとる）', () => { if (inHome.dish) startEat(inHome.dish); else openDelivery(); }, 2.6);
   } else if (id === 'bedroom' || id === 'bed') {
     const big = id === 'bed';
     B(big ? 4.2 : 2.4, 0.6, 3.4, 0xffffff, cx, 0.3, back - 1.2, true);
@@ -6202,6 +6210,7 @@ function finishAct() {
       gg.p.g.position.set(gg.x, 0, gg.z); animPerson(gg.p, 0, 0);
       const fs = fstate(gg.f.id);
       toast(`${gg.f.name}「${pick(['おいしかったね！', 'いっしょに食べるとおいしいね', 'ごちそうさま！また来たいな'])}」`, 'big');
+      state.stats.meals++;
       if (fs.mealDay !== state.day) { fs.mealDay = state.day; addAff(gg.f.id, 15, 'いっしょにご飯'); }
     }
     return;
@@ -6396,9 +6405,9 @@ const paintColor = () => state.paintSel && PAINT_BY[state.paintSel] ? PAINT_BY[s
 /* ---- 1 から 400 までの一覧 ---- */
 function allAdditions400() {
   const list = [];
-  for (const f of FURN) list.push(['家具', f.name, `${yen(f.price)}・家具屋で買える`]);
-  for (const w of WALLPAPERS) list.push(['壁紙', w.name, `${yen(w.price)}・家具屋で買える`]);
-  for (const f of FLOORS) list.push(['床', f.name, `${yen(f.price)}・家具屋で買える`]);
+  for (const f of FURN.filter(q => !q.x1000)) list.push(['家具', f.name, `${yen(f.price)}・家具屋で買える`]);
+  for (const w of WALLPAPERS.filter(q => !q.x1000)) list.push(['壁紙', w.name, `${yen(w.price)}・家具屋で買える`]);
+  for (const f of FLOORS.filter(q => !q.x1000)) list.push(['床', f.name, `${yen(f.price)}・家具屋で買える`]);
   for (const id of CARS100) list.push(['車', CAR_TYPES[id].name, `${yen(CAR_TYPES[id].price)}・${CAR_TYPES[id].desc}`]);
   for (const p of PAINTS) list.push(['車の塗装', p.name, `${yen(p.price)}・カーショップで買える`]);
   return list.map((r, i) => ({ no: i + 1, cat: r[0], name: r[1], desc: r[2] }));
@@ -6407,7 +6416,7 @@ function allAdditions400() {
 /* ---- 家具屋 ---- */
 let fuTab = 'furn', fuType = 'sofa';
 function openFurniture() {
-  const tabs = [['furn', '家具（200）'], ['wall', '壁紙（30）'], ['floor', '床（30）'], ['mine', '持っている家具']];
+  const tabs = [['furn', `家具（${FURN.length}）`], ['wall', `壁紙（${WALLPAPERS.length}）`], ['floor', `床（${FLOORS.length}）`], ['mine', '持っている家具']];
   let html = `<div class="chips">${tabs.map(t => `<button class="chipb${fuTab === t[0] ? ' on' : ''}" data-ft="${t[0]}" type="button">${t[1]}</button>`).join('')}</div>
     <div class="muted">買った家具は、家の中の「家具の部屋」にならびます（1部屋に9こ）。壁紙と床は家の中ぜんぶに使われます。</div>`;
   if (fuTab === 'furn') {
@@ -6593,7 +6602,7 @@ function addAff(id, n, why) {
   const after = stageOf(id);
   if (why) toast(`${FR[id].name}の好感度 +${n}（${why}）`);
   if (after > before) { toast(`${FR[id].name}と「${STAGES[after][1]}」になった！`, 'big'); sfx('lvl'); }
-  save();
+  achCheck(); save();
 }
 const friendMeshes = {};
 function makeFriendMesh(f) {
@@ -6657,7 +6666,7 @@ function giveGift(f, gid, from) {
   const g = GIFT_BY[gid], s = fstate(f.id);
   if (s.giftDay === state.day) { toast(`${f.name}「今日はもうもらったよ。ありがとう！」`); return; }
   if (!pay(g.price)) return;
-  s.giftDay = state.day;
+  s.giftDay = state.day; state.stats.gifts++;
   const fav = f.like === gid;
   toast(`${f.name}「${fav ? `わあ！${g.name}、大好きなの！` : `${g.name}、ありがとう！`}」`, 'big');
   addAff(f.id, fav ? 20 : 10, fav ? '大好きなプレゼント' : 'プレゼント');
@@ -6687,7 +6696,8 @@ function sendHome() {
 function giftsHtml(f) {
   const known = stageOf(f.id) >= 1 || state.partner === f.id;
   return `<h3>プレゼント（1日1回）${known ? `・好きなもの：${GIFT_BY[f.like].e} ${GIFT_BY[f.like].name}` : '・好きなものは友だちになるとわかる'}</h3>
-    <div class="list">${GIFTS.map(g => `<div class="item"><div class="name">${g.e} ${g.name}</div><button class="btn" data-gift="${g.id}" type="button" ${state.money < g.price ? 'disabled' : ''}>${yen(g.price)}でわたす</button></div>`).join('')}</div>`;
+    <div class="chips">${GIFT_CATS.map(c => `<button class="chipb${(giftCat || (known ? GIFT_BY[f.like].cat : '食べ物')) === c ? ' on' : ''}" data-gc="${c}" type="button">${c}（${GIFTS.filter(g => g.cat === c).length}）</button>`).join('')}</div>
+    <div class="list">${GIFTS.filter(g => g.cat === (giftCat || (known ? GIFT_BY[f.like].cat : '食べ物'))).map(g => `<div class="item"><div class="name">${g.e} ${g.name}${known && g.id === f.like ? ' 💕' : ''}</div><button class="btn" data-gift="${g.id}" type="button" ${state.money < g.price ? 'disabled' : ''}>${yen(g.price)}でわたす</button></div>`).join('')}</div>`;
 }
 function relHtml(f) {
   const a = fstate(f.id).aff;
@@ -6705,6 +6715,7 @@ function openFriendMenu(id) {
     b.querySelector('#frInvite').onclick = () => { invite(f); closeScreen(); };
     if (b.querySelector('#frConfess')) b.querySelector('#frConfess').onclick = () => confess(f);
     b.querySelectorAll('[data-gift]').forEach(x => x.onclick = () => giveGift(f, x.dataset.gift, 'town'));
+    bindGiftCats(b, f, 'town');
   });
 }
 
@@ -6736,23 +6747,22 @@ function openGuestMenu() {
   svcScreen(`${f.name}と過ごす`, `${relHtml(f)}
     <div class="list">
       <div class="item"><div><div class="name">💬 話す</div><div class="sub">1日1回 好感度 +5</div></div><button class="btn" id="gTalk" type="button">話す</button></div>
-      <div class="item"><div><div class="name">🍽️ いっしょにご飯を食べる</div><div class="sub">${chefs ? '大食堂のシェフにたのむと、いっしょに食べます' : '出前をとって、ダイニングでいっしょに食べます（800円）'}・1日1回 好感度 +15</div></div><button class="btn primary" id="gEat" type="button">${chefs ? 'シェフのところへ' : '出前をとる'}</button></div>
+      <div class="item"><div><div class="name">🍽️ いっしょにご飯を食べる</div><div class="sub">${chefs ? '大食堂のシェフにたのむか、出前（100種類）をとると、いっしょに食べます' : '出前（100種類）をとって、いっしょに食べます'}・1日1回 好感度 +15</div></div><div class="row">${chefs ? '<button class="btn" id="gChef" type="button">シェフのところへ</button>' : ''}<button class="btn primary" id="gEat" type="button">出前をとる</button></div></div>
       <div class="item"><div><div class="name">🎮 いっしょにゲームをする</div><div class="sub">エアホッケーで対戦・1日1回 好感度 +8〜12</div></div><button class="btn primary" id="gGame" type="button">対戦する</button></div>
       ${canConfess ? '<div class="item"><div class="name">💕 告白する</div><button class="btn danger" id="gConfess" type="button">告白する</button></div>' : ''}
       <div class="item"><div class="name">👋 帰ってもらう</div><button class="btn" id="gBye" type="button">また明日</button></div>
     </div>${giftsHtml(f)}`, b => {
     b.querySelector('#gTalk').onclick = () => talkTo(f, 'home');
-    b.querySelector('#gEat').onclick = () => {
+    if (b.querySelector('#gChef')) b.querySelector('#gChef').onclick = () => {
       closeScreen();
-      if (chefs) { const hall = inHome.rooms.find(r => r.id === 'hall'); if (hall) { P.x = hall.x; P.z = hall.z + 6; } toast(`シェフに料理をたのもう。${f.name}もいっしょに食べます`); return; }
-      if (!pay(800)) return;
-      const d = pick([['宅配ピザ', '🍕'], ['おすし', '🍣'], ['ラーメン', '🍜'], ['カレー', '🍛'], ['ハンバーガー', '🍔']]);
-      toast(`出前の${d[0]}がとどいた！`); startEat([d[0], d[1], [], 0]);
+      { const hall = inHome.rooms.find(r => r.id === 'hall'); if (hall) { P.x = hall.x; P.z = hall.z + 6; } toast(`シェフに料理をたのもう。${f.name}もいっしょに食べます`); return; }
     };
+    b.querySelector('#gEat').onclick = openDelivery;
     b.querySelector('#gGame').onclick = () => openVersus(f);
     if (b.querySelector('#gConfess')) b.querySelector('#gConfess').onclick = () => confess(f);
     b.querySelector('#gBye').onclick = () => { closeScreen(); sendHome(); };
     b.querySelectorAll('[data-gift]').forEach(x => x.onclick = () => giveGift(f, x.dataset.gift, 'home'));
+    bindGiftCats(b, f, 'home');
   });
 }
 function guestSeatFor(ch) {
@@ -6828,7 +6838,9 @@ function endVersus(quit) {
   closeScreen();
   if (quit && v.ps + v.fs === 0) { openGuestMenuOrFriend(f); return; }
   let line = won ? pick(['くやしい～！もう1回！', 'つよいね！', 'まけちゃった！']) : pick(['やったー！わたしの勝ち！', 'へへ、また遊ぼうね', 'いい勝負だったね！']);
+  if (won) state.stats.vsWins++;
   if (s.gameDay !== state.day) { s.gameDay = state.day; addAff(f.id, won ? 12 : 8, 'いっしょにゲーム'); }
+  achCheck();
   svcScreen(won ? '勝った！' : '負けた…', `<div class="res-rows"><div><span>あなた</span><span>${v.ps}点</span></div><div><span>${esc(f.name)}</span><span>${v.fs}点</span></div></div><div class="item"><div class="name">${esc(f.name)}「${line}」</div></div><button class="btn primary" id="vsAgain" type="button">もう1回</button>`, b => {
     b.querySelector('#vsAgain').onclick = () => openVersus(f);
   });
@@ -6836,6 +6848,348 @@ function endVersus(quit) {
 function openGuestMenuOrFriend(f) { if (inHome && inHome.guest) openGuestMenu(); else openFriendMenu(f.id); }
 for (const [id, fn] of [['edPrev', () => selectEdit(-1)], ['edNext', () => selectEdit(1)], ['edRot', rotateEdit], ['edPlace', placeEdit], ['edNear', nearestEdit], ['edBack', unplaceEdit], ['edEnd', () => endEdit()]]) $('#' + id).addEventListener('click', () => { if (edit) fn(); });
 
+
+
+/* =========================================================
+   さらに追加 1000
+   家具200・壁紙100・床100・車100・着せかえ150・家50・町の人40・プレゼント60・出前料理100・実績100
+   ========================================================= */
+const JC = [['桜色', 0xfef4f4], ['桃色', 0xf09199], ['紅色', 0xd7003a], ['茜色', 0xb7282e], ['朱色', 0xeb6101], ['柿色', 0xed6d3d], ['山吹色', 0xf8b500], ['からし色', 0xd0af4c], ['レモン色', 0xfff352], ['若草色', 0xc3d825],
+  ['萌黄色', 0xaacf53], ['抹茶色', 0xc5c56a], ['松葉色', 0x839b5c], ['常盤色', 0x007b43], ['青竹色', 0x7ebea5], ['水浅葱', 0x80aba9], ['空色', 0xa0d8ef], ['勿忘草色', 0x89c3eb], ['瑠璃色', 0x1e50a2], ['藍色', 0x165e83],
+  ['紺色', 0x223a70], ['藤色', 0xbbbcde], ['菫色', 0x7058a3], ['桔梗色', 0x5654a2], ['牡丹色', 0xe7609e], ['小豆色', 0x96514d], ['栗色', 0x762f07], ['焦茶', 0x6f4b3e], ['亜麻色', 0xd6c6af], ['生成り', 0xfbfaf5],
+  ['象牙色', 0xf8f4e6], ['鼠色', 0x949495], ['銀鼠', 0xafafb0], ['墨色', 0x595857], ['漆黒', 0x1a1a1a], ['黄金色', 0xe6b422], ['珊瑚色', 0xf5b199], ['薄紅', 0xf0908d], ['浅葱色', 0x00a3af], ['鴇色', 0xf4b3c2]];
+const ADD1000 = { furn: [], wall: [], floor: [], cars: [], outfit: [], house: [], friend: [], gift: [], dish: [], ach: [] };
+
+/* ---- 家具 200（25種類 × 8） ---- */
+const FURN_TYPES2 = [
+  ['piano', 'ピアノ', 20000], ['guitar', 'ギター', 6000], ['drum', 'ドラムセット', 15000], ['fridge', '冷蔵庫', 8000], ['kitchen', 'キッチン台', 12000],
+  ['washer', '洗濯機', 7000], ['fan', '扇風機', 1500], ['kotatsu', 'こたつ', 4000], ['bunk', '二段ベッド', 9000], ['hammock', 'ハンモック', 3500],
+  ['arcade', 'アーケードゲーム機', 18000], ['billiard', 'ビリヤード台', 25000], ['darts', 'ダーツ', 3000],
+  ['trophy', 'トロフィー', 5000, [['優勝トロフィー', '🏆'], ['金メダル', '🥇'], ['銀メダル', '🥈'], ['銅メダル', '🥉'], ['スポーツのメダル', '🏅'], ['勲章', '🎖️'], ['王冠のかざり', '👑'], ['ダイヤのかざり', '💎']]],
+  ['season', '季節のかざり', 3000, [['クリスマスツリー', '🎄'], ['ジャックオランタン', '🎃'], ['雪だるま', '⛄'], ['ひな人形', '🎎'], ['こいのぼり', '🎏'], ['お月見だんご', '🎑'], ['風鈴', '🎐'], ['くす玉', '🎊']]],
+  ['aircon', 'エアコン', 9000], ['telescope', '望遠鏡', 7000], ['tent', '室内テント', 4000], ['swing', 'ブランコ', 6000], ['slide', 'すべり台', 8000],
+  ['vending', '自動販売機', 16000], ['sofaL', 'L字ソファ', 9000], ['bath', 'ねこ足バスタブ', 14000],
+  ['poster', 'ポスター', 600, [['ロケットのポスター', '🚀'], ['恐竜のポスター', '🦖'], ['ギターのポスター', '🎸'], ['サッカーのポスター', '⚽'], ['パンダのポスター', '🐼'], ['ピザのポスター', '🍕'], ['火山のポスター', '🌋'], ['タワーのポスター', '🗼']]],
+  ['cushion', 'クッション', 500],
+];
+for (const [t, nm, price, list] of FURN_TYPES2) {
+  FURN_TYPES.push([t, nm, price, list]);
+  for (let i = 0; i < 8; i++) {
+    const v = list ? list[i] : FCOL[i];
+    const k = list ? 1 + (i % 3) * 0.25 : [1, 1, 1, 1.1, 1.2, 3, 1.1, 1][i];
+    const f = { id: `f_${t}_${i}`, t, name: list ? v[0] : `${v[0]}${nm}`, price: Math.round(price * k / 10) * 10, c: list ? FCOL[i][1] : v[1], e: list ? v[1] : null, x1000: true };
+    FURN.push(f); FURN_BY[f.id] = f; ADD1000.furn.push(f);
+  }
+}
+const furnModel0 = furnModel;
+furnModel = function (f) {
+  if (!f.x1000) return furnModel0(f);
+  const g = new THREE.Group(), c = f.c;
+  const B = (w, h, d, col, x, y, z) => { const m = new THREE.Mesh(BX(w, h, d), typeof col === 'number' ? imat(col) : col); m.position.set(x, y, z); g.add(m); return m; };
+  const C = (geo, col, x, y, z) => { const m = new THREE.Mesh(geo, typeof col === 'number' ? imat(col) : col); m.position.set(x, y, z); g.add(m); return m; };
+  const S = (e, s, x, y, z) => { const sp = emojiSprite(e, s); sp.position.set(x, y, z); g.add(sp); return sp; };
+  const wood = 0x8d5a2b, dark = 0x2d3436, white = 0xf5f6fa, glow = (col, em) => imat(col, { emissive: em });
+  const cyl = (rt, rb, h, seg = 14) => new THREE.CylinderGeometry(rt, rb, h, seg);
+  switch (f.t) {
+    case 'piano': B(1.5, 1.25, 0.6, c, 0, 0.75, 0.1); B(1.5, 0.08, 0.4, c, 0, 0.78, -0.38); B(1.4, 0.05, 0.22, white, 0, 0.84, -0.42); for (let i = 0; i < 9; i++) B(0.05, 0.05, 0.12, dark, -0.6 + i * 0.15, 0.87, -0.38); for (const x of [-0.68, 0.68]) B(0.1, 0.75, 0.1, c, x, 0.37, -0.45); break;
+    case 'guitar': B(0.5, 0.05, 0.4, dark, 0, 0.03, 0); B(0.05, 0.5, 0.05, dark, 0, 0.27, 0.12); { const b = C(cyl(0.3, 0.3, 0.12, 18), c, 0, 0.55, 0); b.rotation.x = Math.PI / 2; const h = C(cyl(0.08, 0.08, 0.13, 12), dark, 0, 0.58, -0.01); h.rotation.x = Math.PI / 2; } B(0.08, 0.8, 0.05, wood, 0, 1.15, 0); B(0.14, 0.18, 0.05, dark, 0, 1.6, 0); break;
+    case 'drum': { const k = C(cyl(0.4, 0.4, 0.4, 18), c, 0, 0.42, 0.1); k.rotation.x = Math.PI / 2; } for (const [x, y, z] of [[-0.45, 0.65, -0.3], [0.45, 0.65, -0.3], [-0.2, 0.95, 0.05], [0.25, 0.95, 0.05]]) { C(cyl(0.2, 0.2, 0.22), c, x, y, z); C(cyl(0.21, 0.21, 0.02), white, x, y + 0.12, z); }
+      for (const x of [-0.75, 0.75]) { B(0.04, 1.3, 0.04, 0xbdc3c7, x, 0.65, 0.2); C(cyl(0.3, 0.3, 0.02, 18), 0xf1c40f, x, 1.3, 0.2); } break;
+    case 'fridge': B(0.85, 1.9, 0.7, c, 0, 0.95, 0); B(0.86, 0.03, 0.71, dark, 0, 1.3, 0); for (const y of [0.85, 1.6]) B(0.05, 0.3, 0.05, 0xbdc3c7, 0.32, y, -0.37); S('🧊', 0.3, -0.2, 1.65, -0.38); break;
+    case 'kitchen': B(2, 0.88, 0.7, c, 0, 0.44, 0); B(2.06, 0.06, 0.76, 0xdfe6e9, 0, 0.91, 0); B(0.6, 0.05, 0.45, 0x95a5a6, -0.5, 0.94, 0); for (const x of [0.35, 0.75]) C(cyl(0.15, 0.15, 0.03), dark, x, 0.95, -0.1); B(0.05, 0.4, 0.05, 0xbdc3c7, -0.5, 1.15, 0.25); break;
+    case 'washer': B(0.7, 0.9, 0.65, c, 0, 0.45, 0); { const d = C(cyl(0.24, 0.24, 0.04, 20), glow(0x74c7ec, 0x0b3a55), 0, 0.45, -0.33); d.rotation.x = Math.PI / 2; } B(0.6, 0.12, 0.04, dark, 0, 0.8, -0.33); break;
+    case 'fan': C(cyl(0.22, 0.25, 0.06), c, 0, 0.03, 0); B(0.05, 1.0, 0.05, white, 0, 0.55, 0); { const r = C(cyl(0.35, 0.35, 0.06, 20), new THREE.MeshLambertMaterial({ color: c, transparent: true, opacity: 0.55 }), 0, 1.1, -0.05); r.rotation.x = Math.PI / 2; } C(new THREE.SphereGeometry(0.08, 8, 6), dark, 0, 1.1, -0.08); break;
+    case 'kotatsu': B(1.4, 0.32, 1.4, c, 0, 0.17, 0); B(1.1, 0.06, 1.1, wood, 0, 0.36, 0); S('🍊', 0.35, 0, 0.55, 0); break;
+    case 'bunk': for (const [x, z] of [[-0.7, -1], [0.7, -1], [-0.7, 1], [0.7, 1]]) B(0.1, 1.9, 0.1, c, x, 0.95, z); for (const y of [0.35, 1.3]) { B(1.4, 0.15, 2, c, 0, y, 0); B(1.3, 0.15, 1.9, white, 0, y + 0.13, 0); B(0.5, 0.1, 0.3, white, 0, y + 0.25, 0.7); } for (let y = 0.5; y < 1.4; y += 0.25) B(0.04, 0.04, 0.4, c, 0.75, y, -0.75); break;
+    case 'hammock': for (const x of [-1.2, 1.2]) B(0.12, 1.5, 0.12, wood, x, 0.75, 0); { const h = B(2.2, 0.05, 0.8, c, 0, 0.8, 0); void h; } B(0.4, 0.12, 0.6, white, -0.7, 0.88, 0); break;
+    case 'arcade': B(0.8, 1.8, 0.75, c, 0, 0.9, 0); B(0.65, 0.5, 0.05, glow(0x111111, 0xe84393), 0, 1.35, -0.36); B(0.75, 0.1, 0.35, dark, 0, 0.95, -0.45); for (const [x, col] of [[-0.15, 0xe74c3c], [0.05, 0xf1c40f], [0.2, 0x3498db]]) C(cyl(0.04, 0.04, 0.05, 8), col, x, 1.02, -0.5); B(0.8, 0.2, 0.05, glow(c, 0x333333), 0, 1.75, -0.36); break;
+    case 'billiard': B(2.2, 0.15, 1.2, c, 0, 0.82, 0); B(2.0, 0.02, 1.0, 0x0b6e4f, 0, 0.9, 0); for (const [x, z] of [[-0.95, -0.45], [0.95, -0.45], [-0.95, 0.45], [0.95, 0.45]]) B(0.12, 0.75, 0.12, c, x, 0.37, z); for (let i = 0; i < 6; i++) C(new THREE.SphereGeometry(0.04, 8, 6), [0xffffff, 0xf1c40f, 0xe74c3c, 0x3498db, 0x8e44ad, 0x2d3436][i], -0.3 + i * 0.12, 0.95, (i % 2) * 0.1); break;
+    case 'darts': B(0.1, 1.6, 0.1, dark, 0, 0.8, 0.05); { const d = C(cyl(0.3, 0.3, 0.05, 20), c, 0, 1.45, 0); d.rotation.x = Math.PI / 2; const e = C(cyl(0.18, 0.18, 0.06, 20), white, 0, 1.45, -0.01); e.rotation.x = Math.PI / 2; const r = C(cyl(0.05, 0.05, 0.07, 12), 0xe74c3c, 0, 1.45, -0.02); r.rotation.x = Math.PI / 2; } break;
+    case 'trophy': B(1, 1.1, 0.4, wood, 0, 0.55, 0); B(0.9, 0.04, 0.35, 0x6d4c41, 0, 0.75, -0.02); S(f.e, 0.7, 0, 1.45, 0); S(f.e, 0.35, -0.25, 0.95, -0.05); S(f.e, 0.35, 0.25, 0.95, -0.05); break;
+    case 'season': C(cyl(0.45, 0.5, 0.1, 18), c, 0, 0.05, 0); S(f.e, 1.4, 0, 0.85, 0); break;
+    case 'aircon': B(0.5, 1.7, 0.35, c, 0, 0.85, 0); for (let y = 0.4; y < 1.4; y += 0.12) B(0.42, 0.03, 0.02, dark, 0, y, -0.18); B(0.3, 0.1, 0.02, glow(0x111111, 0x0be881), 0, 1.5, -0.18); break;
+    case 'telescope': for (const a of [0, 2.1, 4.2]) { const l = B(0.05, 1.1, 0.05, dark, Math.sin(a) * 0.25, 0.5, Math.cos(a) * 0.25); l.rotation.set(Math.cos(a) * 0.25, 0, -Math.sin(a) * 0.25); } { const t = C(cyl(0.1, 0.13, 1.1, 14), c, 0, 1.15, -0.1); t.rotation.x = -1.0; } break;
+    case 'tent': { const t = C(new THREE.ConeGeometry(1.1, 1.6, 4), c, 0, 0.8, 0); t.rotation.y = Math.PI / 4; } B(0.5, 0.8, 0.05, dark, 0, 0.4, -0.76); S('⭐', 0.4, 0, 1.75, 0); break;
+    case 'swing': for (const x of [-0.9, 0.9]) for (const z of [-0.5, 0.5]) { const l = B(0.08, 1.9, 0.08, c, x, 0.95, z * 0.7); l.rotation.x = z > 0 ? -0.15 : 0.15; } B(1.9, 0.1, 0.1, c, 0, 1.9, 0); for (const x of [-0.25, 0.25]) B(0.02, 1.4, 0.02, dark, x, 1.2, 0); B(0.6, 0.06, 0.3, wood, 0, 0.5, 0); break;
+    case 'slide': for (let i = 0; i < 5; i++) B(0.6, 0.05, 0.1, c, 0, 0.3 + i * 0.3, 0.9); for (const x of [-0.3, 0.3]) B(0.06, 1.6, 0.06, c, x, 0.8, 0.9); B(0.7, 0.08, 0.7, c, 0, 1.55, 0.6); { const s = B(0.6, 0.06, 2.2, c, 0, 0.8, -0.5); s.rotation.x = -0.75; } break;
+    case 'vending': B(1, 1.9, 0.8, c, 0, 0.95, 0); B(0.8, 0.9, 0.05, glow(0xffffff, 0x555555), 0, 1.3, -0.41); for (let i = 0; i < 8; i++) B(0.12, 0.25, 0.04, [0xe74c3c, 0x3498db, 0xf1c40f, 0x27ae60][i % 4], -0.27 + (i % 4) * 0.18, 1.5 - Math.floor(i / 4) * 0.4, -0.44); B(0.6, 0.15, 0.05, dark, 0, 0.3, -0.41); break;
+    case 'sofaL': B(2.2, 0.45, 0.9, c, 0, 0.3, 0); B(2.2, 0.6, 0.25, c, 0, 0.75, 0.33); B(0.9, 0.45, 1.4, c, -0.65, 0.3, -1.15); B(0.25, 0.6, 1.4, c, -1, 0.75, -1.15); B(0.25, 0.4, 0.9, c, 1.05, 0.6, 0); break;
+    case 'bath': B(1.7, 0.65, 0.85, c, 0, 0.5, 0); B(1.5, 0.05, 0.65, glow(0x74c7ec, 0x0b3a55), 0, 0.8, 0); for (const [x, z] of [[-0.7, -0.32], [0.7, -0.32], [-0.7, 0.32], [0.7, 0.32]]) C(cyl(0.06, 0.04, 0.2, 8), 0xf1c40f, x, 0.1, z); S('💧', 0.35, 0.3, 1.0, 0); break;
+    case 'poster': B(0.06, 1.0, 0.06, wood, 0, 0.5, 0.05); B(0.95, 1.25, 0.05, white, 0, 1.4, 0); S(f.e, 0.8, 0, 1.4, -0.06); break;
+    case 'cushion': B(0.8, 0.2, 0.8, c, 0, 0.1, 0); B(0.5, 0.22, 0.5, white, 0, 0.11, 0).scale.set(0.3, 1, 0.3); B(0.6, 0.18, 0.6, c, 0.15, 0.29, 0.1).rotation.y = 0.4; break;
+  }
+  return g;
+};
+
+/* ---- 壁紙 100・床 100 ---- */
+{
+  const W = [];
+  JC.slice(0, 20).forEach(([n, c]) => W.push({ name: `${n}の壁紙`, kind: 'solid', c, c2: c }));
+  JC.slice(20, 40).forEach(([n, c]) => W.push({ name: `${n}のしま模様の壁紙`, kind: 'stripe', c: 0xffffff, c2: c }));
+  for (let i = 0; i < 15; i++) { const [n, c] = JC[(i * 3 + 1) % 40]; W.push({ name: `${n}の水玉の壁紙`, kind: 'dot', c: 0xffffff, c2: c }); }
+  for (let i = 0; i < 15; i++) { const [n, c] = JC[(i * 7 + 4) % 40]; W.push({ name: `${n}のチェックの壁紙`, kind: 'check', c: 0xffffff, c2: c }); }
+  [['月', 0x1e2a4a, '🌙'], ['雲', 0xcdeefc, '☁️'], ['にじ', 0xffffff, '🌈'], ['いちご', 0xffe3ee, '🍓'], ['レモン', 0xfffbe0, '🍋'], ['さくらんぼ', 0xfff0f0, '🍒'], ['足あと', 0xf7f1e3, '🐾'], ['さかな', 0xd6f0ff, '🐟'], ['ちょうちょ', 0xf0fff0, '🦋'], ['クローバー', 0xeafbea, '🍀'],
+    ['もみじ', 0xfff3e0, '🍁'], ['雪の結晶', 0xdfefff, '❄️'], ['さくら', 0xfff0f5, '🌸'], ['音符', 0xffffff, '🎵'], ['くるま', 0xeef5ff, '🚗'], ['恐竜', 0xe9f7df, '🦖'], ['ネコ', 0xfdf3e7, '🐱'], ['イヌ', 0xfdf3e7, '🐶'], ['ドーナツ', 0xffe8f0, '🍩'], ['サッカーボール', 0xe8ffe8, '⚽']]
+    .forEach(([n, c, e]) => W.push({ name: `${n}柄の壁紙`, kind: 'emoji', c, e }));
+  [['白いレンガ', 0xf2f2f2, 0xc8c8c8], ['灰色のレンガ', 0x8a8a8a, 0xd0d0d0], ['黄色いレンガ', 0xe6c35c, 0xf7ead0], ['茶色のレンガ', 0x7b4a2e, 0xd9c2a8], ['黒いレンガ', 0x2d2d2d, 0x777777]].forEach(([n, c, c2]) => W.push({ name: `${n}の壁紙`, kind: 'brick', c, c2 }));
+  [['白い板', 0xf3efe7, 0xcfc6b8], ['灰色の板', 0xa4a4a4, 0x7a7a7a], ['こげ茶の板', 0x5b3a26, 0x3e2718], ['赤い板', 0xb03a2e, 0x7d281f], ['青い板', 0x2e5e9e, 0x1e3f6e]].forEach(([n, c, c2]) => W.push({ name: `${n}の壁紙`, kind: 'plank', c, c2 }));
+  const base = WALLPAPERS.length;
+  W.forEach((w, i) => { Object.assign(w, { id: `w_${base + i}`, price: 2500 + (i % 20) * 250, x1000: true }); WALLPAPERS.push(w); WALL_BY[w.id] = w; ADD1000.wall.push(w); });
+  const F = [];
+  [['オーク', 0xc4a77d], ['パイン', 0xe2c48f], ['杉', 0xd9a86c], ['桐', 0xe8d9b8], ['栗の木', 0x8b5a2b], ['くるみ', 0x7a5230], ['マホガニー', 0x6b2f1a], ['ローズウッド', 0x5a2a27], ['アッシュ', 0xd8c8a8], ['バーチ', 0xe6d2a5],
+    ['ゼブラウッド', 0xbfa073], ['紫檀', 0x4a2320], ['ケヤキ', 0xb8763e], ['カエデ', 0xe3b778], ['ブナ', 0xd7b48a], ['ホワイトオーク', 0xd9c3a0], ['ヴィンテージ', 0x8a6a4a], ['グレーウッド', 0x9a948c], ['ブラックウッド', 0x2f2622], ['ハニー', 0xd9a441],
+    ['アカシア', 0xa8693a], ['白いウォッシュ', 0xf1ebe0], ['オリーブ', 0x9b8a4e], ['キャメル', 0xc19a6b], ['ラスティック', 0x7d5a3c]]
+    .forEach(([n, c]) => F.push({ name: `${n}のフローリング`, kind: 'plank', c, c2: new THREE.Color(c).multiplyScalar(0.72).getHex() }));
+  for (let i = 0; i < 20; i++) { const [n, c] = JC[(i * 2) % 40]; F.push({ name: `${n}のタイル`, kind: 'tile', c, c2: 0xffffff }); }
+  for (let i = 0; i < 10; i++) { const [a, c] = JC[(i * 4 + 2) % 40], [b, c2] = JC[(i * 4 + 19) % 40]; F.push({ name: `${a}と${b}のチェックの床`, kind: 'check', c, c2 }); }
+  for (let i = 0; i < 10; i++) { const [n, c] = JC[(i * 4 + 1) % 40], c2 = JC[(i * 4 + 21) % 40][1]; F.push({ name: `${n}のモザイクの床`, kind: 'mosaic', c, c2 }); }
+  [['御影石', 0x8a8a8a], ['砂岩', 0xd2b48c], ['テラゾー', 0xe0dcd3], ['黒大理石', 0x2b2b2b], ['ピンク大理石', 0xf0c8c8], ['緑の大理石', 0x4f7f6a], ['スレート', 0x5a6268], ['ライムストーン', 0xe6dcc3],
+    ['トラバーチン', 0xd9c8a9], ['玉砂利', 0xbdb6a8], ['砂浜', 0xf0e0b0], ['芝生', 0x6ab04c], ['雪原', 0xf7fbff], ['月面', 0xb0b0b0], ['溶岩', 0x4a2c2a]]
+    .forEach(([n, c]) => F.push({ name: `${n}の床`, kind: 'noise', c, c2: new THREE.Color(c).multiplyScalar(0.8).getHex() }));
+  [['青畳', 0x9fbf6a, 0x5f7f3a], ['琉球畳', 0xd8c27a, 0xa08a4a], ['黄金の畳', 0xe6b422, 0x9e7a12], ['黒いふちの畳', 0xc9c27a, 0x1a1a1a], ['茶室の畳', 0xbfb27a, 0x6d4c41]].forEach(([n, c, c2]) => F.push({ name: n, kind: 'tatami', c, c2 }));
+  for (let i = 0; i < 15; i++) { const [n, c] = JC[(i * 3 + 2) % 40]; F.push({ name: `${n}のカーペット`, kind: 'solid', c, c2: c }); }
+  const fb = FLOORS.length;
+  F.forEach((f, i) => { Object.assign(f, { id: `fl_${fb + i}`, price: 2500 + (i % 20) * 250, x1000: true }); FLOORS.push(f); FLOOR_BY[f.id] = f; ADD1000.floor.push(f); });
+}
+
+/* ---- 車 100（10クラス × 10） ---- */
+const CAR_CLASSES2 = [
+  ['race', 'レーシングカー', { shape: 'car', low: true, max: 55, acc: 27, turn: 2.4 }, 50000, ['レッドブレット', 'ブルーアロー', 'サーキットキング', 'ピットイン', 'チェッカー', 'ポールポジション', 'ファステスト', 'グランプリ', 'トップギア', 'ゴールライン']],
+  ['open', 'オープンカー', { shape: 'car', low: true, noRoof: true, max: 38, acc: 16, turn: 2.2 }, 18000, ['そよかぜ', 'サンシャイン', 'ビーチクルーザー', 'リゾート', 'カブリオ', 'スカイライド', 'ブリーズ', 'マリン', 'サマー', 'オーシャン']],
+  ['limo', 'リムジン', { shape: 'car', long: 1.5, max: 32, acc: 12, turn: 1.5, r: 2.2 }, 30000, ['プレジデント', 'セレブ', 'インペリアル', 'ロイヤル', 'エグゼクティブ', 'ゴールドクラス', 'スターダスト', 'レッドカーペット', 'シャンパン', 'グランドホテル']],
+  ['pickup', 'ピックアップトラック', { shape: 'truck', bed: true, max: 28, acc: 12, turn: 1.8, r: 2.0 }, 11000, ['ファーマー', 'カウボーイ', 'ランチ', 'ハーベスト', 'ロッキー', 'テキサス', 'キャンパー', 'ブルドッグ', 'バッファロー', 'ハイランダー']],
+  ['camper', 'キャンピングカー', { shape: 'van', long: 1.2, max: 24, acc: 9, turn: 1.6, r: 2.1 }, 16000, ['ホームオンホイール', 'たびびと', 'のんびり号', 'グランピング', 'キャラバン', 'ノマド', 'アウトドア', 'ほしぞら号', 'ぼうけん号', 'ロードハウス']],
+  ['mini', 'ミニカー', { shape: 'car', max: 22, acc: 12, turn: 2.7 }, 2500, ['ぷちぷち', 'まるっこ', 'ちょこん', 'こつぶ', 'ミニミニ', 'ころころ', 'ぴよぴよ', 'わたあめ', 'マシュマロ', 'あめだま']],
+  ['patrol', 'パトロールカー', { shape: 'car', max: 36, acc: 16, turn: 2.1, siren: [0xff3b30, 0x0984e3] }, 20000, ['まもる1号', 'まもる2号', 'あんしん号', 'みまもり号', 'セーフティ', 'ガーディアン', 'パトロールA', 'パトロールB', 'ナイトパトロール', 'ハイウェイパトロール']],
+  ['bus', '路線バス', { shape: 'bus', max: 22, acc: 8, turn: 1.4, r: 2.6 }, 20000, ['えきまえ線', 'こうえん線', 'みなと線', 'やまのて線', 'ひまわり線', 'さくら線', '夜行バス', '観光バス', 'スクールバス', 'ふたかい建てバス']],
+  ['moto', 'バイク', { shape: 'bike', max: 30, acc: 16, turn: 2.8, r: 1.1 }, 6000, ['スクーター', 'ネイキッド', 'ツアラー', 'モタード', 'クルーザー', 'スーパースポーツ', 'カフェレーサー', 'トライアル', 'ビッグスクーター', 'サイドカー']],
+  ['future', '未来カー', { shape: 'car', low: true, ev: true, max: 48, acc: 24, turn: 2.5 }, 60000, ['ホバー', 'クォンタム', 'ネオンライダー', 'サイバー', 'フォトン', 'ワープ', 'アンドロメダ', 'オーロラ', 'ユニバース', 'タイムマシン']],
+];
+CAR_CLASSES2.forEach(([cid, cname, base, price, names], ci) => {
+  CAR_CLASSES.push([cid, cname, base, price, names]);
+  names.forEach((nm, i) => {
+    const o = Object.assign({}, base);
+    const j = ((i * 37 + ci * 13) % 10) / 10;
+    o.max = Math.round((base.max + j * 6) * 10) / 10; o.acc = Math.round((base.acc + j * 3) * 10) / 10;
+    if (cid === 'bus' && i === 9) o.double = true;
+    const id = `car_${cid}_${i}`;
+    CAR_TYPES[id] = Object.assign(o, { name: `${nm}（${cname}）`, price: Math.round(price * (1 + i * 0.12) / 100) * 100, color: cid === 'patrol' ? 0xf5f6fa : CAR_PAL[(i + ci + 3) % CAR_PAL.length], color2: cid === 'patrol' ? 0x1e1e1e : cid === 'limo' ? 0x111111 : undefined, cls: cid, desc: `${cname}・最高速度 ${Math.round(o.max * 3.6)}km/h${o.ev ? '・ガソリンいらず' : ''}`, x1000: true });
+    MY_CARS.push(id); ADD1000.cars.push(id);
+  });
+});
+
+/* ---- 着せかえ 150 ---- */
+{
+  const O = [];
+  JC.filter((_, i) => i % 3 === 0).slice(0, 12).forEach(([n, c], i) => O.push([`o_cap_${i}`, 'hat', `キャップ（${n}）`, 300, { hat: 'cap', c }]));
+  [['白', 0xf5f6fa], ['黒', 0x2d3436], ['ピンク', 0xf4b3c2], ['水色', 0xa0d8ef], ['赤', 0xd7003a], ['こげ茶', 0x6f4b3e]].forEach(([n, c], i) => O.push([`o_straw_${i}`, 'hat', `むぎわら帽子（${n}）`, 600, { hat: 'straw', c }]));
+  [['赤', 0xb7282e], ['白', 0xf5f6fa], ['紺', 0x223a70], ['緑', 0x007b43], ['むらさき', 0x7058a3], ['金', 0xe6b422]].forEach(([n, c], i) => O.push([`o_silk_${i}`, 'hat', `シルクハット（${n}）`, 2000, { hat: 'silk', c }]));
+  [['赤', 0xd7003a], ['青', 0x1e50a2], ['白', 0xf5f6fa], ['黒', 0x2d3436], ['緑', 0x007b43], ['オレンジ', 0xeb6101], ['ピンク', 0xe7609e], ['銀', 0xafafb0]].forEach(([n, c], i) => O.push([`o_helm_${i}`, 'hat', `ヘルメット（${n}）`, 800, { hat: 'helmet', c }]));
+  [['銀', 0xdfe6e9], ['ルビー', 0xd7003a], ['サファイア', 0x1e50a2], ['エメラルド', 0x00b894]].forEach(([n, c], i) => O.push([`o_crown_${i}`, 'hat', `王冠（${n}）`, 10000, { hat: 'crown', c }]));
+  JC.slice(0, 30).forEach(([n, c], i) => O.push([`o_sh_${i}`, 'shirt', `シャツ（${n}）`, 400, { c }]));
+  for (let i = 0; i < 20; i++) { const [n, c] = JC[(i * 2 + 1) % 40]; O.push([`o_st_${i}`, 'shirt', `しましまシャツ（${n}）`, 900, { c: 0xffffff, stripe: c }]); }
+  for (let i = 0; i < 30; i++) { const [n, c] = JC[(i + 10) % 40]; O.push([`o_pt_${i}`, 'pants', `ズボン（${n}）`, 500, { c }]); }
+  const AC = [['赤', 0xd7003a], ['青', 0x1e50a2], ['ピンク', 0xe7609e], ['緑', 0x007b43], ['黄', 0xf8b500], ['むらさき', 0x7058a3], ['白', 0xf5f6fa], ['黒', 0x2d3436]];
+  AC.slice(0, 6).forEach(([n, c], i) => O.push([`o_gl_${i}`, 'acc', `メガネ（${n}）`, 600, { acc: 'glasses2', c }]));
+  AC.forEach(([n, c], i) => O.push([`o_pk_${i}`, 'acc', `リュック（${n}）`, 1200, { acc: 'pack2', c }]));
+  AC.forEach(([n, c], i) => O.push([`o_sc_${i}`, 'acc', `マフラー（${n}）`, 900, { acc: 'scarf', c }]));
+  AC.slice(0, 6).forEach(([n, c], i) => O.push([`o_cp_${i}`, 'acc', `マント（${n}）`, 2500, { acc: 'cape', c }]));
+  AC.slice(0, 6).forEach(([n, c], i) => O.push([`o_bw_${i}`, 'acc', `ちょうネクタイ（${n}）`, 700, { acc: 'bow', c }]));
+  for (const o of O) { OUTFITS.push(o); OUTFIT[o[0]] = { id: o[0], slot: o[1], name: o[2], price: o[3], ...o[4] }; ADD1000.outfit.push(o); }
+}
+const applyOutfit0 = applyOutfit;
+applyOutfit = function () {
+  applyOutfit0();
+  const ac = state.outfit.acc && OUTFIT[state.outfit.acc];
+  if (!ac || !P.person) return;
+  const g = P.person.g;
+  const add = (w, h, d, x, y, z) => { const m = new THREE.Mesh(BX(w, h, d), lam(ac.c)); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+  if (ac.acc === 'glasses2') add(0.46, 0.09, 0.04, 0, 2.0, 0.27);
+  if (ac.acc === 'pack2') add(0.52, 0.62, 0.26, 0, 1.35, -0.34);
+  if (ac.acc === 'scarf') { add(0.62, 0.14, 0.48, 0, 1.72, 0); add(0.14, 0.42, 0.06, 0.16, 1.48, 0.24); }
+  if (ac.acc === 'cape') add(0.74, 1.15, 0.06, 0, 1.2, -0.25);
+  if (ac.acc === 'bow') add(0.28, 0.1, 0.04, 0, 1.64, 0.23);
+};
+
+/* ---- 家 50 ---- */
+[
+  HSE('apt_new', '新築アパート', 1, 14000, 'apt', 12, 9, 6.5, 0xf5f0e6, 0x7f8c8d), HSE('share', 'シェアハウス', 1, 16000, 'gable', 10, 9, 6, 0xf7e7ce, 0x6d4c41),
+  HSE('bus_house', 'バスを改造した家', 1, 13000, 'trailer', 11, 4, 3.2, 0xf6b93b, 0x2d3436), HSE('cabin', '山小屋', 1, 19000, 'log', 8, 7, 3.6, 0x7b5233, 0x2f4f2f),
+  HSE('beach_hut', '海の家', 1, 17000, 'house', 9, 7, 3.4, 0xfdf2e9, 0x2e86de), HSE('tent_house', 'グランピングテント', 1, 11000, 'aframe', 7, 7, 5, 0xf5f6fa, 0xd8c3a5),
+  HSE('igloo', 'かまくらハウス', 1, 16000, 'dome', 8, 8, 4, 0xffffff, 0xeaf6ff), HSE('mini_jp', '小さな和室の家', 1, 21000, 'jp', 9, 8, 4, 0xece4d4, 0x3b3f46),
+  HSE('box_house', '箱型の小さな家', 1, 23000, 'flat', 9, 8, 4, 0xd5d8dc, 0x2d3436), HSE('green_cont', '緑のコンテナハウス', 1, 20000, 'container', 12, 6, 5.4, 0x27ae60, 0xf1c40f),
+  HSE('yellow_roof', '黄色い屋根の家', 2, 43000, 'house', 12, 10, 6, 0xfdfaf2, 0xf1c40f), HSE('green_roof', '緑の屋根の家', 2, 44000, 'house', 12, 10, 6, 0xf5f6fa, 0x27ae60),
+  HSE('pink_house', 'ピンクの家', 2, 52000, 'gable', 12, 10, 6.5, 0xfad4dc, 0x8e44ad), HSE('duplex', 'メゾネットの家', 2, 75000, 'flat', 13, 11, 7, 0xe8e2d0, 0x34495e),
+  HSE('farm', '農家の家', 2, 58000, 'jp', 15, 12, 5, 0xe0d5bd, 0x5d4e3a), HSE('cottage', 'コテージ', 2, 80000, 'log', 13, 10, 6, 0xa0703f, 0x3e5c3a),
+  HSE('hut_hill', '丘の上の家', 2, 68000, 'gable', 12, 10, 7, 0xffffff, 0x1e3799), HSE('aframe2', '大きな三角屋根の家', 2, 85000, 'aframe', 12, 12, 10, 0x8d5a2b, 0x2d3436),
+  HSE('garden2', '花だらけの家', 2, 95000, 'house', 14, 11, 6, 0xfff0f5, 0xe84393), HSE('stone', '石づくりの家', 2, 115000, 'gable', 13, 11, 7, 0x9e9e9e, 0x4e342e),
+  HSE('cube', 'キューブハウス', 3, 190000, 'flat', 13, 13, 8, 0xffffff, 0xe17055), HSE('skip', 'スキップフロアの家', 3, 210000, 'flat', 15, 12, 8, 0xdfe6e9, 0x636e72),
+  HSE('ryokan', '温泉旅館風の家', 3, 320000, 'jp', 16, 16, 6, 0xe8dcc8, 0x2f3640), HSE('chalet', 'スイス風シャレー', 3, 250000, 'log', 15, 12, 7.5, 0x8b5a2b, 0xa93226),
+  HSE('dome2', '星空ドームの家', 3, 270000, 'dome', 13, 13, 7, 0x2c3e50, 0x34495e), HSE('glass2', '森のガラスハウス', 3, 290000, 'glass', 14, 12, 6, 0xffffff, 0xffffff),
+  HSE('light2', '岬の灯台ハウス', 3, 380000, 'light', 12, 10, 6, 0xffffff, 0x2e86de), HSE('tree2', '大木のツリーハウス', 3, 330000, 'tree', 12, 10, 6, 0xd9b38c, 0x6d4c41),
+  HSE('spanish', 'スペイン風の家', 3, 260000, 'flat', 15, 12, 7, 0xfff3e0, 0xd35400), HSE('kura', '蔵のある家', 3, 230000, 'jp', 15, 15, 6, 0xffffff, 0x2d3436),
+  HSE('penthouse', 'ペントハウス', 4, 1300000, 'tower', 14, 14, 50, 0xb2bec3, 0x2d3436), HSE('river_man', '川ぞいの高級マンション', 4, 600000, 'tower', 16, 14, 26, 0xdfe6e9, 0x636e72),
+  HSE('yokan2', '赤レンガの洋館', 4, 750000, 'yokan', 18, 14, 9, 0xb5543c, 0x2c3e50), HSE('ryotei', '料亭風の屋敷', 4, 900000, 'jp', 22, 18, 5.5, 0xf3eee2, 0x1e272e),
+  HSE('bali', 'バリ風ヴィラ', 4, 880000, 'house', 18, 14, 6, 0xe8d5b5, 0x6d4c41), HSE('lakehouse', '湖のログハウス', 4, 720000, 'log', 18, 13, 7, 0x6e4b2a, 0x2c3e50),
+  HSE('modern2', '黒いモダン邸宅', 4, 1500000, 'flat', 22, 16, 9, 0x2d3436, 0x636e72), HSE('white_villa', '白いプールヴィラ', 4, 1000000, 'flat', 20, 14, 7, 0xffffff, 0x74b9ff),
+  HSE('chateau_s', '小さなシャトー', 4, 1250000, 'yokan', 22, 16, 10, 0xece4d4, 0x34495e), HSE('glass4', '湖畔のガラス邸', 4, 1600000, 'glass', 20, 16, 7, 0xffffff, 0xffffff),
+  HSE('rose_gotei', 'バラ園の大豪邸', 5, 2500000, 'mansion', 24, 22, 10, 0xfde2e4, 0xb03a48), HSE('marble', '大理石の大豪邸', 5, 4000000, 'mansion', 24, 22, 11, 0xf5f6fa, 0xbdc3c7),
+  HSE('ice_castle', '氷のお城', 5, 9000000, 'castle', 26, 22, 14, 0xd6f0ff, 0x74b9ff), HSE('dragon_castle', 'ドラゴン城', 5, 12000000, 'castle', 26, 22, 16, 0x4a4a4a, 0x8e1b1b),
+  HSE('flower_palace', '花の宮殿', 5, 11000000, 'palace', 26, 22, 12, 0xfff4e0, 0xe84393), HSE('moon', '月の豪邸', 5, 25000000, 'sky', 22, 18, 9, 0xf5f6fa, 0xf1c40f),
+  HSE('cyber', 'サイバー豪邸', 5, 16000000, 'future', 24, 20, 10, 0x2d3436, 0xe84393), HSE('emerald', 'エメラルドの豪邸', 5, 14000000, 'mansion', 24, 22, 11, 0x55efc4, 0x00b894),
+  HSE('shogun', '将軍のお屋敷', 5, 6000000, 'jp', 26, 22, 7, 0xf5efe0, 0x8e1b1b), HSE('crystal', 'クリスタルの大豪邸', 5, 30000000, 'glass', 24, 22, 10, 0xffffff, 0xffffff),
+].forEach(h => { h.x1000 = true; HOUSES.push(h); HOUSE[h.id] = h; ADD1000.house.push(h); });
+
+/* ---- プレゼント 60（8 → 68） ---- */
+const GIFT_CATS = ['食べ物', '花・植物', 'おもちゃ', 'ファッション', '本・ゲーム・音楽', '生活雑貨'];
+{
+  const old = { flower: '花・植物', cake: '食べ物', book: '本・ゲーム・音楽', plush: 'おもちゃ', game: '本・ゲーム・音楽', ball: 'おもちゃ', bento: '食べ物', acc: 'ファッション' };
+  for (const g of GIFTS) g.cat = old[g.id];
+  const add = (cat, list) => list.forEach(([id, name, e, price]) => { const g = { id, name, e, price, cat, x1000: true }; GIFTS.push(g); GIFT_BY[id] = g; ADD1000.gift.push(g); });
+  add('食べ物', [['cookie', 'クッキー', '🍪', 400], ['choco', 'チョコレート', '🍫', 500], ['donut', 'ドーナツ', '🍩', 300], ['icecream', 'アイス', '🍨', 350], ['pudding', 'プリン', '🍮', 300], ['strawberry', 'いちご', '🍓', 600], ['melon', 'メロン', '🍈', 3000], ['onigiri', 'おにぎり', '🍙', 200],
+    ['sushi_g', 'おすしの折り詰め', '🍣', 2500], ['pizza_g', 'ピザ', '🍕', 1500], ['candy', 'キャンディ', '🍬', 150], ['tea', 'お茶の葉', '🍵', 800], ['coffee', 'コーヒー豆', '☕', 1000], ['honey', 'はちみつ', '🍯', 900], ['bread', 'クロワッサン', '🥐', 350]]);
+  add('花・植物', [['rose', 'バラ', '🌹', 700], ['sunflower', 'ひまわり', '🌻', 500], ['tulip', 'チューリップ', '🌷', 450], ['sakura_g', 'さくらの枝', '🌸', 800], ['cactus_g', 'サボテン', '🌵', 600], ['bonsai_g', '盆栽', '🌳', 5000], ['clover', '四つ葉のクローバー', '🍀', 300], ['hibiscus', 'ハイビスカス', '🌺', 550]]);
+  add('おもちゃ', [['robot_t', 'ロボット', '🤖', 2500], ['puzzle', 'パズル', '🧩', 900], ['car_t', 'ミニカー', '🚗', 800], ['dino', '恐竜のおもちゃ', '🦖', 1200], ['ufo', 'UFOのおもちゃ', '🛸', 1500], ['balloon', '風船', '🎈', 200], ['train_t', '電車のおもちゃ', '🚂', 1400], ['rocket_t', 'ロケットのおもちゃ', '🚀', 1800], ['panda_p', 'パンダのぬいぐるみ', '🐼', 1300], ['unicorn_p', 'ユニコーンのぬいぐるみ', '🦄', 1600]]);
+  add('ファッション', [['ring', '指輪', '💍', 8000], ['watch', 'うで時計', '⌚', 6000], ['ribbon', 'リボン', '🎀', 400], ['hat_g', 'つば広の帽子', '👒', 1500], ['sunglass_g', 'サングラス', '🕶️', 2000], ['bag', 'バッグ', '👜', 4000], ['shoes', 'スニーカー', '👟', 3500], ['scarf_g', 'マフラー', '🧣', 1800], ['lip', 'リップ', '💄', 1200], ['tiara', 'ティアラ', '👑', 9000]]);
+  add('本・ゲーム・音楽', [['manga', 'マンガ', '📖', 500], ['picbook', '絵本', '📕', 700], ['cd', '音楽CD', '💿', 1500], ['headphone', 'ヘッドホン', '🎧', 5000], ['guitar_g', 'ギター', '🎸', 12000], ['camera_g', 'カメラ', '📷', 15000], ['movie', '映画のチケット', '🎬', 1800], ['paints', '絵の具セット', '🎨', 1600], ['mic', 'マイク', '🎤', 2200]]);
+  add('生活雑貨', [['candle', 'キャンドル', '🕯️', 800], ['umbrella', 'かさ', '☂️', 1200], ['lamp_g', 'ランプ', '💡', 1500], ['pillow', 'まくら', '🛏️', 1400], ['alarm', '目覚まし時計', '⏰', 1300], ['herb', 'ハーブの鉢', '🌿', 700], ['letter', 'お手紙', '💌', 100], ['bathsalt', '入浴剤', '🛁', 600]]);
+}
+
+/* ---- 町の人 40（8 → 48） ---- */
+{
+  const fn = ['あおい', 'ひまり', 'りん', 'めい', 'ゆな', 'ことね', 'つむぎ', 'えま', 'のあ', 'さな', 'かんな', 'しずく', 'みゆ', 'あかり', 'ちひろ', 'ここな', 'まひろ', 'いろは', 'すず', 'ゆずき'];
+  const mn = ['ゆうと', 'はやと', 'そら', 'あおと', 'いつき', 'りく', 'こうき', 'しょう', 'だいち', 'けんた', 'ひろと', 'たくみ', 'かずま', 'はるき', 'あさひ', 'りょう', 'しゅん', 'たいが', 'ゆうま', 'こたろう'];
+  const hob = ['料理', '写真', '釣り', '登山', 'ダンス', '絵をかくこと', 'ピアノ', '読書', '映画', '天体観測', 'キャンプ', '手芸', 'ガーデニング', 'スケボー', '野球', 'バスケ', '水泳', '将棋', 'ドライブ', 'カフェめぐり',
+    '歌うこと', 'プログラミング', '電車', '恐竜', '虫とり', 'お菓子作り', 'ファッション', '動物', 'ゲーム', 'マンガ', 'ヨガ', 'サイクリング', 'スキー', 'サーフィン', '書道', '茶道', '旅行', '占い', '宇宙', 'ギター'];
+  const hair = [0x1d1d1d, 0x2d1b10, 0x3a2a1e, 0x5d4037, 0x8a5a2b, 0xd4a373, 0x6d4c41, 0x2a1d14];
+  for (let i = 0; i < 40; i++) {
+    const girl = i % 2 === 0, k = i >> 1;
+    const f = { id: `t_${i}`, name: girl ? fn[k] : mn[k], g: girl ? 'f' : 'm', shirt: JC[(i * 7 + 3) % 40][1], pants: JC[(i * 11 + 20) % 40][1], hair: hair[i % 8], long: girl && i % 4 !== 2,
+      like: GIFTS[8 + (i * 23) % 60].id, at: ['auto', i], skill: Math.round((0.45 + ((i * 37) % 45) / 100) * 100) / 100, word: `${hob[i]}が好きなんだ`, x1000: true };
+    FRIENDS.push(f); FR[f.id] = f; ADD1000.friend.push(f);
+  }
+}
+let AUTO_SPOTS = null;
+function makeAutoSpots(n) {
+  const rng = mulberry32(777), out = [], taken = FRIENDS.filter(f => f.at[0] !== 'auto').map(f => friendSpot(f));
+  const marks = [...PLACES.map(p => ({ x: p.mx, z: p.mz })), ...SERVICES.map(s => ({ x: s.mx, z: s.mz })), ...VENDING, ...BENCHES, { x: RACE.x, z: RACE.z }];
+  const free = (x, z) => !boxes.some(b => x > b.x0 - 1 && x < b.x1 + 1 && z > b.z0 - 1 && z < b.z1 + 1) && !circles.some(c => Math.hypot(x - c.x, z - c.z) < c.r + 1)
+    && marks.every(m => m.x == null || Math.hypot(x - m.x, z - m.z) > 6) && [...taken, ...out].every(p => Math.hypot(x - p.x, z - p.z) > 9);
+  for (let tries = 0; out.length < n && tries < 20000; tries++) {
+    const bx = BC[Math.floor(rng() * BC.length)], bz = BC[Math.floor(rng() * BC.length)];
+    const side = Math.floor(rng() * 4), t = (rng() * 2 - 1) * 18, e = 22.5;
+    const x = bx + (side === 0 ? e : side === 1 ? -e : t), z = bz + (side === 2 ? e : side === 3 ? -e : t);
+    if (onBlock(x, z) && free(x, z)) out.push({ x, z });
+  }
+  while (out.length < n) out.push({ x: 30 + out.length, z: 22 });
+  return out;
+}
+const friendSpot0 = friendSpot;
+friendSpot = function (f) {
+  if (f.at[0] !== 'auto') return friendSpot0(f);
+  if (!AUTO_SPOTS) AUTO_SPOTS = makeAutoSpots(FRIENDS.filter(q => q.at[0] === 'auto').length);
+  return AUTO_SPOTS[f.at[1]];
+};
+
+/* ---- 出前の料理 100 ---- */
+const DISH_CATS = ['和食', '洋食', '中華', 'エスニック', 'ファストフード', 'スイーツ'];
+const DELIVERY = [];
+{
+  const add = (cat, list) => list.forEach(([name, e, price]) => { const d = { id: `d_${DELIVERY.length}`, name, e, price, cat }; DELIVERY.push(d); ADD1000.dish.push(d); });
+  add('和食', [['天ぷら', '🍤', 1200], ['うな重', '🍱', 2800], ['牛丼', '🍚', 600], ['親子丼', '🍳', 700], ['かつ丼', '🍚', 800], ['ざるそば', '🍜', 700], ['きつねうどん', '🍜', 650], ['おでん', '🍢', 600], ['焼き魚定食', '🐟', 900], ['すき焼き', '🥩', 2500],
+    ['しゃぶしゃぶ', '🥩', 2400], ['お刺身の盛り合わせ', '🐟', 2000], ['ちらしずし', '🍣', 1500], ['手巻きずし', '🍣', 1600], ['お好み焼き', '🥞', 800], ['たこ焼き', '🐙', 500], ['焼き鳥', '🍢', 900], ['とんかつ定食', '🍱', 1000], ['茶わん蒸し', '🍮', 400], ['おにぎりセット', '🍙', 400]]);
+  add('洋食', [['ハンバーグ', '🍖', 1100], ['オムライス', '🍳', 900], ['ナポリタン', '🍝', 850], ['カルボナーラ', '🍝', 1000], ['ミートソース', '🍝', 850], ['グラタン', '🧀', 1000], ['ドリア', '🧀', 950], ['ビーフシチュー', '🍲', 1500], ['ステーキ', '🥩', 2800], ['ローストチキン', '🍗', 1800],
+    ['エビフライ', '🍤', 1100], ['クリームコロッケ', '🥔', 800], ['ポトフ', '🍲', 900], ['ラザニア', '🧀', 1200], ['マルゲリータ', '🍕', 1400], ['ミックスサンド', '🥪', 600], ['ロールキャベツ', '🥬', 900], ['コーンスープ', '🌽', 400], ['フィッシュアンドチップス', '🐟', 1000], ['パエリア', '🥘', 1600]]);
+  add('中華', [['しょうゆラーメン', '🍜', 800], ['ぎょうざ', '🥟', 500], ['チャーハン', '🍚', 750], ['マーボー豆腐', '🌶️', 850], ['酢豚', '🍖', 1100], ['エビチリ', '🦐', 1300], ['小籠包', '🥟', 900], ['春巻き', '🌯', 600], ['天津飯', '🍳', 800], ['担々麺', '🍜', 950],
+    ['回鍋肉', '🥬', 950], ['チンジャオロース', '🥩', 1000], ['北京ダック', '🦆', 3500], ['中華まん', '🥟', 300], ['あんかけ焼きそば', '🍜', 900]]);
+  add('エスニック', [['カレーライス', '🍛', 800], ['バターチキンカレー', '🍛', 1100], ['ナンとカレー', '🍞', 1200], ['ガパオライス', '🍳', 1000], ['フォー', '🍜', 950], ['トムヤムクン', '🍲', 1200], ['タコス', '🌮', 800], ['ブリトー', '🌯', 900], ['ケバブ', '🥙', 900], ['ビビンバ', '🍚', 1000],
+    ['チヂミ', '🥞', 800], ['トッポギ', '🌶️', 700], ['サムギョプサル', '🥓', 1800], ['生春巻き', '🥬', 700], ['ナシゴレン', '🍳', 1000]]);
+  add('ファストフード', [['ハンバーガー', '🍔', 500], ['チーズバーガー', '🍔', 550], ['フライドポテト', '🍟', 300], ['フライドチキン', '🍗', 600], ['ホットドッグ', '🌭', 400], ['チキンナゲット', '🍗', 400], ['ポップコーン', '🍿', 300], ['ベーグル', '🥯', 350], ['クロワッサン', '🥐', 300], ['ホットサンド', '🥪', 450]]);
+  add('スイーツ', [['ショートケーキ', '🍰', 500], ['チョコケーキ', '🍫', 550], ['チーズケーキ', '🍰', 500], ['モンブラン', '🌰', 600], ['パフェ', '🍨', 800], ['パンケーキ', '🥞', 900], ['ワッフル', '🍪', 500], ['いちごクレープ', '🍓', 600], ['ドーナツ', '🍩', 250], ['プリン', '🍮', 300],
+    ['かき氷', '🍧', 400], ['ソフトクリーム', '🍦', 300], ['だんご', '🍡', 250], ['たい焼き', '🐟', 200], ['どら焼き', '🥞', 220], ['わらびもち', '🍡', 350], ['マカロン', '🍬', 700], ['アップルパイ', '🍎', 600], ['フルーツタルト', '🍓', 700], ['メロンパン', '🍈', 220]]);
+}
+let dlvCat = '和食';
+function openDelivery() {
+  const g = inHome && inHome.guest;
+  svcScreen('出前（100種類）', `<div class="muted">${g ? `${esc(g.f.name)}といっしょに食べます。` : ''}注文すると、すぐにとどいてテーブルで食べられます。食べると体力が満タンになります。</div>
+    <div class="chips">${DISH_CATS.map(c => `<button class="chipb${dlvCat === c ? ' on' : ''}" data-dvc="${c}" type="button">${c}（${DELIVERY.filter(d => d.cat === c).length}）</button>`).join('')}</div>
+    <div class="list">${DELIVERY.map((d, i) => [d, i]).filter(([d]) => d.cat === dlvCat).map(([d, i]) => `<div class="item"><div class="name">No.${i + 1} ${d.e} ${esc(d.name)}${state.ate.includes(d.name) ? '<span class="sub">　食べたことがある</span>' : ''}</div><button class="btn primary" data-dv="${d.id}" type="button" ${state.money < d.price ? 'disabled' : ''}>${yen(d.price)}</button></div>`).join('')}</div>`, b => {
+    b.querySelectorAll('[data-dvc]').forEach(x => x.onclick = () => { dlvCat = x.dataset.dvc; openDelivery(); });
+    b.querySelectorAll('[data-dv]').forEach(x => x.onclick = () => {
+      const d = DELIVERY.find(q => q.id === x.dataset.dv);
+      if (!pay(d.price)) return;
+      closeScreen(); toast(`出前の${d.name}がとどいた！`);
+      const dish = [d.name, d.e, [], 0];
+      if (inHome && inHome.chairs.length) startEat(dish); else finishMeal(dish);
+    });
+  });
+}
+const finishMeal0 = finishMeal;
+finishMeal = function (d) {
+  if (!state.ate.includes(d[0])) state.ate.push(d[0]);
+  finishMeal0(d);
+  achCheck();
+};
+
+/* ---- プレゼントの分類 ---- */
+let giftCat = null;
+function bindGiftCats(b, f, from) {
+  b.querySelectorAll('[data-gc]').forEach(x => x.onclick = () => { giftCat = x.dataset.gc; if (from === 'home') openGuestMenu(); else openFriendMenu(f.id); });
+}
+
+/* ---- 実績 100 ---- */
+{
+  const frCount = st => FRIENDS.filter(f => (state.fr[f.id] || { aff: 0 }).aff >= STAGES[st][0]).length;
+  const myHouses = s => s.houses.filter(h => h !== 'start').length;
+  const num = n => n.toLocaleString('ja-JP');
+  const spec = [
+    ['fr', n => `友だち${n}人`, n => `町の人${n}人と「友だち」以上になる`, () => frCount(1), [1, 3, 5, 10, 15, 20, 30, 40, 48]],
+    ['bf', n => `親友${n}人`, n => `町の人${n}人と「親友」になる`, () => frCount(3), [1, 3, 5, 10, 20, 48]],
+    ['gift', n => `プレゼント${n}回`, n => `プレゼントを${n}回わたす`, s => s.stats.gifts, [1, 5, 10, 30, 50, 100]],
+    ['meal', n => `いっしょにご飯${n}回`, n => `家で友だちとご飯を${n}回食べる`, s => s.stats.meals, [1, 5, 10, 30, 50]],
+    ['vs', n => `対戦で${n}勝`, n => `友だちとのエアホッケーで${n}回勝つ`, s => s.stats.vsWins, [1, 5, 10, 30, 50]],
+    ['ate', n => `グルメ${n}品`, n => `${n}種類の料理を食べる`, s => s.ate.length, [1, 10, 30, 50, 100]],
+    ['furn', n => `家具${n}こ`, n => `家具を${n}こ持つ`, s => s.furn.length, [1, 10, 50, 100, 200, 400]],
+    ['place', n => `模様がえ${n}こ`, n => `家具を${n}こ自由に置く`, s => Object.keys(s.furnPos).length, [1, 5, 10, 30]],
+    ['wall', n => `壁紙${n}まい`, n => `壁紙を${n}まい持つ`, s => s.wallsOwned.length, [1, 10, 50, 130]],
+    ['floor', n => `床${n}まい`, n => `床を${n}まい持つ`, s => s.floorsOwned.length, [1, 10, 50, 130]],
+    ['cars', n => `車${n}台`, n => `車を${n}台持つ`, s => s.cars.length, [5, 10, 30, 50, 100, MY_CARS.length]],
+    ['outfit', n => `着せかえ${n}着`, n => `着せかえを${n}こ持つ`, s => s.owned.length, [10, 30, 50, 100, OUTFITS.length]],
+    ['house', n => `家${n}けん`, n => `家を${n}けん持つ`, s => myHouses(s), [1, 3, 5, 10, 20, HOUSES.length]],
+    ['money', n => `${num(n)}円持ち`, n => `${num(n)}円を持つ`, s => s.money, [1000000, 10000000, 100000000]],
+    ['earn', n => `合計${num(n)}円`, n => `合計で${num(n)}円かせぐ`, s => s.stats.earned, [10000000, 100000000]],
+    ['jobs', n => `仕事${n}回`, n => `仕事を${n}回やりとげる`, s => s.stats.jobs, [200, 300, 500, 1000]],
+    ['km', n => `${num(n / 1000)}km走った`, n => `合計${num(n / 1000)}km運転する`, s => s.stats.dist, [500000, 1000000]],
+    ['day', n => `${n}日目`, n => `${n}日目をむかえる`, s => s.day, [7, 30, 100, 365]],
+    ['lotto', n => `宝くじ${n}回当選`, n => `宝くじに${n}回当たる`, s => s.stats.lottoWins, [3, 10]],
+    ['daily', n => `ミッション${n}こ`, n => `デイリーミッションを${n}こクリア`, s => s.stats.daily, [30, 100]],
+    ['games', n => `ゲーム${n}本`, n => `ゲームを${n}本発売する`, s => s.games.length, [5, 10, 20]],
+    ['hanabi', n => `花火${n}回`, n => `花火を${n}回見る`, s => s.stats.hanabi, [5, 10]],
+    ['lost', n => `落とし物${n}回`, n => `落とし物を${n}回届ける`, s => s.stats.lost, [10, 30]],
+    ['vend', n => `ジュース${n}本`, n => `自動販売機で${n}本買う`, s => s.stats.vend, [10, 50]],
+  ];
+  const list = [];
+  for (const [id, nm, desc, val, ths] of spec) {
+    ths.forEach((n, k) => list.push([`x_${id}_${n}`, nm(n), desc(n), s => val(s) >= n, Math.min(50000, 500 * (k + 1) * (k + 1))]));
+    if (id === 'bf') list.push(['x_partner', '恋人ができた', '町の人に告白して恋人になる', s => !!s.partner, 3000]);
+  }
+  for (const a of list) { ACH.push(a); ADD1000.ach.push(a); }
+}
+
+function allAdditions1000() {
+  const L = [];
+  for (const f of ADD1000.furn) L.push(['家具', f.name, `${yen(f.price)}・家具屋で買える`]);
+  for (const w of ADD1000.wall) L.push(['壁紙', w.name, `${yen(w.price)}・家具屋で買える`]);
+  for (const f of ADD1000.floor) L.push(['床', f.name, `${yen(f.price)}・家具屋で買える`]);
+  for (const id of ADD1000.cars) L.push(['車', CAR_TYPES[id].name, `${yen(CAR_TYPES[id].price)}・${CAR_TYPES[id].desc}`]);
+  for (const o of ADD1000.outfit) L.push(['着せかえ', o[2], `${yen(o[3])}・洋服屋で買える`]);
+  for (const h of ADD1000.house) L.push(['家', h.name, `${yen(h.price)}・${HOUSE_TIERS[h.tier]}・不動産屋で買える`]);
+  for (const f of ADD1000.friend) L.push(['町の人', f.name, `${f.word}・好きなもの：${GIFT_BY[f.like].name}`]);
+  for (const g of ADD1000.gift) L.push(['プレゼント', `${g.e} ${g.name}`, `${yen(g.price)}・${g.cat}`]);
+  for (const d of ADD1000.dish) L.push(['出前の料理', `${d.e} ${d.name}`, `${yen(d.price)}・${d.cat}`]);
+  for (const a of ADD1000.ach) L.push(['実績', a[1], a[2]]);
+  return L.map((r, i) => ({ no: i + 1, cat: r[0], name: r[1], desc: r[2] }));
+}
 
 /* =========================================================
    boot
