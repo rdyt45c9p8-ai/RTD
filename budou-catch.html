@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ぶどう棚キャッチ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;800&display=swap">
+<style>
+  /* Layout: one centered column — score strip, the vineyard stage, then the level ladder 1〜10 */
+  :root {
+    --paper: #eef2ea;
+    --ink: #2b1733;
+    --muted: #5e5566;
+    --grape: #5a2a6b;
+    --grape-soft: #e4d7ea;
+    --leaf: #4f7a3a;
+    --gold: #c8901c;
+    --line: #cfd8c6;
+    --display: "Dela Gothic One", "Hiragino Sans", "Yu Gothic", sans-serif;
+    --body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
+    color-scheme: light;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+  .app {
+    max-width: 520px;
+    margin: 0 auto;
+    padding-block: 14px 28px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 1.6rem;
+    margin: 0;
+    color: var(--grape);
+    letter-spacing: 0.04em;
+    text-wrap: balance;
+  }
+  .variety { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.08em; }
+
+  .hud {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr;
+    gap: 8px;
+  }
+  .hud > div {
+    border: 2px solid var(--ink);
+    border-radius: 12px;
+    padding: 4px 10px 6px;
+    background: #fff;
+    min-width: 0;
+  }
+  .hud .label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; display: block; }
+  .hud .value {
+    font-family: var(--display);
+    font-size: 1.5rem;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .hud .unit { font-size: 0.8rem; margin-left: 2px; font-family: var(--body); font-weight: 800; }
+  #score { color: var(--grape); }
+  #lives { color: #c0392b; letter-spacing: 0.08em; }
+  #lives .lost { color: var(--line); }
+
+  .stage {
+    position: relative;
+    width: min(100%, max(260px, calc((100dvh - 250px) * 2 / 3)));
+    aspect-ratio: 2 / 3;
+    margin: 0 auto;
+    border: 3px solid var(--ink);
+    border-radius: 20px;
+    overflow: hidden;
+    background: #d9ecee;
+    max-width: 100%;
+  }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+  }
+  .overlay.dim { background: rgba(43, 23, 51, 0.32); }
+  .card {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    padding: 16px 18px 18px;
+    width: min(100%, 300px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .card h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: 1.2rem;
+    margin: 0;
+    line-height: 1.4;
+    text-wrap: balance;
+  }
+  .card p { margin: 0; font-size: 0.88rem; }
+  .rules { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.86rem; }
+  .rules li { display: flex; align-items: center; gap: 8px; }
+  .rules svg { flex: none; }
+  .rules b { font-weight: 800; }
+  .how { font-size: 0.78rem; color: var(--muted); }
+  .result-num {
+    font-family: var(--display);
+    font-size: 2.6rem;
+    line-height: 1.1;
+    color: var(--grape);
+    font-variant-numeric: tabular-nums;
+  }
+  .result-num small { font-family: var(--body); font-weight: 800; font-size: 1rem; margin-left: 4px; color: var(--ink); }
+  .stats { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 0.88rem; }
+  .stats dt { color: var(--muted); }
+  .stats dd { margin: 0; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  button {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    background: var(--grape);
+    color: #fff;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 10px 22px;
+    cursor: pointer;
+    box-shadow: 0 3px 0 var(--ink);
+    transition: transform 0.08s, box-shadow 0.08s;
+  }
+  button:hover { background: #6d3482; }
+  button:active { transform: translateY(3px); box-shadow: 0 0 0 var(--ink); }
+  button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+  .countdown {
+    font-family: var(--display);
+    font-size: 5.5rem;
+    color: #fff;
+    -webkit-text-stroke: 3px var(--ink);
+    paint-order: stroke fill;
+    text-shadow: 0 5px 0 var(--ink);
+    line-height: 1;
+    text-align: center;
+  }
+  .countdown.go { font-size: 3rem; color: var(--gold); }
+  .pop { animation: pop 0.35s ease-out; }
+  @keyframes pop { from { transform: scale(1.6); opacity: 0.3; } to { transform: scale(1); opacity: 1; } }
+
+  .ladder { display: flex; flex-direction: column; gap: 6px; }
+  .ladder-head { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8rem; flex-wrap: wrap; }
+  .ladder-head span:first-child { letter-spacing: 0.1em; color: var(--muted); }
+  #next { font-weight: 800; }
+  .steps { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; }
+  .steps span {
+    text-align: center;
+    font-family: var(--display);
+    font-size: 0.85rem;
+    padding: 4px 0;
+    border-radius: 8px;
+    border: 2px solid var(--line);
+    color: var(--muted);
+    background: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+  .steps span.done { background: var(--grape-soft); border-color: var(--grape-soft); color: var(--grape); }
+  .steps span.now { background: var(--grape); border-color: var(--ink); color: #fff; }
+  footer { font-size: 0.76rem; color: var(--muted); text-align: center; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pop { animation: none; }
+    button { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>ぶどう棚キャッチ</h1>
+    <span class="variety">マスカット・ベーリーA 収穫ゲーム</span>
+  </header>
+
+  <div class="hud" aria-live="polite">
+    <div><span class="label">収穫</span><span class="value" id="score">0</span><span class="unit">房</span></div>
+    <div><span class="label">レベル</span><span class="value" id="level">1</span></div>
+    <div><span class="label">いのち</span><span class="value" id="lives">♥♥♥</span></div>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="field" aria-label="ぶどう棚とかごのゲーム画面"></canvas>
+
+    <div class="overlay dim" id="panel-title">
+      <div class="card">
+        <h2>ぶどう棚から落ちてくる房を、かごで受けとめよう</h2>
+        <ul class="rules">
+          <li>
+            <svg width="22" height="24" viewBox="0 0 22 24" aria-hidden="true"><g fill="#5a2a6b"><circle cx="6" cy="8" r="4"/><circle cx="16" cy="8" r="4"/><circle cx="11" cy="8" r="4"/><circle cx="8" cy="14" r="4"/><circle cx="14" cy="14" r="4"/><circle cx="11" cy="20" r="4"/></g></svg>
+            <span>ぶどう … <b>1房</b></span>
+          </li>
+          <li>
+            <svg width="22" height="24" viewBox="0 0 22 24" aria-hidden="true"><g fill="#d9a531" stroke="#8a5a10" stroke-width="0.8"><circle cx="6" cy="8" r="4"/><circle cx="16" cy="8" r="4"/><circle cx="11" cy="8" r="4"/><circle cx="8" cy="14" r="4"/><circle cx="14" cy="14" r="4"/><circle cx="11" cy="20" r="4"/></g></svg>
+            <span>金のぶどう（完熟）… <b>3房</b></span>
+          </li>
+          <li>
+            <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><ellipse cx="8" cy="6" rx="5" ry="3.5" fill="#ffffff" stroke="#2b1733" stroke-width="0.8"/><ellipse cx="11" cy="13" rx="8" ry="6" fill="#f2c230" stroke="#2b1733" stroke-width="1"/><rect x="8" y="7" width="2.5" height="12" fill="#2b1733"/><rect x="13" y="7" width="2.5" height="12" fill="#2b1733"/></svg>
+            <span>ハチ … 当たると <b>いのちが1つ減る</b></span>
+          </li>
+        </ul>
+        <p>10房とるごとにレベルが1つ上がります。レベル10で100房そろえたら収穫完了です。</p>
+        <p class="how">指でなぞる・マウスを動かす・← →キーでかごが動きます。</p>
+        <button id="start" type="button">収穫スタート</button>
+        <p class="how" id="best-title"></p>
+      </div>
+    </div>
+
+    <div class="overlay" id="panel-count" hidden>
+      <div class="countdown" id="count-num">3</div>
+    </div>
+
+    <div class="overlay dim" id="panel-pause" hidden>
+      <div class="card">
+        <h2>ひと休み中</h2>
+        <p>画面を離れたので一時停止しました。</p>
+        <button id="resume" type="button">続ける</button>
+      </div>
+    </div>
+
+    <div class="overlay dim" id="panel-result" hidden>
+      <div class="card">
+        <h2 id="result-title">収穫おわり</h2>
+        <div class="result-num"><span id="result-score">0</span><small>房</small></div>
+        <dl class="stats">
+          <dt>とどいたレベル</dt><dd id="result-level">1</dd>
+          <dt>最高記録</dt><dd id="result-best">0房</dd>
+        </dl>
+        <p id="result-note"></p>
+        <button id="again" type="button">もう一度</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="ladder" aria-label="レベル">
+    <div class="ladder-head"><span>レベル 1〜10</span><span id="next">あと10房でレベル2</span></div>
+    <div class="steps" id="steps"></div>
+  </section>
+
+  <footer>マスカット・ベーリーA の収穫どきは 9月〜10月です。</footer>
+</div>
+
+<script>
+(() => {
+  const W = 360, H = 540;
+  const GROUND = H - 26;
+  const MAX_LEVEL = 10;
+  const PER_LEVEL = 10;
+  const GOAL = MAX_LEVEL * PER_LEVEL;
+
+  const cv = document.getElementById('field');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  const $ = (id) => document.getElementById(id);
+  const panels = { title: $('panel-title'), count: $('panel-count'), pause: $('panel-pause'), result: $('panel-result') };
+
+  let mode = 'title';
+  let score = 0, shownScore = 0, lives = 3;
+  let items = [], floaters = [];
+  let spawnTimer = 0, flash = 0, clock = 0;
+  const basket = { x: W / 2, targetX: W / 2, w: 74, y: GROUND - 34 };
+  const keys = { left: false, right: false };
+
+  let best = 0;
+  try { best = parseInt(localStorage.getItem('budou-catch-best') || '0', 10) || 0; } catch (e) {}
+
+  // Fixed layout for the vine leaves on the trellis
+  let seed = 7;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const leaves = [];
+  for (let i = 0; i < 30; i++) {
+    leaves.push({ x: i * 12.5 + rand() * 10, y: 10 + rand() * 30, r: 13 + rand() * 9, shade: rand() });
+  }
+  const hanging = [44, 112, 180, 250, 318];
+
+  const level = () => Math.min(MAX_LEVEL, Math.floor(score / PER_LEVEL) + 1);
+
+  // ---------- sizing ----------
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    if (!r.width) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    cv.width = Math.round(r.width * dpr);
+    cv.height = Math.round(r.height * dpr);
+    const s = r.width / W;
+    ctx.setTransform(dpr * s, 0, 0, dpr * s, 0, 0);
+    draw();
+  }
+  new ResizeObserver(resize).observe(cv);
+
+  // ---------- drawing ----------
+  function drawBackground() {
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, '#bfdfe4');
+    sky.addColorStop(0.65, '#eef2df');
+    sky.addColorStop(1, '#f3ecd6');
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, W, H);
+
+    // far hills (鈴鹿の山なみ)
+    ctx.fillStyle = '#a9c3b4';
+    ctx.beginPath();
+    ctx.moveTo(0, 410);
+    ctx.bezierCurveTo(80, 360, 150, 395, 220, 370);
+    ctx.bezierCurveTo(280, 350, 330, 380, W, 365);
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+    ctx.fillStyle = '#8fb27a';
+    ctx.beginPath();
+    ctx.moveTo(0, 455);
+    ctx.bezierCurveTo(100, 425, 200, 470, W, 440);
+    ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
+
+    // ground
+    ctx.fillStyle = '#6f9a4f';
+    ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = '#5c8540';
+    for (let x = 4; x < W; x += 14) ctx.fillRect(x, GROUND + 6 + (x % 3) * 3, 6, 2);
+
+    // trellis posts and wires (ぶどう棚)
+    ctx.strokeStyle = '#7a5434';
+    ctx.lineWidth = 5;
+    [18, W - 18].forEach((x) => { ctx.beginPath(); ctx.moveTo(x, 30); ctx.lineTo(x, GROUND); ctx.stroke(); });
+    ctx.strokeStyle = 'rgba(70,60,50,0.55)';
+    ctx.lineWidth = 1.2;
+    for (let y = 18; y <= 50; y += 16) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+    // leaves
+    leaves.forEach((l) => {
+      ctx.fillStyle = l.shade < 0.33 ? '#4f7a3a' : l.shade < 0.66 ? '#5f8d42' : '#6e9d4c';
+      leaf(l.x, l.y, l.r);
+    });
+
+    // bunches still hanging on the trellis
+    hanging.forEach((x, i) => drawGrape(x, 66 + (i % 2) * 6, 0.8, false));
+  }
+
+  function leaf(x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x - r * 0.45, y, r * 0.6, 0, Math.PI * 2);
+    ctx.arc(x + r * 0.45, y, r * 0.6, 0, Math.PI * 2);
+    ctx.arc(x, y + r * 0.35, r * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const ROWS = [4, 3, 3, 2, 1];
+  function drawGrape(x, y, s, gold) {
+    const r = 5.2 * s;
+    ctx.strokeStyle = '#6b4a2a';
+    ctx.lineWidth = 2 * s;
+    ctx.beginPath(); ctx.moveTo(x, y - 14 * s); ctx.lineTo(x + 2 * s, y - 24 * s); ctx.stroke();
+    ctx.fillStyle = gold ? '#7f9a3a' : '#5f8d42';
+    ctx.beginPath(); ctx.ellipse(x + 8 * s, y - 20 * s, 6 * s, 3.5 * s, -0.5, 0, Math.PI * 2); ctx.fill();
+
+    const base = gold ? '#d9a531' : '#5a2a6b';
+    const shine = gold ? '#ffe7a0' : '#9c6bb0';
+    ROWS.forEach((n, row) => {
+      const cy = y - 10 * s + row * r * 1.55;
+      for (let k = 0; k < n; k++) {
+        const cx = x + (k - (n - 1) / 2) * r * 1.75;
+        ctx.fillStyle = base;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = shine;
+        ctx.beginPath(); ctx.arc(cx - r * 0.35, cy - r * 0.35, r * 0.3, 0, Math.PI * 2); ctx.fill();
+      }
+    });
+    if (gold) {
+      ctx.strokeStyle = 'rgba(255,240,170,0.9)';
+      ctx.lineWidth = 1.5;
+      const t = clock * 4;
+      for (let i = 0; i < 4; i++) {
+        const a = t + i * Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * 20, y + Math.sin(a) * 20);
+        ctx.lineTo(x + Math.cos(a) * 25, y + Math.sin(a) * 25);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawBee(x, y, t) {
+    const flap = Math.sin(t * 40) * 0.5 + 0.5;
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.strokeStyle = '#2b1733';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.ellipse(x - 4, y - 9 - flap * 2, 7, 4 + flap * 2, -0.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.ellipse(x + 5, y - 9 - flap * 2, 7, 4 + flap * 2, 0.4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+    ctx.save();
+    ctx.beginPath(); ctx.ellipse(x, y, 14, 10, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#f2c230'; ctx.fill();
+    ctx.clip();
+    ctx.fillStyle = '#2b1733';
+    ctx.fillRect(x - 5, y - 10, 4, 20);
+    ctx.fillRect(x + 3, y - 10, 4, 20);
+    ctx.restore();
+    ctx.strokeStyle = '#2b1733'; ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.ellipse(x, y, 14, 10, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = '#2b1733';
+    ctx.beginPath(); ctx.arc(x - 9, y - 2, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + 14, y); ctx.lineTo(x + 19, y + 1); ctx.lineTo(x + 14, y + 3); ctx.fill();
+  }
+
+  function drawBasket() {
+    const { x, y, w } = basket;
+    const h = 34;
+    // grapes piled in the basket
+    const pile = Math.min(score, 9);
+    for (let i = 0; i < pile; i++) {
+      const px = x + (i - (pile - 1) / 2) * 7;
+      const py = y + 2 - Math.sin((i + 0.5) / pile * Math.PI) * 7;
+      ctx.fillStyle = '#5a2a6b';
+      ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = '#b07a44';
+    ctx.strokeStyle = '#2b1733';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y);
+    ctx.lineTo(x + w / 2, y);
+    ctx.lineTo(x + w * 0.4, y + h);
+    ctx.lineTo(x - w * 0.4, y + h);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(80,45,20,0.55)';
+    ctx.lineWidth = 1.5;
+    for (let i = 1; i < 4; i++) {
+      const yy = y + (h / 4) * i;
+      const half = w / 2 - (w * 0.1) * (i / 4);
+      ctx.beginPath(); ctx.moveTo(x - half, yy); ctx.lineTo(x + half, yy); ctx.stroke();
+    }
+    ctx.fillStyle = '#8a5a32';
+    ctx.strokeStyle = '#2b1733';
+    ctx.lineWidth = 2;
+    roundRect(x - w / 2 - 4, y - 5, w + 8, 8, 4);
+    ctx.fill(); ctx.stroke();
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawFloaters() {
+    ctx.textAlign = 'center';
+    floaters.forEach((f) => {
+      ctx.globalAlpha = Math.max(0, Math.min(1, f.life));
+      ctx.font = `${f.size}px "Dela Gothic One", sans-serif`;
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#ffffff';
+      ctx.strokeText(f.text, f.x, f.y);
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function draw() {
+    drawBackground();
+    items.forEach((it) => {
+      if (it.kind === 'bee') drawBee(it.x, it.y, it.t);
+      else drawGrape(it.x, it.y, 1, it.kind === 'gold');
+    });
+    drawBasket();
+    drawFloaters();
+    if (flash > 0) {
+      ctx.fillStyle = `rgba(200,40,40,${flash * 0.5})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
+
+  // ---------- game logic ----------
+  function spawn() {
+    const L = level();
+    const beeChance = Math.min(0.12 + (L - 1) * 0.03, 0.4);
+    const roll = Math.random();
+    const kind = roll < beeChance ? 'bee' : roll < beeChance + 0.07 ? 'gold' : 'grape';
+    const x = 28 + Math.random() * (W - 56);
+    const speed = 120 + (L - 1) * 24 + Math.random() * 30;
+    items.push({
+      kind, x, baseX: x, y: 56,
+      vy: kind === 'bee' ? speed * 0.85 : speed,
+      t: Math.random() * 6,
+      amp: kind === 'bee' ? 18 + Math.random() * 30 : 0,
+    });
+  }
+
+  function addFloater(text, x, y, color, size = 20) {
+    floaters.push({ text, x, y, color, size, life: 1 });
+  }
+
+  function update(dt) {
+    clock += dt;
+    if (keys.left) basket.targetX -= 380 * dt;
+    if (keys.right) basket.targetX += 380 * dt;
+    const half = basket.w / 2 + 4;
+    basket.targetX = Math.max(half, Math.min(W - half, basket.targetX));
+    basket.x += (basket.targetX - basket.x) * Math.min(1, dt * 16);
+
+    floaters.forEach((f) => { f.y -= 40 * dt; f.life -= dt * 1.1; });
+    floaters = floaters.filter((f) => f.life > 0);
+    flash = Math.max(0, flash - dt * 1.5);
+
+    if (mode !== 'play') return;
+
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) {
+      spawn();
+      spawnTimer = Math.max(0.36, 1.0 - (level() - 1) * 0.07) * (0.75 + Math.random() * 0.5);
+    }
+
+    const top = basket.y;
+    for (const it of items) {
+      it.t += dt;
+      it.y += it.vy * dt;
+      if (it.kind === 'bee') it.x = Math.max(20, Math.min(W - 20, it.baseX + Math.sin(it.t * 3) * it.amp));
+      const hitY = it.y + 14 >= top && it.y - 10 <= top + 18;
+      if (hitY && Math.abs(it.x - basket.x) <= basket.w / 2 + 6) {
+        it.done = true;
+        catchItem(it);
+        if (mode !== 'play') break;
+      } else if (it.y > H + 30) {
+        it.done = true;
+      }
+    }
+    items = items.filter((it) => !it.done);
+  }
+
+  function catchItem(it) {
+    const before = level();
+    if (it.kind === 'bee') {
+      lives -= 1;
+      flash = 1;
+      addFloater('いたっ！', it.x, basket.y - 16, '#c0392b');
+      updateHud();
+      if (lives <= 0) finish(false);
+      return;
+    }
+    const gain = it.kind === 'gold' ? 3 : 1;
+    score = Math.min(GOAL, score + gain);
+    addFloater(gain === 3 ? '+3 完熟' : '+1', it.x, basket.y - 16, gain === 3 ? '#b07a10' : '#5a2a6b');
+    const after = level();
+    if (after > before) addFloater(`レベル ${after}！`, W / 2, H / 2 - 40, '#2b1733', 30);
+    updateHud();
+    if (score >= GOAL) finish(true);
+  }
+
+  // ---------- HUD ----------
+  const steps = $('steps');
+  for (let i = 1; i <= MAX_LEVEL; i++) {
+    const s = document.createElement('span');
+    s.textContent = String(i);
+    steps.appendChild(s);
+  }
+
+  function updateHud() {
+    const L = level();
+    $('level').textContent = String(L);
+    $('lives').innerHTML = [1, 2, 3].map((n) => `<span class="${n <= lives ? '' : 'lost'}">♥</span>`).join('');
+    [...steps.children].forEach((el, i) => {
+      const n = i + 1;
+      el.className = n === L ? 'now' : n < L ? 'done' : '';
+    });
+    const nextAt = L * PER_LEVEL;
+    $('next').textContent = L < MAX_LEVEL
+      ? `あと${nextAt - score}房でレベル${L + 1}`
+      : `あと${GOAL - score}房で収穫完了`;
+    $('best-title').textContent = best > 0 ? `最高記録：${best}房` : '';
+  }
+
+  // The score counts up one at a time: 1, 2, 3, ...
+  setInterval(() => {
+    if (shownScore < score) shownScore += 1;
+    else if (shownScore > score) shownScore = score;
+    $('score').textContent = String(shownScore);
+  }, 45);
+
+  // ---------- flow ----------
+  function show(name) {
+    Object.entries(panels).forEach(([k, el]) => { el.hidden = k !== name; });
+  }
+
+  let countTimers = [];
+  function startGame() {
+    score = 0; shownScore = 0; lives = 3;
+    items = []; floaters = []; spawnTimer = 0.4; flash = 0;
+    basket.x = basket.targetX = W / 2;
+    updateHud();
+    $('score').textContent = '0';
+    mode = 'count';
+    show('count');
+    const num = $('count-num');
+    const seq = ['3', '2', '1', 'スタート！'];
+    countTimers.forEach(clearTimeout);
+    countTimers = seq.map((label, i) => setTimeout(() => {
+      num.textContent = label;
+      num.classList.toggle('go', i === seq.length - 1);
+      num.classList.remove('pop'); void num.offsetWidth; num.classList.add('pop');
+      if (i === seq.length - 1) {
+        mode = 'play';
+        countTimers.push(setTimeout(() => { if (mode === 'play') show(null); }, 600));
+      }
+    }, i * 900));
+  }
+
+  function finish(cleared) {
+    mode = 'over';
+    items = [];
+    if (score > best) {
+      best = score;
+      try { localStorage.setItem('budou-catch-best', String(best)); } catch (e) {}
+    }
+    $('result-title').textContent = cleared ? '収穫完了！' : '収穫おわり';
+    $('result-score').textContent = String(score);
+    $('result-level').textContent = `${level()} / ${MAX_LEVEL}`;
+    $('result-best').textContent = `${best}房`;
+    $('result-note').textContent = cleared
+      ? 'レベル10まで全部とりきりました。ジュースにもワインにもできる量です。'
+      : score >= 50 ? 'たくさんとれました。あと少しでレベル10です。' : 'ハチをよけながら、金のぶどうをねらってみましょう。';
+    updateHud();
+    setTimeout(() => show('result'), 500);
+  }
+
+  function pause() {
+    if (mode !== 'play') return;
+    mode = 'paused';
+    show('pause');
+  }
+
+  $('start').addEventListener('click', startGame);
+  $('again').addEventListener('click', startGame);
+  $('resume').addEventListener('click', () => { mode = 'play'; show(null); last = performance.now(); });
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+  // ---------- input ----------
+  function pointerTo(e) {
+    const r = cv.getBoundingClientRect();
+    basket.targetX = ((e.clientX - r.left) / r.width) * W;
+  }
+  cv.addEventListener('pointerdown', (e) => { pointerTo(e); cv.setPointerCapture?.(e.pointerId); });
+  cv.addEventListener('pointermove', pointerTo);
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'a') { keys.left = true; e.preventDefault(); }
+    if (e.key === 'ArrowRight' || e.key === 'd') { keys.right = true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'a') keys.left = false;
+    if (e.key === 'ArrowRight' || e.key === 'd') keys.right = false;
+  });
+
+  // ---------- loop ----------
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    if (mode !== 'paused') update(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  updateHud();
+  resize();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(draw);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
