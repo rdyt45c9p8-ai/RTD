@@ -209,6 +209,19 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
 .dex{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
 .dex span{font-size:11.5px;padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
 .dex span.on{color:var(--fg);border-color:rgba(228,180,94,.6);background:rgba(228,180,94,.08)}
+.tut{position:absolute;z-index:10;left:50%;transform:translateX(-50%);top:calc(var(--hud-h,70px) + 12px);width:min(430px,calc(100% - 32px));padding:14px 16px 12px;border-color:var(--brass)}
+.tut-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+.tut-h span{font-family:var(--f-pixel);color:var(--brass);font-size:14px;font-variant-numeric:tabular-nums}
+.tut-h .linkish{font-size:12px;color:var(--muted)}
+.tut b{display:block;font-family:var(--f-display);font-weight:400;font-size:18px;letter-spacing:.04em}
+.tut p{margin:6px 0 10px;font-size:13.5px;line-height:1.7}
+.tut-f{display:flex;align-items:center;gap:6px}
+.tut-f span{flex:1;font-size:12.5px;color:var(--muted)}
+.tut-f span.ok{color:var(--peace);font-weight:700}
+.tut-ring{position:absolute;z-index:10;pointer-events:none;border:2px solid var(--brass);border-radius:10px;box-shadow:0 0 0 4px rgba(228,180,94,.25),0 0 18px rgba(228,180,94,.6);animation:tutp 1.2s ease-in-out infinite}
+@keyframes tutp{50%{box-shadow:0 0 0 8px rgba(228,180,94,.1),0 0 26px rgba(228,180,94,.8)}}
+@media (max-width:760px){ .tut{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 150px)} .tut p{font-size:13px} }
+@media (prefers-reduced-motion:reduce){ .tut-ring{animation:none} }
 .banner{position:absolute;z-index:6;left:50%;top:30%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:0;padding-inline:16px}
 .banner.show{animation:ban 3.2s ease-out forwards}
 .banner small{display:block;font-family:var(--f-pixel);font-size:18px;color:var(--fg);letter-spacing:.2em;text-shadow:0 2px 8px rgba(0,0,0,.8)}
@@ -229,7 +242,7 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
 .intro li{display:grid;grid-template-columns:26px 1fr;gap:6px}
 .intro li span{font-family:var(--f-pixel);color:var(--brass);font-size:16px}
 .intro .acts .btn{padding:9px 14px;font-size:14px}
-.intro .btn.go{background:var(--brass);border-color:var(--brass);color:#1d1508;font-weight:700}
+.btn.go{background:var(--brass);border-color:var(--brass);color:#1d1508;font-weight:700}
 
 @media (max-width:760px){
   .brand{display:none}
@@ -373,6 +386,13 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
   <div class="log" id="log" aria-live="polite"></div>
   <div class="banner" id="banner"></div>
   <div class="toast" id="toast"></div>
+  <div class="tut-ring" id="tutRing" hidden></div>
+  <div class="plate tut" id="tut" role="dialog" aria-labelledby="tutTitle" aria-live="polite" hidden>
+    <div class="tut-h"><span id="tutNo"></span><button class="linkish" type="button" id="tutQuit">チュートリアルをやめる</button></div>
+    <b id="tutTitle"></b>
+    <p id="tutText"></p>
+    <div class="tut-f"><span id="tutState"></span><button class="btn" type="button" id="tutBack">もどる</button><button class="btn go" type="button" id="tutNext">次へ</button></div>
+  </div>
   <button class="btn photoExit" type="button" id="photoExit" hidden>画面の表示を戻す</button>
   <div class="achpop" id="achPop" aria-live="polite"></div>
 
@@ -406,7 +426,8 @@ details.nhist ol{margin:6px 0 0;padding-left:1.3em;color:var(--fg)}
         <li><span>5</span><div>最初に生み出した国があなたの国です。画面下の命令ボタンで攻めたり、開拓したりできます。ほかの国と同盟を組むと、攻められたときに助けに来てくれます。</div></li>
       </ol>
       <div class="acts">
-        <button class="btn go" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
+        <button class="btn go" type="button" id="startTut">チュートリアルで遊び方を覚える</button>
+        <button class="btn" type="button" id="startAfrica">人類発祥の地アフリカから始める</button>
         <button class="btn" type="button" id="startFree">好きな場所に置く</button>
       </div>
       <p class="scen-h">シナリオで始める</p>
@@ -3089,10 +3110,77 @@ $('menu').addEventListener('change', e => {
   const k = e.target.dataset.cfgsel; if (!k) return;
   CFG[k] = +e.target.value; applyCfg(k); renderMenu();
 });
+// ===== チュートリアル（13ステップ） =====
+const q$ = sel => document.querySelector(sel);
+const TUT = [
+  { t:'ようこそ', d:'地球文明記へようこそ。これから13のステップで遊び方を案内します。案内のとおりに操作すると、自動で次へ進みます。' },
+  { t:'地球を回す', d:'画面をドラッグして（スマホは指でなぞって）、地球を回してみましょう。',
+    enter(){ this.l0 = camS.lon; this.a0 = camS.lat; }, done(){ return Math.abs(wrapLon(camS.lon - this.l0)) + Math.abs(camS.lat - this.a0) > 12; } },
+  { t:'近づく', d:'ホイールかピンチ、または道具の「近く」ボタンで、地球に近づきましょう。', target:() => $('zoomIn'),
+    enter(){ this.h0 = camS.alt; }, done(){ return camS.alt < this.h0*.6 || camS.alt < 60; } },
+  { t:'人類を生み出す', d:'道具の「人類」を選んで、陸地をタップしましょう。最初のテントが建ち、それがあなたの国になります。', target:() => q$('[data-tool="human"]'),
+    done(){ return started && isMine(myNation); } },
+  { t:'時間を早める', d:'上の「3倍」を押して、時間を早く進めましょう。「停止」で止めることもできます。', target:() => q$('[data-speed="3"]'),
+    done(){ return speed >= 3; } },
+  { t:'時代を進める', d:'人が増えると、テントは村や町に育ちます。待ちきれないときは「次の時代へ」で時代を進められます。押してみましょう。', target:() => $('nextEra'),
+    enter(){ this.e0 = eraIdx; }, done(){ return eraIdx > this.e0 || eraIdx >= ERAS.length - 1; } },
+  { t:'街を調べる', d:'道具の「見る」を選んで、自分の街をタップしましょう。パネルに、人口や名所などの街のようすが出ます。', target:() => q$('[data-tool="look"]'),
+    done(){ const c = sel && sel.type === 'city' && sById.get(sel.id); return !!c && c.nation === myNation; } },
+  { t:'街を開拓する', d:'画面下の命令バーで「開拓」を押してから、自分の街の近くの陸地をタップしましょう。新しい街ができます。', target:() => q$('[data-cmd="cmdSettle"]'),
+    enter(){ this.c0 = myCount(); }, done(){ return myCount() > this.c0; } },
+  { t:'ライバルの国をつくる', d:'道具の「建国」を選び、特化（貿易・防衛・戦争）を選んでから、自分の国から離れた陸地をタップしましょう。', target:() => q$('[data-tool="nation"]'),
+    enter(){ this.n0 = N.length; }, done(){ return N.length > this.n0; } },
+  { t:'ほかの国と付き合う', d:'「見る」でライバルの国の土地をタップしましょう。パネルから、宣戦布告や同盟の申し込みができます。', target:() => innerWidth <= 760 && !$('side').classList.contains('open') ? $('sideToggle') : q$('[data-tool="look"]'),
+    done(){ return !!(sel && sel.type === 'nation' && sel.id !== myNation && N[sel.id] && N[sel.id].alive); } },
+  { t:'天災を起こす', d:'道具の「天災」を選ぶと、隕石・地震・恵みの雨・空の現象など、13種類から選べます。どれかを起こしてみましょう。', target:() => q$('[data-tool="meteor"]'),
+    enter(){ this.d0 = disCount; }, done(){ return disCount > this.d0; } },
+  { t:'メニューを開く', d:'上の「メニュー」から、図鑑・実績・目標・ランキング・設定・保存などが開けます。開いてみましょう。', target:() => $('menuBtn'),
+    done(){ return !$('menu').hidden; } },
+  { t:'これで準備完了', d:'おつかれさまでした。図鑑の500の要素や実績を集めながら、テントから「銀河の盟主」をめざしましょう。遊び方はメニューの「遊び方」タブでいつでも読めます。' },
+];
+let tutI = -1, tutOkAt = 0;
+function tutShow(i){
+  tutI = i; tutOkAt = 0;
+  const st = TUT[i]; if (st.enter) st.enter();
+  $('tut').hidden = false;
+  $('tutNo').textContent = `${i + 1} / ${TUT.length}`;
+  $('tutTitle').textContent = st.t; $('tutText').textContent = st.d;
+  $('tutBack').hidden = i === 0;
+  const el = st.target && st.target(); if (el && el.scrollIntoView) try { el.scrollIntoView({ block:'nearest', inline:'center' }); } catch (e) {}
+  tutTick();
+}
+function startTutorial(){
+  closeMenu(); $('intro').hidden = true; setPhoto(false);
+  tutShow(0);
+}
+function endTutorial(done){
+  tutI = -1; $('tut').hidden = true; $('tutRing').hidden = true;
+  if (done){ try { localStorage.setItem('chikyu-bunmeiki-tut', '1'); } catch (e) {} toast('チュートリアルを終えました'); }
+}
+function tutTick(){
+  if (tutI < 0) return;
+  const st = TUT[tutI], ok = !st.done || st.done();
+  const last = tutI === TUT.length - 1;
+  $('tutState').textContent = !st.done ? '' : ok ? 'できた！' : 'やってみよう';
+  $('tutState').className = ok && st.done ? 'ok' : '';
+  $('tutNext').textContent = last ? 'おわる' : ok ? '次へ' : 'とばす';
+  if (ok && st.done){ if (!tutOkAt) tutOkAt = performance.now(); else if (performance.now() - tutOkAt > 1200){ tutShow(tutI + 1); return; } }
+  const el = st.target && st.target(), ring = $('tutRing');
+  const r = el && el.getBoundingClientRect();
+  if (!r || r.width === 0 || ok){ ring.hidden = true; return; }
+  ring.hidden = false;
+  Object.assign(ring.style, { left:(r.left - 5) + 'px', top:(r.top - 5) + 'px', width:(r.width + 10) + 'px', height:(r.height + 10) + 'px' });
+}
+setInterval(tutTick, 250);
+$('tutNext').addEventListener('click', () => { if (tutI < 0) return; if (tutI >= TUT.length - 1) endTutorial(true); else tutShow(tutI + 1); });
+$('tutBack').addEventListener('click', () => { if (tutI > 0) tutShow(tutI - 1); });
+$('tutQuit').addEventListener('click', () => endTutorial(false));
+$('startTut').addEventListener('click', startTutorial);
 // メニュー（遊び方・年表・実績・保存）
 let menuTab = 'help', logFilter = 'all', resetArm = false;
 const SAVE_KEY = 'chikyu-bunmeiki-save';
 const HELP_HTML = `
+<div class="acts" style="margin:0 0 6px"><button class="btn go" type="button" data-tutstart="1">チュートリアルをはじめる</button></div>
 <h3>基本の操作</h3>
 <ol><li>ドラッグで地球を回します。</li><li>ホイールかピンチで近づいたり離れたりします。近づくと視点が傾いて街並みが見えます。</li><li>「見る」を選んで国や街をタップすると、右のパネルに詳しく出ます。</li></ol>
 <h3>神さまの道具</h3>
@@ -3156,6 +3244,7 @@ $('menu').addEventListener('click', e => {
   else if (b.dataset.rank){ rankBy = b.dataset.rank; renderMenu(); }
   else if (b.dataset.cfg){ const k = b.dataset.cfg; CFG[k] = !CFG[k]; applyCfg(k); renderMenu(); }
   else if (b.dataset.photo) setPhoto(true);
+  else if (b.dataset.tutstart) startTutorial();
   else if (b.dataset.jump){ const c = sById.get(+b.dataset.jump); if (c){ closeMenu(); sel = { type:'city', id:c.id }; focusOn(c.x, c.y, 30); openSide(); } }
   else if (b.dataset.mpeace){ const [a, c] = b.dataset.mpeace.split('-').map(Number); const w = warOf(a, c); if (w){ makePeace(w); stat.peace++; } renderMenu(); }
   else if (b.dataset.reset){ if (resetArm) location.reload(); else { resetArm = true; renderMenu(); } }
