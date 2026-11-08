@@ -362,6 +362,16 @@
   #gauges i { display: block; height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
   #gauges b { display: block; height: 100%; background: var(--signal); }
   #gauges b#dmgBar { background: var(--mint); }
+  #mpHud { margin-top: 6px; pointer-events: auto; color: var(--text); font: inherit; font-weight: 700; cursor: pointer; border-color: #0be881; }
+  #mpHud::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #0be881; align-self: center; }
+  #mpHud.off::before { background: #b2bec3; }
+  #mpHud small { color: var(--muted); font-weight: 400; font-size: 11px; }
+  #mpHud[hidden], #tChat[hidden] { display: none; }
+  .mp-log { max-height: 220px; overflow-y: auto; display: grid; gap: 6px; padding: 8px; border-radius: 12px; background: rgba(255,255,255,.05); margin-bottom: 8px; }
+  .mp-msg { display: grid; gap: 1px; }
+  .mp-msg b { font-size: 12px; color: #0be881; }
+  .mp-msg.me b { color: var(--signal); }
+  .mp-msg span { overflow-wrap: anywhere; }
   #tools {
     position: absolute; right: calc(10px + env(safe-area-inset-right, 0px)); top: calc(172px + env(safe-area-inset-top, 0px));
     display: flex; flex-direction: column; gap: 8px; pointer-events: auto;
@@ -465,6 +475,7 @@
 <div id="hud" hidden>
   <div class="tl">
     <div class="chip"><span id="money">0円</span><span id="clock">1日目 08:00</span><i class="stam" title="体力"><b id="stamBar"></b></i></div>
+    <button id="mpHud" class="chip" type="button" hidden><span id="mpHudText">オンライン</span><small>T でチャット</small></button>
     <div id="jobPanel" hidden>
       <div class="jp-head"><b id="jpTitle"></b><span id="jpCount"></span></div>
       <div id="jpTask"></div>
@@ -477,7 +488,7 @@
   <div id="hint" hidden></div>
   <div id="prompt" hidden role="button" tabindex="0"><kbd>E</kbd><span id="promptText"></span></div>
   <div id="speedo" hidden><b id="spd">0</b><small>km/h</small><div id="gauges" hidden><span><em id="fuelLabel">⛽</em><i><b id="fuelBar"></b></i></span><span>🔧<i><b id="dmgBar"></b></i></span></div></div>
-  <div id="tools"><button class="tbtn" id="tHorn" type="button"><span>📯</span>ホーン</button><button class="tbtn" id="tLight" type="button"><span>💡</span>ライト</button><button class="tbtn" id="tCam" type="button"><span>🎥</span>カメラ</button><button class="tbtn" id="tPhoto" type="button"><span>📷</span>写真</button></div>
+  <div id="tools"><button class="tbtn" id="tHorn" type="button"><span>📯</span>ホーン</button><button class="tbtn" id="tLight" type="button"><span>💡</span>ライト</button><button class="tbtn" id="tCam" type="button"><span>🎥</span>カメラ</button><button class="tbtn" id="tPhoto" type="button"><span>📷</span>写真</button><button class="tbtn" id="tChat" type="button" hidden><span>💬</span>みんな</button></div>
   <div id="joy"><div id="joyKnob"></div></div>
   <div id="btns">
     <button class="rbtn" id="bPhone" type="button">スマホ<small class="kb">M</small></button>
@@ -1335,6 +1346,7 @@ function onKeyPress(k) {
   if (!running) return;
   if (!openScreen && !edit && !inHome && running) {
     if (k === 'q') { cycleGun(); return; }
+    if (k === 't' && MP.room) { openMulti(); return; }
     if (k === 'r' && gunCur) { reloadGun(); return; }
   }
   if (edit && !openScreen) {
@@ -5203,6 +5215,7 @@ function updateExtras(dt) {
   animateInterior(dt);
   updateFriends(dt);
   gunTick(dt);
+  mpTick(dt);
   if (inHome) { updateGuestInside(dt); updateEdit(); }
   cheatTick();
   animateHome(dt);
@@ -7327,18 +7340,19 @@ function fireGun() {
   const fwd = new THREE.Vector3(); camera.getWorldDirection(fwd);
   const moving = Math.hypot(readMove().x, readMove().y) > 0.1;
   const o = camera.position.clone().addScaledVector(fwd, 4.4);
-  let hitAny = null;
+  let hitAny = null, lastHp = null;
   for (let k = 0; k < d.pellets; k++) {
     const sp = d.spread * (moving ? 1.8 : 1);
     const dir = fwd.clone().add(new THREE.Vector3(rnd(-sp, sp), rnd(-sp, sp), rnd(-sp, sp))).normalize();
     const h = castShot(o, dir);
-    const hp = o.clone().addScaledVector(dir, h.t);
+    const hp = o.clone().addScaledVector(dir, h.t); lastHp = hp;
     const geo = new THREE.BufferGeometry().setFromPoints([mz, hp]);
     const line = new THREE.Line(geo, tracerMat); scene.add(line); shotFx.push({ m: line, t: 0.06 });
     if (h.kind !== 'air') { const s = new THREE.Mesh(sparkGeo, sparkMat); s.position.copy(hp); scene.add(s); shotFx.push({ m: s, t: 0.15 }); }
     if (h.kind === 'target') { hitTarget(h.tg, h.ring, d); hitAny = h; }
   }
   if (hitAny) tone(1200, 0.05, 'square', 0.03);
+  if (lastHp) mpShot(mz, lastHp);
   cam.pitch = clamp(cam.pitch - d.kick * (gunCur === 'm249' && gunAimP > 0 ? 0.6 : 1), 0.05, 1.2); cam.yaw += rnd(-1, 1) * d.kick * 0.4; cam.shake = Math.max(cam.shake, d.kick * 2);
   if (gunMag[gunCur] <= 0) reloadGun();
 }
@@ -7567,6 +7581,239 @@ $('#bFire').addEventListener('pointerdown', e => { initAudio(); gunFire = true; 
 for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('#bFire').addEventListener(ev, () => { gunFire = false; });
 $('#bReload').addEventListener('click', () => reloadGun());
 $('#bGun').addEventListener('click', () => { initAudio(); if (!openScreen) cycleGun(); });
+
+
+/* =========================================================
+   みんなで遊ぶ（同じページを開いている人と、同じ町に集まる）
+   ========================================================= */
+const MP = { room: null, user: null, remotes: new Map(), names: {}, sentAt: 0, lastPres: '', shotAt: 0, log: [], connected: false, canChat: true };
+const r2 = v => Math.round(v * 100) / 100;
+const myLoc = () => inHome ? 'home' : inRange ? 'range' : 'town';
+const myNick = () => (state.nick || MP.meName || 'プレイヤー').slice(0, 16);
+async function initMulti() {
+  if (!window.claude || typeof window.claude.use !== 'function') return;
+  let room = null, user = null;
+  try { [room, user] = await Promise.all([window.claude.use('room'), window.claude.use('user')]); } catch (e) { return; }
+  if (!room) return;
+  MP.room = room; MP.user = user;
+  if (user) { try { const me = await user.me(); MP.meName = me.name || ''; } catch (e) { /* ignore */ } }
+  room.onPeers(ch => {
+    for (const p of ch.left) removeRemote(p.peer);
+    for (const p of [...ch.joined, ...ch.updated]) if (!p.sameTab && p.kind === 'viewer') upsertRemote(p);
+    resolveNames(); mpHud();
+  }, () => { MP.room = null; for (const k of [...MP.remotes.keys()]) removeRemote(k); mpHud(); });
+  room.on('chat', onChat);
+  room.on('shot', onShot);
+  room.onConnection(c => { MP.connected = c; mpHud(); });
+  mpHud();
+}
+async function resolveNames() {
+  if (!MP.user) return;
+  const ids = [...MP.remotes.values()].map(r => r.by).filter(Boolean);
+  if (!ids.length) return;
+  try { const ps = await MP.user.profiles(ids); for (const id of ids) MP.names[id] = ps[id] && ps[id].name || ''; } catch (e) { /* ignore */ }
+  for (const r of MP.remotes.values()) refreshLabel(r);
+}
+const remoteName = r => (r.pres && typeof r.pres.nm === 'string' && r.pres.nm.trim() ? r.pres.nm.trim().slice(0, 16) : '') || (r.by && MP.names[r.by]) || 'プレイヤー';
+const num = (v, d = 0) => typeof v === 'number' && isFinite(v) ? v : d;
+
+function upsertRemote(p) {
+  let r = MP.remotes.get(p.peer);
+  if (!r) { r = { peer: p.peer, by: p.by, x: 0, z: 0, h: 0, t: 0, person: null, car: null, carKey: '', looks: '', label: null, labelText: '', bubble: null, bubbleT: 0, gunId: null, fresh: true }; MP.remotes.set(p.peer, r); }
+  r.by = p.by; r.pres = p.presence || {};
+  const q = r.pres;
+  r.tx = num(q.x, r.x); r.tz = num(q.z, r.z); r.th = num(q.h, r.h);
+  if (r.fresh && q.x != null) { r.x = r.tx; r.z = r.tz; r.h = r.th; r.fresh = false; }
+  const looks = `${num(q.sh, 0xffc928)}_${num(q.pt, 0x2b3a67)}`;
+  if (looks !== r.looks) {
+    r.looks = looks;
+    if (r.person) scene.remove(r.person.g);
+    r.person = makePerson({ shirt: num(q.sh, 0xffc928), pants: num(q.pt, 0x2b3a67), hair: 0x2a1d14 });
+    scene.add(r.person.g); r.gunId = null; r.labelText = '';
+  }
+  const carKey = typeof q.car === 'string' && CAR_TYPES[q.car] ? `${q.car}_${num(q.pc, -1)}` : '';
+  if (carKey !== r.carKey) {
+    r.carKey = carKey;
+    if (r.car) scene.remove(r.car);
+    r.car = carKey ? makeCarMesh(q.car, num(q.pc, -1) >= 0 ? q.pc : undefined).g : null;
+    if (r.car) scene.add(r.car);
+  }
+  const gun = typeof q.gun === 'string' && GUN[q.gun] ? q.gun : null;
+  if (gun !== r.gunId) {
+    if (r.gunMesh) { r.person.armR.remove(r.gunMesh); r.gunMesh = null; }
+    r.gunId = gun;
+    if (gun) { const m = gunModel(gun); m.position.set(0, -0.72, 0.05); m.rotation.x = Math.PI / 2; m.scale.setScalar(1.25); r.person.armR.add(m); r.gunMesh = m; }
+  }
+  refreshLabel(r);
+}
+function refreshLabel(r) {
+  if (!r.person) return;
+  const text = remoteName(r);
+  if (text === r.labelText) return;
+  r.labelText = text;
+  if (r.label) r.person.g.remove(r.label);
+  r.label = labelSprite(`🎮 ${text}`, '#0be881'); r.label.scale.set(3, 0.7, 1); r.label.position.y = 3.1; r.person.g.add(r.label);
+}
+function removeRemote(peer) {
+  const r = MP.remotes.get(peer); if (!r) return;
+  if (r.person) scene.remove(r.person.g);
+  if (r.car) scene.remove(r.car);
+  if (r.carLabel) scene.remove(r.carLabel);
+  MP.remotes.delete(peer);
+}
+function sameWorld(r) { const l = r.pres && r.pres.loc; return l === myLoc() && l !== 'home'; }
+
+function mpTick(dt) {
+  if (!MP.room) return;
+  // 自分の様子を送る（1秒に10回まで、変わったときだけ）
+  MP.sentAt -= dt;
+  if (running && P.person && MP.sentAt <= 0) {
+    MP.sentAt = 0.1;
+    const o = state.outfit, c = P.inCar, mv = readMove();
+    const pres = { nm: myNick(), loc: myLoc(), x: r2(c ? c.x : P.x), z: r2(c ? c.z : P.z), h: r2(c ? c.h : P.h), mv: Math.hypot(mv.x, mv.y) > 0.08 || (c && Math.abs(c.speed) > 0.5) ? 1 : 0,
+      car: c ? c.type : null, pc: c ? (paintColor() == null ? -1 : paintColor()) : -1,
+      sh: o.shirt && OUTFIT[o.shirt] ? OUTFIT[o.shirt].c : 0xffc928, pt: o.pants && OUTFIT[o.pants] ? OUTFIT[o.pants].c : 0x2b3a67, gun: gunCur, ap: r2(gunAimP) };
+    const key = JSON.stringify(pres);
+    if (key !== MP.lastPres) { MP.lastPres = key; MP.room.presence(pres).catch(() => {}); }
+  }
+  // ほかの人を動かす
+  for (const r of MP.remotes.values()) {
+    if (!r.person) continue;
+    const vis = sameWorld(r) && r.pres.x != null;
+    const k = Math.min(1, dt * 10);
+    if (Math.hypot(r.tx - r.x, r.tz - r.z) > 30) { r.x = r.tx; r.z = r.tz; }
+    r.x += (r.tx - r.x) * k; r.z += (r.tz - r.z) * k; r.h += angDiff(r.h, r.th) * k;
+    const inCar = !!r.car;
+    r.person.g.visible = vis && !inCar;
+    if (r.car) {
+      r.car.visible = vis;
+      r.car.position.set(r.x, surf(r.x, r.z), r.z); r.car.rotation.y = r.h;
+      if (!r.carLabel || r.carLabelText !== r.labelText) { if (r.carLabel) scene.remove(r.carLabel); r.carLabel = labelSprite(`🎮 ${r.labelText}`, '#0be881'); r.carLabel.scale.set(3, 0.7, 1); r.carLabelText = r.labelText; scene.add(r.carLabel); }
+      r.carLabel.visible = vis; r.carLabel.position.set(r.x, 3.6, r.z);
+    } else if (r.carLabel) r.carLabel.visible = false;
+    if (!inCar) {
+      r.person.g.position.set(r.x, surf(r.x, r.z) - 0.02, r.z); r.person.g.rotation.y = r.h;
+      if (r.pres.mv) { r.t += dt * 11; animPerson(r.person, r.t, 1); } else animPerson(r.person, 0, 0);
+      if (r.gunId) { const ap = num(r.pres.ap); r.person.armR.rotation.set(-Math.PI / 2 + ap, 0, 0); r.person.armL.rotation.set(-Math.PI / 2 + ap + 0.15, 0, 0.55); }
+    }
+    if (r.bubble) {
+      r.bubbleT -= dt;
+      r.bubble.visible = vis;
+      r.bubble.position.set(r.x, inCar ? 4.6 : 4.0, r.z);
+      if (r.bubbleT <= 0) { scene.remove(r.bubble); r.bubble = null; }
+    }
+  }
+}
+
+/* ---- チャット ---- */
+const cleanText = s => String(s).replace(/[\u0000-\u001f\u007f​-‏‪-‮⁠-⁤﻿]/g, '').trim();
+function sendChat(text) {
+  const t = cleanText(text).slice(0, 80);
+  if (!t || !MP.room) return;
+  MP.room.emit('chat', { t, nm: myNick() }).catch(e => {
+    if (e && e.code === 'not_permitted') { MP.canChat = false; toast('チャットは、このページを「参加者（Contributor）」以上で共有された人だけ使えます'); }
+  });
+}
+function onChat(msg) {
+  const d = msg.data || {};
+  const t = cleanText(typeof d.t === 'string' ? d.t : '').slice(0, 80);
+  if (!t) return;
+  const r = MP.remotes.get(msg.peer);
+  const who = msg.sameTab ? myNick() : r ? remoteName(r) : cleanText(typeof d.nm === 'string' ? d.nm : '').slice(0, 16) || 'プレイヤー';
+  MP.log.push({ who, t, me: msg.sameTab });
+  if (MP.log.length > 40) MP.log.shift();
+  if (!msg.sameTab) { toast(`💬 ${who}「${t}」`); sfx('click'); }
+  if (r && r.person) {
+    if (r.bubble) scene.remove(r.bubble);
+    r.bubble = labelSprite(t.length > 20 ? t.slice(0, 19) + '…' : t, '#ffffff'); r.bubble.scale.set(Math.min(8, 1.2 + t.length * 0.32), 0.75, 1);
+    scene.add(r.bubble); r.bubbleT = 6;
+  }
+  renderChatLog();
+}
+function renderChatLog() {
+  const box = document.getElementById('mpLog'); if (!box) return;
+  box.textContent = '';
+  for (const m of MP.log.slice(-30)) {
+    const row = document.createElement('div'); row.className = 'mp-msg' + (m.me ? ' me' : '');
+    const b = document.createElement('b'); b.textContent = m.who; row.appendChild(b);
+    const s = document.createElement('span'); s.textContent = m.t; row.appendChild(s);
+    box.appendChild(row);
+  }
+  if (!MP.log.length) { const e = document.createElement('div'); e.className = 'muted'; e.textContent = 'まだメッセージはありません'; box.appendChild(e); }
+  box.scrollTop = box.scrollHeight;
+}
+
+/* ---- ほかの人の銃のたま ---- */
+function mpShot(a, b) {
+  const now = performance.now();
+  if (!MP.room || MP.shotAt > now) return;
+  MP.shotAt = now + 150;
+  MP.room.emit('shot', { a: [r2(a.x), r2(a.y), r2(a.z)], b: [r2(b.x), r2(b.y), r2(b.z)], g: gunCur, loc: myLoc() }).catch(() => {});
+}
+function onShot(msg) {
+  if (msg.sameTab) return;
+  const d = msg.data || {};
+  const ok = v => Array.isArray(v) && v.length === 3 && v.every(n => typeof n === 'number' && isFinite(n));
+  if (!ok(d.a) || !ok(d.b) || d.loc !== myLoc() || d.loc === 'home') return;
+  const a = new THREE.Vector3(...d.a), b = new THREE.Vector3(...d.b);
+  if (a.distanceTo(b) > 200 || a.distanceTo(camera.position) > 250) return;
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([a, b]), tracerMat); scene.add(line); shotFx.push({ m: line, t: 0.06 });
+  const s = new THREE.Mesh(sparkGeo, sparkMat); s.position.copy(b); scene.add(s); shotFx.push({ m: s, t: 0.15 });
+  if (GUN[d.g] && a.distanceTo(camera.position) < 80) gunSound(GUN[d.g]);
+}
+
+/* ---- 画面 ---- */
+function mpHud() {
+  const on = !!MP.room;
+  const n = [...MP.remotes.values()].filter(r => r.pres && r.pres.x != null).length;
+  $('#mpHud').hidden = !on; $('#tChat').hidden = !on;
+  if (on) setText($('#mpHudText'), MP.connected ? `オンライン ${n + 1}人` : 'つないでいます…');
+  $('#mpHud').classList.toggle('off', !MP.connected);
+}
+const LOC_NAME = { town: '町', range: '射撃場', home: '家の中' };
+function openMulti() {
+  if (!MP.room) return;
+  const list = [...MP.remotes.values()].filter(r => r.pres && r.pres.x != null);
+  svcScreen('みんなで遊ぶ', `<div class="muted">このページをいっしょに開いている人が、同じ町に出てきます。車も銃も見えます（家の中はそれぞれの家なので見えません）。</div>
+    <h3>あなたの名前</h3>
+    <div class="row"><input id="mpNick" maxlength="16" placeholder="名前" style="flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;font:inherit"><button class="btn" id="mpNickSave" type="button">決定</button></div>
+    <h3>いまいる人（${list.length + 1}人）</h3>
+    <div class="list" id="mpList"></div>
+    <h3>チャット</h3>
+    <div id="mpLog" class="mp-log"></div>
+    <div class="row"><input id="mpText" maxlength="80" placeholder="メッセージ（Enterで送信）" style="flex:1;min-width:0;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:inherit;font:inherit"><button class="btn primary" id="mpSend" type="button" ${MP.canChat ? '' : 'disabled'}>送る</button></div>`, b => {
+    const nick = b.querySelector('#mpNick'); nick.value = myNick();
+    b.querySelector('#mpNickSave').onclick = () => { state.nick = cleanText(nick.value).slice(0, 16); save(); toast(`名前を「${myNick()}」にしました`); MP.lastPres = ''; };
+    const lb = b.querySelector('#mpList');
+    const meRow = document.createElement('div'); meRow.className = 'item'; const mn = document.createElement('div'); mn.className = 'name'; mn.textContent = `⭐ ${myNick()}（あなた）・${LOC_NAME[myLoc()]}`; meRow.appendChild(mn); lb.appendChild(meRow);
+    for (const r of list) {
+      const row = document.createElement('div'); row.className = 'item';
+      const nm = document.createElement('div'); nm.className = 'name';
+      nm.textContent = `🎮 ${remoteName(r)}・${LOC_NAME[r.pres.loc] || '町'}${r.pres.car && CAR_TYPES[r.pres.car] ? `・${CAR_TYPES[r.pres.car].name}に乗っている` : ''}${r.pres.gun && GUN[r.pres.gun] ? `・${GUN[r.pres.gun].name}を構えている` : ''}`;
+      row.appendChild(nm);
+      if (r.pres.loc === 'town') { const bt = document.createElement('button'); bt.className = 'btn'; bt.type = 'button'; bt.textContent = '合流する'; bt.onclick = () => { closeScreen(); if (inRange) exitRange(); if (inHome) exitHome(true); setPin(r.tx, r.tz); }; row.appendChild(bt); }
+      lb.appendChild(row);
+    }
+    renderChatLog();
+    const tx = b.querySelector('#mpText');
+    const go = () => { sendChat(tx.value); tx.value = ''; tx.focus(); };
+    b.querySelector('#mpSend').onclick = go;
+    tx.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); go(); } });
+  });
+}
+const drawMinimap0 = drawMinimap;
+drawMinimap = function (t) {
+  drawMinimap0(t);
+  if (!MP.room || myLoc() !== 'town') return;
+  for (const r of MP.remotes.values()) {
+    if (!r.pres || r.pres.loc !== 'town') continue;
+    mctx.fillStyle = '#0be881'; mctx.strokeStyle = '#0b3d2a'; mctx.lineWidth = 2;
+    mctx.beginPath(); mctx.arc(w2m(r.x), w2m(r.z), 6, 0, 7); mctx.fill(); mctx.stroke();
+  }
+};
+$('#mpHud').addEventListener('click', () => { if (!openScreen) openMulti(); });
+$('#tChat').addEventListener('click', () => { if (!openScreen) openMulti(); });
+initMulti();
 
 /* =========================================================
    boot
