@@ -1,0 +1,226 @@
+<title>ミニゲーム50</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap">
+<style>
+/* レイアウト：携帯ゲーム機の世界。一覧＝カートリッジ棚、プレイ＝画面＋横のランキング表 */
+:root {
+  --shell: #1a1630;      /* 本体の色 */
+  --panel: #241f40;      /* カートリッジ・パネル */
+  --panel-2: #2e2852;    /* 押したとき・強調 */
+  --line: #3d3569;       /* 区切り線 */
+  --screen: #141127;     /* ゲーム画面 */
+  --fg: #f3eee2;         /* 文字 */
+  --dim: #a59fc6;        /* 補足の文字 */
+  --coin: #ffb547;       /* アクセント（コイン色） */
+  --ok: #7ee081;
+  --cat-action: #ffb547; --cat-puzzle: #5fd3c4; --cat-reflex: #ff6b8b; --cat-brain: #6aa8ff; --cat-luck: #c08bff;
+  --f-pix: "DotGothic16", ui-monospace, "Osaka-Mono", monospace;
+  --f-body: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", system-ui, sans-serif;
+  --r: 14px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--shell); color: var(--fg); font-family: var(--f-body); font-size: 15px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-tap-highlight-color: transparent;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--coin); outline-offset: 2px; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 20px 48px; }
+
+/* ヘッダー */
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px 24px; padding-bottom: 18px; border-bottom: 2px dashed var(--line); }
+.brand { min-width: 0; }
+.logo { font-family: var(--f-pix); font-size: clamp(34px, 7vw, 54px); line-height: 1; margin: 0; letter-spacing: .02em; }
+.logo b { color: var(--coin); font-weight: 400; }
+.tag { margin: 8px 0 0; color: var(--dim); font-size: 14px; text-wrap: balance; }
+.me { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.me label { font-size: 12px; color: var(--dim); letter-spacing: .08em; }
+#nick { width: 11em; max-width: 100%; padding: 8px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--panel); }
+#nick:focus { border-color: var(--coin); outline: none; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--panel); font-size: 12px; color: var(--dim); white-space: nowrap; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+.chip[data-on="1"] { color: var(--fg); }
+.chip[data-on="1"]::before { background: var(--ok); box-shadow: 0 0 0 3px rgba(126,224,129,.2); }
+.ghost { padding: 6px 14px; border-radius: 999px; border: 2px solid var(--line); background: transparent; font-size: 13px; }
+.ghost:hover { border-color: var(--dim); }
+.note { margin: 12px 0 0; padding: 8px 14px; border-radius: 10px; background: var(--panel); color: var(--dim); font-size: 13px; }
+
+/* タブ・絞りこみ */
+.bar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; justify-content: space-between; margin: 22px 0 16px; }
+.tabs, .filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { padding: 8px 18px; border: 0; border-radius: 10px; background: transparent; color: var(--dim); font-weight: 700; }
+.tab[aria-selected="true"] { background: var(--panel-2); color: var(--fg); }
+.fchip { padding: 4px 12px; border-radius: 999px; border: 2px solid var(--line); background: transparent; font-size: 13px; color: var(--dim); }
+.fchip[aria-pressed="true"] { border-color: var(--c, var(--fg)); color: var(--fg); background: var(--panel); }
+
+/* カートリッジ一覧 */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 12px; }
+.cart {
+  --c: var(--dim);
+  position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; text-align: left;
+  padding: 14px 14px 12px; border: 0; border-radius: 6px 6px var(--r) var(--r); background: var(--panel);
+  box-shadow: inset 0 4px 0 var(--c); transition: transform .12s ease, background .12s ease;
+}
+.cart:hover { background: var(--panel-2); transform: translateY(-2px); }
+.cart:active { transform: translateY(0); }
+.cart .no { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--f-pix); font-size: 13px; color: var(--dim); }
+.cart .no span:last-child { color: var(--c); font-family: var(--f-body); font-size: 11px; font-weight: 700; letter-spacing: .06em; }
+.cart h3 { margin: 0; font-size: 17px; line-height: 1.35; font-weight: 800; }
+.cart .d { margin: 0; font-size: 12px; color: var(--dim); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cart dl { margin: 4px 0 0; padding-top: 8px; border-top: 1px dashed var(--line); display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 12px; }
+.cart dt { color: var(--dim); }
+.cart dd { margin: 0; text-align: right; font-family: var(--f-pix); font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cart dd small { font-family: var(--f-body); color: var(--dim); font-size: 11px; }
+[data-cat="アクション"] { --c: var(--cat-action); } [data-cat="パズル"] { --c: var(--cat-puzzle); } [data-cat="反射"] { --c: var(--cat-reflex); } [data-cat="頭脳"] { --c: var(--cat-brain); } [data-cat="運"] { --c: var(--cat-luck); }
+
+/* 総合ランキング */
+.overall { background: var(--panel); border-radius: var(--r); padding: 18px; }
+.overall h2 { margin: 0 0 4px; font-size: 18px; }
+.overall p { margin: 0 0 14px; color: var(--dim); font-size: 13px; }
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+th { font-size: 12px; color: var(--dim); font-weight: 700; }
+td.n { text-align: right; font-family: var(--f-pix); }
+tr.me td { background: var(--panel-2); }
+.medal { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-family: var(--f-pix); background: var(--line); }
+.m1 { background: #ffd34d; color: #3b2a00; } .m2 { background: #d4d8e8; color: #262a3a; } .m3 { background: #e0a26b; color: #3a2210; }
+
+/* プレイ画面 */
+.play-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 18px 0 14px; }
+.play-head h2 { margin: 0; font-size: clamp(20px, 4vw, 26px); font-weight: 800; }
+.play-head .no { font-family: var(--f-pix); color: var(--dim); font-size: 14px; }
+.play-head .sp { flex: 1; }
+.play-body { display: grid; grid-template-columns: minmax(0, 440px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 760px) { .play-body { grid-template-columns: minmax(0, 1fr); } }
+.stage { display: flex; flex-direction: column; gap: 10px; min-width: 0; align-items: center; }
+.console { width: 100%; max-width: 440px; background: var(--panel); border-radius: 18px 18px 42px 18px; padding: 12px 12px 16px; }
+.hud { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 10px; }
+.hud div { background: var(--screen); border-radius: 8px; padding: 4px 10px; min-width: 0; }
+.hud small { display: block; font-size: 10px; letter-spacing: .14em; color: var(--dim); }
+.hud b { display: block; font-family: var(--f-pix); font-weight: 400; font-size: 22px; line-height: 1.2; font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#hudTime[data-low="1"] { color: #ff6b8b; }
+.screen { position: relative; width: min(100%, calc((100dvh - 210px) * 0.6667)); min-width: min(100%, 260px); margin: 0 auto; aspect-ratio: 2 / 3; max-width: 100%; border-radius: 8px; overflow: hidden; background: var(--screen); box-shadow: 0 0 0 3px #0c0a1a; }
+canvas { display: block; width: 100%; height: 100%; touch-action: none; user-select: none; -webkit-user-select: none; }
+.overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 22px; text-align: center; background: rgba(20, 17, 39, .88); }
+.overlay .ono { font-family: var(--f-pix); color: var(--dim); }
+.overlay h3 { margin: 0; font-size: 26px; font-weight: 800; text-wrap: balance; }
+.overlay p { margin: 0; max-width: 30ch; font-size: 14px; color: var(--dim); text-wrap: pretty; }
+.overlay .keys { color: var(--fg); background: var(--panel); border-radius: 10px; padding: 8px 12px; font-size: 13px; }
+.overlay .big { font-family: var(--f-pix); font-size: 56px; line-height: 1; color: var(--coin); font-variant-numeric: tabular-nums; }
+.overlay .newbest { color: var(--ok); font-weight: 800; }
+.btn { padding: 12px 28px; border: 0; border-radius: 999px; background: var(--coin); color: #2a1a00; font-weight: 800; font-size: 16px; box-shadow: 0 4px 0 #b9781f; }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #b9781f; }
+.btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.overlay small { color: var(--dim); font-size: 12px; }
+
+/* 画面ボタン */
+.pad { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; max-width: 440px; padding: 4px 6px; user-select: none; -webkit-user-select: none; }
+.dpad { display: grid; grid-template-columns: repeat(3, 56px); grid-template-rows: repeat(3, 52px); gap: 2px; }
+.pb { border: 0; border-radius: 10px; background: var(--panel-2); color: var(--fg); font-size: 20px; touch-action: none; }
+.pb[data-down="1"] { background: var(--line); transform: scale(.96); }
+.pb.u { grid-area: 1 / 2; } .pb.l { grid-area: 2 / 1; } .pb.r { grid-area: 2 / 3; } .pb.d { grid-area: 3 / 2; }
+.pb.a { width: 84px; height: 84px; border-radius: 50%; background: #e2545f; font-family: var(--f-pix); font-size: 26px; box-shadow: 0 5px 0 #8f2b37; }
+.pb.a[data-down="1"] { box-shadow: 0 1px 0 #8f2b37; transform: translateY(4px); }
+.help { margin: 0; max-width: 440px; font-size: 13px; color: var(--dim); text-align: center; }
+
+.board { background: var(--panel); border-radius: var(--r); padding: 16px 18px; min-width: 0; }
+.board h3 { margin: 0 0 2px; font-size: 16px; }
+.board .sub { margin: 0 0 10px; color: var(--dim); font-size: 12px; }
+.rank { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.rank li { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; }
+.rank li.me { background: var(--panel-2); }
+.rank .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank .sc { font-family: var(--f-pix); font-variant-numeric: tabular-nums; }
+.rank li.none { display: block; }
+.rank .empty { display: block; color: var(--dim); font-size: 13px; padding: 10px 0; }
+.mine { margin: 12px 0 0; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 13px; color: var(--dim); }
+.mine b { color: var(--fg); font-family: var(--f-pix); font-weight: 400; }
+@media (max-width: 760px) { body.playing .top, body.playing .foot { display: none; } body.playing .play-head { margin-top: 4px; } }
+.foot { margin-top: 36px; color: var(--dim); font-size: 12px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .cart, .btn, .pb { transition: none; } .cart:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1 class="logo">ミニゲーム<b>50</b></h1>
+      <p class="tag">50本のミニゲームで、みんなとハイスコアを競おう</p>
+    </div>
+    <div class="me">
+      <label for="nick">ニックネーム</label>
+      <input id="nick" maxlength="12" autocomplete="off">
+      <span id="net" class="chip">準備中…</span>
+      <button id="snd" class="ghost" type="button">効果音 ON</button>
+    </div>
+  </header>
+  <p id="note" class="note" hidden></p>
+
+  <section id="home">
+    <div class="bar">
+      <div class="tabs" role="tablist">
+        <button class="tab" id="tabGames" role="tab" aria-selected="true" type="button">ゲーム一覧</button>
+        <button class="tab" id="tabRank" role="tab" aria-selected="false" type="button">総合ランキング</button>
+      </div>
+      <div class="filters" id="filters"></div>
+    </div>
+    <div id="grid" class="grid"></div>
+    <div id="overall" class="overall" hidden>
+      <h2>総合ランキング</h2>
+      <p>各ゲームのランキングで 1位に10点、2位に9点 … 10位に1点。50本の合計で順位が決まります。</p>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>順位</th><th>ニックネーム</th><th style="text-align:right">ポイント</th><th style="text-align:right">遊んだ数</th></tr></thead>
+        <tbody id="overallBody"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="play" hidden>
+    <div class="play-head">
+      <button id="back" class="ghost" type="button">← 一覧へ</button>
+      <span class="no" id="pNo"></span>
+      <h2 id="pName"></h2>
+      <span class="sp"></span>
+      <button id="padToggle" class="ghost" type="button">画面ボタン</button>
+    </div>
+    <div class="play-body">
+      <div class="stage">
+        <div class="console">
+          <div class="hud">
+            <div><small>SCORE</small><b id="hudScore">0</b></div>
+            <div><small>BEST</small><b id="hudBest">0</b></div>
+            <div><small id="hudTimeLabel">TIME</small><b id="hudTime">—</b></div>
+          </div>
+          <div class="screen">
+            <canvas id="cv" width="360" height="540" aria-label="ゲーム画面"></canvas>
+            <div id="ov" class="overlay"></div>
+          </div>
+        </div>
+        <div id="pad" class="pad" hidden>
+          <div class="dpad">
+            <button class="pb u" data-k="U" type="button" aria-label="上">▲</button>
+            <button class="pb l" data-k="L" type="button" aria-label="左">◀</button>
+            <button class="pb r" data-k="R" type="button" aria-label="右">▶</button>
+            <button class="pb d" data-k="D" type="button" aria-label="下">▼</button>
+          </div>
+          <button class="pb a" data-k="A" type="button">A</button>
+        </div>
+        <p id="pHelp" class="help"></p>
+      </div>
+      <aside class="board">
+        <h3>このゲームのランキング</h3>
+        <p class="sub" id="boardSub"></p>
+        <ol id="rank" class="rank"></ol>
+        <p id="mine" class="mine"></p>
+      </aside>
+    </div>
+  </section>
+  <p class="foot">キーボード：矢印キー（WASD）で移動、スペース・Enter・Z で A ボタン、Esc で一覧へ</p>
+</div>
